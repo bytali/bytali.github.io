@@ -1,1187 +1,491 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta
-    name="description"
-    content="An elegant, minimal wedding invitation with a live countdown and RSVP interaction."
-  />
-  <title>Amelia & Noah — Wedding Invitation</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500&display=swap"
-    rel="stylesheet"
-  />
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3eee5">
+  <meta name="description" content="Tali creates modern, personal wedding websites for Filipino couples—complete with RSVP, schedules, maps, and guest details.">
+  <title>Tali — Wedding websites, tied together with care</title>
   <style>
     :root {
-      --paper: #f5f1ea;
-      --paper-deep: #e9e1d5;
-      --ink: #253128;
-      --muted: #70786f;
-      --sage: #73816f;
-      --sage-dark: #52604f;
-      --white: #fffdf9;
-      --line: rgba(37, 49, 40, 0.16);
-      --serif: "Cormorant Garamond", Georgia, serif;
-      --sans: "Inter", Arial, sans-serif;
+      --paper: #f3eee5;
+      --ink: #1f211e;
+      --muted: #69695f;
+      --line: rgba(31, 33, 30, .16);
+      --accent: #9d4938;
+      --accent-soft: #dfc1b5;
+      --card: rgba(255, 255, 255, .48);
+      --radius: 1.25rem;
+      --max: 72rem;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      overflow-x: hidden;
       color: var(--ink);
-      background: var(--paper);
-      font-family: var(--sans);
-      font-weight: 300;
+      background:
+        linear-gradient(rgba(31,33,30,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(31,33,30,.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 3rem 3rem;
+      font: 400 1rem/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-rendering: optimizeLegibility;
     }
 
-    ::selection {
-      color: var(--white);
-      background: var(--sage-dark);
-    }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .wrap { width: min(calc(100% - 2rem), var(--max)); margin-inline: auto; }
+    .serif { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
 
-    a,
-    button,
-    input,
-    textarea {
-      font: inherit;
-    }
-
-    a,
-    button {
-      color: inherit;
-    }
-
-    .grain {
+    .skip {
       position: fixed;
-      inset: 0;
-      z-index: 30;
-      opacity: 0.035;
-      pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");
+      left: 1rem;
+      top: -5rem;
+      z-index: 10;
+      padding: .7rem 1rem;
+      background: var(--ink);
+      color: white;
+      border-radius: 999px;
+      text-decoration: none;
     }
+    .skip:focus { top: 1rem; }
 
-    .orb {
-      position: fixed;
-      z-index: -1;
-      width: 34rem;
-      height: 34rem;
-      border-radius: 50%;
-      filter: blur(20px);
-      opacity: 0.22;
-      pointer-events: none;
-    }
-
-    .orb-one {
-      top: -12rem;
-      right: -10rem;
-      background: #c6d1bd;
-      animation: float-orb 10s ease-in-out infinite alternate;
-    }
-
-    .orb-two {
-      bottom: -15rem;
-      left: -12rem;
-      background: #e6cabd;
-      animation: float-orb 12s ease-in-out infinite alternate-reverse;
-    }
-
-    .topbar {
-      position: absolute;
+    header {
+      position: sticky;
       top: 0;
-      left: 0;
-      z-index: 20;
+      z-index: 5;
+      backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--paper) 82%, transparent);
+      border-bottom: 1px solid var(--line);
+    }
+
+    nav {
+      min-height: 4.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      width: 100%;
-      padding: 1.6rem clamp(1.25rem, 4vw, 4rem);
+      gap: 1rem;
     }
 
-    .monogram {
-      font-family: var(--serif);
-      font-size: 1.4rem;
-      font-weight: 600;
-      text-decoration: none;
-      letter-spacing: 0.08em;
-    }
-
-    .monogram span {
-      margin: 0 0.2rem;
-      color: var(--sage);
-      font-style: italic;
-    }
-
-    .top-link {
-      padding-bottom: 0.25rem;
-      border-bottom: 1px solid var(--ink);
-      font-size: 0.72rem;
-      font-weight: 500;
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-    }
-
-    .hero {
-      position: relative;
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.65fr);
+    .brand {
+      display: inline-flex;
       align-items: center;
-      gap: clamp(2rem, 7vw, 8rem);
-      min-height: 100svh;
-      padding: 8rem clamp(1.25rem, 7vw, 8rem) 5rem;
+      gap: .65rem;
+      font-weight: 750;
+      letter-spacing: -.03em;
+      text-decoration: none;
     }
 
-    .hero-copy {
-      max-width: 760px;
+    .knot { width: 1.8rem; height: 1.8rem; flex: 0 0 auto; }
+    .knot path {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 70;
+      animation: draw 1.4s ease-out both;
     }
 
-    .eyebrow {
-      margin: 0 0 1.25rem;
-      color: var(--sage-dark);
-      font-size: 0.68rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.28em;
-    }
-
-    h1,
-    h2,
-    h3,
-    p {
-      margin-top: 0;
-    }
-
-    h1 {
-      margin-bottom: 1.5rem;
-      font-family: var(--serif);
-      font-size: clamp(5rem, 13vw, 10.5rem);
-      font-weight: 400;
-      line-height: 0.72;
-      letter-spacing: -0.055em;
-    }
-
-    h1 .ampersand {
-      display: block;
-      margin: 0.2rem 0 0.1rem 18%;
-      color: var(--sage);
-      font-size: 0.56em;
-      font-style: italic;
-      line-height: 0.8;
-    }
-
-    .date-line {
-      color: var(--muted);
-      font-size: 0.8rem;
-      letter-spacing: 0.08em;
-    }
-
-    .hero-actions {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      margin-top: 2.3rem;
-    }
+    .navlinks { display: flex; align-items: center; gap: 1.4rem; }
+    .navlinks > a:not(.button) { color: var(--muted); text-decoration: none; font-size: .92rem; }
+    .navlinks > a:hover { color: var(--ink); }
 
     .button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 3.25rem;
-      padding: 0.85rem 1.45rem;
-      border: 0;
+      gap: .55rem;
+      min-height: 2.9rem;
+      padding: .75rem 1.05rem;
+      border: 1px solid var(--ink);
       border-radius: 999px;
-      cursor: pointer;
-      text-decoration: none;
-      transition:
-        transform 180ms ease,
-        background 180ms ease,
-        box-shadow 180ms ease;
-    }
-
-    .button:hover {
-      transform: translateY(-2px);
-    }
-
-    .button-primary {
-      color: var(--white);
       background: var(--ink);
-      box-shadow: 0 12px 32px rgba(37, 49, 40, 0.14);
-    }
-
-    .button-primary:hover {
-      background: var(--sage-dark);
-      box-shadow: 0 16px 38px rgba(37, 49, 40, 0.18);
-    }
-
-    .text-link {
-      font-size: 0.76rem;
-      font-weight: 500;
+      color: #fff;
+      font-weight: 700;
       text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
     }
+    .button:hover { transform: translateY(-2px); box-shadow: 0 .7rem 1.4rem rgba(31,33,30,.12); }
+    .button.secondary { background: transparent; color: var(--ink); }
 
-    .text-link span {
-      display: inline-block;
-      margin-left: 0.3rem;
-      transition: transform 180ms ease;
-    }
-
-    .text-link:hover span {
-      transform: translate(3px, 3px);
-    }
-
-    .invitation-card {
+    main { overflow: hidden; }
+    .hero {
       position: relative;
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
       align-items: center;
-      justify-content: space-between;
-      width: min(100%, 360px);
-      aspect-ratio: 0.72;
-      justify-self: center;
-      padding: 2rem;
-      border: 1px solid rgba(255, 255, 255, 0.56);
-      border-radius: 180px 180px 1.2rem 1.2rem;
-      color: var(--white);
-      background:
-        linear-gradient(rgba(48, 65, 51, 0.42), rgba(48, 65, 51, 0.48)),
-        radial-gradient(circle at 30% 20%, #aab8a0 0, transparent 38%),
-        linear-gradient(145deg, #85917f, #4f5d4d);
-      box-shadow: 0 35px 80px rgba(42, 56, 45, 0.25);
-      cursor: pointer;
-      transform-style: preserve-3d;
-      transition:
-        transform 180ms ease,
-        box-shadow 250ms ease;
+      gap: clamp(2rem, 7vw, 7rem);
+      min-height: calc(100svh - 4.25rem);
+      padding-block: clamp(4.5rem, 10vw, 8rem);
     }
 
-    .invitation-card:hover {
-      box-shadow: 0 42px 95px rgba(42, 56, 45, 0.3);
-    }
-
-    .card-kicker,
-    .card-note {
-      font-size: 0.66rem;
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      margin: 0 0 1.2rem;
+      color: var(--accent);
+      font-weight: 750;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      letter-spacing: 0.22em;
+      font-size: .76rem;
     }
+    .eyebrow::before { content: ""; width: 1.5rem; border-top: 1px solid currentColor; }
 
-    .card-flower {
-      font-size: 2rem;
-      animation: slow-spin 14s linear infinite;
+    h1 {
+      max-width: 10ch;
+      margin: 0;
+      font-size: clamp(3.7rem, 8.5vw, 7.7rem);
+      line-height: .88;
+      letter-spacing: -.065em;
     }
+    h1 em { color: var(--accent); font-weight: inherit; }
 
-    .card-title {
-      font-family: var(--serif);
-      font-size: clamp(2.2rem, 4vw, 3.6rem);
-      line-height: 0.95;
-    }
-
-    .scroll-cue {
-      position: absolute;
-      right: clamp(1.25rem, 4vw, 4rem);
-      bottom: 2rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    .lead {
+      max-width: 35rem;
+      margin: 1.7rem 0 2rem;
       color: var(--muted);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      writing-mode: vertical-rl;
+      font-size: clamp(1.05rem, 1.5vw, 1.22rem);
     }
 
-    .scroll-cue span {
-      display: block;
-      width: 1px;
-      height: 48px;
-      background: var(--ink);
-      animation: scroll-line 2s ease-in-out infinite;
+    .actions { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
+    .note { color: var(--muted); font-size: .82rem; }
+
+    .preview-wrap { position: relative; min-height: 35rem; }
+    .thread {
+      position: absolute;
+      inset: -5rem -12rem auto -8rem;
+      width: 42rem;
+      max-width: none;
+      pointer-events: none;
+      opacity: .78;
+    }
+    .thread path {
+      fill: none;
+      stroke: var(--accent-soft);
+      stroke-width: 2;
+      stroke-dasharray: 6 10;
+      animation: drift 18s linear infinite;
     }
 
-    .countdown-section {
+    .phone {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(100%, 21rem);
+      min-height: 39rem;
+      padding: .7rem;
+      border: 1px solid rgba(31,33,30,.22);
+      border-radius: 2.3rem;
+      background: #171815;
+      box-shadow: 0 2.5rem 5rem rgba(31,33,30,.22);
+      transform: translate(-50%, -50%) rotate(2.7deg);
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .screen {
       position: relative;
-      padding: clamp(5rem, 10vw, 9rem) clamp(1.25rem, 7vw, 8rem);
+      min-height: 37.6rem;
       overflow: hidden;
-      color: var(--white);
-      text-align: center;
-      background: var(--ink);
+      border-radius: 1.75rem;
+      background: #f7f1e8;
+      color: #2c2b27;
     }
 
-    .countdown-section::before {
+    .screen::before {
       content: "";
       position: absolute;
-      top: -12rem;
-      left: 50%;
-      width: 42rem;
-      height: 42rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 50%;
-      transform: translateX(-50%);
-    }
-
-    .countdown-section .eyebrow {
-      color: #bfcab9;
-    }
-
-    .section-heading {
-      position: relative;
-    }
-
-    .section-heading h2,
-    .details-intro h2,
-    .rsvp-copy h2 {
-      margin-bottom: 0.7rem;
-      font-family: var(--serif);
-      font-size: clamp(3rem, 7vw, 6.5rem);
-      font-weight: 400;
-      line-height: 0.92;
-      letter-spacing: -0.035em;
-    }
-
-    .countdown-date {
-      color: rgba(255, 255, 255, 0.58);
-      font-size: 0.75rem;
-      letter-spacing: 0.13em;
-    }
-
-    .countdown {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
-      align-items: center;
-      max-width: 980px;
-      margin: clamp(3rem, 6vw, 5rem) auto 0;
-    }
-
-    .time-block {
-      min-width: 0;
-    }
-
-    .time-block strong {
-      display: block;
-      font-family: var(--serif);
-      font-size: clamp(3.2rem, 8vw, 8rem);
-      font-weight: 400;
-      font-variant-numeric: tabular-nums;
-      line-height: 0.82;
-      letter-spacing: -0.04em;
-      transition:
-        transform 180ms ease,
-        opacity 180ms ease;
-    }
-
-    .time-block strong.tick {
-      opacity: 0.45;
-      transform: translateY(-4px);
-    }
-
-    .time-block span {
-      display: block;
-      margin-top: 1rem;
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.22em;
-    }
-
-    .time-divider {
-      width: 1px;
-      height: clamp(4rem, 8vw, 7rem);
-      background: rgba(255, 255, 255, 0.14);
-    }
-
-    .countdown-message {
-      min-height: 1.4rem;
-      margin: 2.4rem 0 0;
-      color: #d8dfd3;
-      font-family: var(--serif);
-      font-size: 1.35rem;
-      font-style: italic;
-    }
-
-    .details-section {
-      display: grid;
-      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
-      gap: clamp(3rem, 10vw, 10rem);
-      padding: clamp(5rem, 10vw, 10rem) clamp(1.25rem, 7vw, 8rem);
-    }
-
-    .timeline {
-      border-top: 1px solid var(--line);
-    }
-
-    .timeline-item {
-      display: grid;
-      grid-template-columns: 95px 1fr;
-      gap: 1.5rem;
-      padding: 2rem 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .timeline-time {
-      color: var(--sage-dark);
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-    }
-
-    .timeline-item h3 {
-      margin-bottom: 0.35rem;
-      font-family: var(--serif);
-      font-size: 2rem;
-      font-weight: 500;
-    }
-
-    .timeline-item div p {
-      max-width: 420px;
-      margin-bottom: 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.75;
-    }
-
-    .venue-section {
-      padding: 0 clamp(1.25rem, 7vw, 8rem) clamp(5rem, 10vw, 10rem);
-    }
-
-    .venue-card {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      min-height: 390px;
-      padding: clamp(2rem, 5vw, 5rem);
-      border-radius: 1.2rem;
+      inset: 0;
       background:
-        linear-gradient(90deg, rgba(242, 236, 227, 0.94), rgba(242, 236, 227, 0.62)),
-        radial-gradient(circle at 80% 20%, #c6cfbe 0, transparent 36%),
-        linear-gradient(135deg, #d9cabd, #9baa94);
-      box-shadow: inset 0 0 0 1px rgba(37, 49, 40, 0.08);
+        radial-gradient(circle at 78% 12%, rgba(174,102,79,.28), transparent 30%),
+        linear-gradient(150deg, transparent 58%, rgba(102,113,86,.14));
     }
 
-    .venue-card h2 {
-      margin-bottom: 1rem;
-      font-family: var(--serif);
-      font-size: clamp(3rem, 7vw, 6rem);
-      font-weight: 400;
-    }
+    .sample-top { position: relative; padding: 1.3rem 1.35rem 0; display: flex; justify-content: space-between; font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; }
+    .sample-copy { position: relative; padding: 6.4rem 1.55rem 1.5rem; }
+    .sample-copy small { color: #8d4a3b; letter-spacing: .13em; text-transform: uppercase; }
+    .sample-copy h2 { margin: .7rem 0 .6rem; font-size: 3.4rem; line-height: .9; letter-spacing: -.06em; }
+    .sample-copy p { max-width: 18rem; margin: 0; color: #68665f; font-size: .85rem; }
 
-    .venue-card p {
-      margin-bottom: 0;
-      line-height: 1.7;
-    }
-
-    .circle-link {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 96px;
-      height: 96px;
-      border: 1px solid var(--ink);
-      border-radius: 50%;
-      font-size: 0.7rem;
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      transition:
-        color 200ms ease,
-        background 200ms ease,
-        transform 200ms ease;
-    }
-
-    .circle-link:hover {
-      color: var(--white);
-      background: var(--ink);
-      transform: rotate(6deg);
-    }
-
-    .rsvp-section {
-      display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(320px, 0.8fr);
-      gap: clamp(3rem, 10vw, 10rem);
-      padding: clamp(5rem, 10vw, 10rem) clamp(1.25rem, 7vw, 8rem);
-      background: var(--paper-deep);
-    }
-
-    .rsvp-copy > p:last-child {
-      max-width: 440px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-
-    .rsvp-form {
-      display: grid;
-      gap: 1.5rem;
-    }
-
-    .rsvp-form > label > span,
-    .rsvp-form legend {
-      display: block;
-      margin-bottom: 0.7rem;
-      font-size: 0.68rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.17em;
-    }
-
-    input[type="text"],
-    textarea {
-      width: 100%;
-      padding: 1rem 0;
-      border: 0;
-      border-bottom: 1px solid rgba(37, 49, 40, 0.28);
-      border-radius: 0;
-      outline: none;
-      color: var(--ink);
-      background: transparent;
-      resize: vertical;
-    }
-
-    input[type="text"]:focus,
-    textarea:focus {
-      border-color: var(--sage-dark);
-    }
-
-    fieldset {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin: 0;
-      padding: 0;
-      border: 0;
-    }
-
-    .choice {
+    .date-card {
       position: relative;
-    }
-
-    .choice input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .choice span {
-      display: inline-flex;
-      padding: 0.75rem 1rem;
-      border: 1px solid rgba(37, 49, 40, 0.18);
-      border-radius: 999px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      transition:
-        color 160ms ease,
-        background 160ms ease,
-        border-color 160ms ease;
-    }
-
-    .choice input:checked + span {
-      color: var(--white);
-      border-color: var(--ink);
-      background: var(--ink);
-    }
-
-    .submit-button {
-      justify-content: space-between;
-      width: 100%;
-      margin-top: 0.5rem;
-    }
-
-    .form-response {
-      min-height: 1.2rem;
-      margin: 0;
-      color: var(--sage-dark);
-      font-family: var(--serif);
-      font-size: 1.1rem;
-      font-style: italic;
-    }
-
-    footer {
-      display: flex;
+      margin: 1rem;
+      padding: 1.15rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1rem;
       align-items: center;
-      justify-content: space-between;
-      padding: 2rem clamp(1.25rem, 7vw, 8rem);
-      color: var(--white);
-      background: var(--ink);
+      border: 1px solid rgba(44,43,39,.16);
+      border-radius: 1.2rem;
+      background: rgba(255,255,255,.56);
     }
+    .date-card strong { font: 400 2.3rem/1 Georgia, serif; }
+    .date-card span { display: block; color: #68665f; font-size: .76rem; }
+    .mini-button { grid-column: 1 / -1; padding: .72rem; border-radius: 999px; background: #2c2b27; color: white; text-align: center; font-size: .78rem; font-weight: 700; }
 
-    footer p {
-      margin: 0;
-      font-family: var(--serif);
-      font-size: 1.5rem;
-    }
-
-    footer p span {
-      color: #acb9a6;
-      font-style: italic;
-    }
-
-    footer small {
-      color: rgba(255, 255, 255, 0.5);
-      letter-spacing: 0.18em;
-    }
-
-    .note-dialog {
-      width: min(calc(100% - 2rem), 540px);
-      padding: 3rem;
-      border: 0;
-      border-radius: 1rem;
-      color: var(--ink);
-      background: var(--white);
-      box-shadow: 0 35px 100px rgba(25, 35, 27, 0.35);
-    }
-
-    .note-dialog::backdrop {
-      background: rgba(25, 35, 27, 0.58);
-      backdrop-filter: blur(7px);
-    }
-
-    .note-dialog h2 {
-      font-family: var(--serif);
-      font-size: clamp(2.5rem, 7vw, 4.6rem);
-      font-weight: 400;
-      line-height: 0.94;
-    }
-
-    .note-dialog > p:not(.eyebrow) {
-      color: var(--muted);
-      line-height: 1.75;
-    }
-
-    .dialog-close {
+    .seal {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      border: 0;
-      background: transparent;
-      cursor: pointer;
-      font-size: 1.6rem;
+      right: -1.3rem;
+      bottom: 1.8rem;
+      width: 7rem;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      background: var(--paper);
+      color: var(--accent);
+      text-align: center;
+      font: 400 .78rem/1.15 Georgia, serif;
+      transform: rotate(-8deg);
     }
 
-    .reveal {
-      opacity: 0;
-      transform: translateY(28px);
-      transition:
-        opacity 800ms ease,
-        transform 800ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    section { padding-block: clamp(5rem, 10vw, 9rem); }
+    .section-head { display: grid; grid-template-columns: .55fr 1fr; gap: 2rem; margin-bottom: 3rem; }
+    .section-head h2 { max-width: 13ch; margin: 0; font-size: clamp(2.4rem, 5vw, 4.7rem); line-height: .95; letter-spacing: -.05em; }
+    .section-head p { max-width: 38rem; margin: .25rem 0 0; color: var(--muted); font-size: 1.08rem; }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
     }
-
-    .reveal.is-visible {
-      opacity: 1;
-      transform: translateY(0);
+    .feature {
+      min-height: 17rem;
+      padding: 1.5rem;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--card) 80%, transparent);
     }
+    .feature:nth-child(2) { transform: translateY(1.5rem); }
+    .feature-num { color: var(--accent); font-size: .75rem; letter-spacing: .12em; }
+    .feature h3 { margin: 4.4rem 0 .65rem; font: 400 1.65rem/1.05 Georgia, serif; }
+    .feature p { margin: 0; color: var(--muted); font-size: .92rem; }
 
-    .delay-one {
-      transition-delay: 130ms;
+    .process {
+      display: grid;
+      grid-template-columns: .8fr 1.2fr;
+      gap: clamp(2rem, 8vw, 8rem);
+      align-items: start;
     }
-
-    .delay-two {
-      transition-delay: 260ms;
+    .process-card {
+      position: sticky;
+      top: 7rem;
+      padding: 2rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: white;
     }
+    .process-card p { color: rgba(255,255,255,.68); }
+    .steps { border-top: 1px solid var(--line); }
+    .step { display: grid; grid-template-columns: 4rem 1fr; gap: 1rem; padding: 1.8rem 0; border-bottom: 1px solid var(--line); }
+    .step b { color: var(--accent); font-size: .78rem; }
+    .step h3 { margin: 0 0 .35rem; font: 400 1.45rem/1.15 Georgia, serif; }
+    .step p { margin: 0; color: var(--muted); }
 
-    @keyframes float-orb {
-      from {
-        transform: translate3d(0, 0, 0) scale(1);
-      }
-
-      to {
-        transform: translate3d(2rem, 1.5rem, 0) scale(1.08);
-      }
+    .quote {
+      position: relative;
+      padding: clamp(2.5rem, 8vw, 6rem);
+      border-radius: calc(var(--radius) * 1.3);
+      background: #d9c7b4;
+      overflow: hidden;
     }
-
-    @keyframes slow-spin {
-      to {
-        transform: rotate(360deg);
-      }
+    .quote::after {
+      content: "tali";
+      position: absolute;
+      right: -1rem;
+      bottom: -4.5rem;
+      color: rgba(255,255,255,.28);
+      font: 400 12rem/1 Georgia, serif;
+      letter-spacing: -.08em;
     }
+    blockquote { position: relative; z-index: 1; max-width: 19ch; margin: 0; font: 400 clamp(2.2rem, 5vw, 4.5rem)/1.02 Georgia, serif; letter-spacing: -.045em; }
+    .quote p { position: relative; z-index: 1; margin: 1.4rem 0 0; color: #554e46; }
 
-    @keyframes scroll-line {
-      0%,
-      100% {
-        opacity: 0.45;
-        transform: scaleY(0.55);
-        transform-origin: top;
-      }
+    .cta { text-align: center; }
+    .cta h2 { max-width: 12ch; margin: 0 auto 1rem; font-size: clamp(3rem, 7vw, 6.8rem); line-height: .9; letter-spacing: -.065em; }
+    .cta p { max-width: 34rem; margin: 0 auto 2rem; color: var(--muted); }
 
-      50% {
-        opacity: 1;
-        transform: scaleY(1);
-        transform-origin: bottom;
-      }
-    }
+    footer { padding: 2rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+    .footer-row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+
+    .reveal { opacity: 0; transform: translateY(1.25rem); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @keyframes draw { from { stroke-dashoffset: 70; } to { stroke-dashoffset: 0; } }
+    @keyframes drift { to { stroke-dashoffset: -160; } }
+    @keyframes float { 0%,100% { transform: translate(-50%, -50%) rotate(2.7deg); } 50% { transform: translate(-50%, calc(-50% - 9px)) rotate(1.8deg); } }
 
     @media (max-width: 820px) {
-      .hero,
-      .details-section,
-      .rsvp-section {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        gap: 4rem;
-        padding-top: 9rem;
-      }
-
-      .invitation-card {
-        width: min(88vw, 350px);
-      }
-
-      .scroll-cue {
-        display: none;
-      }
-
-      .countdown {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2.2rem 1rem;
-      }
-
-      .time-divider {
-        display: none;
-      }
-
-      .details-section,
-      .rsvp-section {
-        gap: 4rem;
-      }
+      .navlinks > a:not(.button) { display: none; }
+      .hero { grid-template-columns: 1fr; min-height: auto; }
+      .hero-copy { text-align: center; }
+      h1, .lead { margin-inline: auto; }
+      .actions { justify-content: center; }
+      .preview-wrap { min-height: 40rem; }
+      .section-head, .process { grid-template-columns: 1fr; }
+      .features { grid-template-columns: 1fr; }
+      .feature, .feature:nth-child(2) { min-height: auto; transform: none; }
+      .feature h3 { margin-top: 2.5rem; }
+      .process-card { position: relative; top: 0; }
     }
 
     @media (max-width: 520px) {
-      h1 {
-        font-size: clamp(4.2rem, 23vw, 7rem);
-      }
-
-      .hero-actions {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .countdown {
-        gap: 2.7rem 0.5rem;
-      }
-
-      .time-block strong {
-        font-size: 4rem;
-      }
-
-      .venue-card {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 3rem;
-      }
-
-      .circle-link {
-        width: 82px;
-        height: 82px;
-      }
-
-      .note-dialog {
-        padding: 2.4rem 1.5rem 1.8rem;
-      }
-
-      footer {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
+      .wrap { width: min(calc(100% - 1.25rem), var(--max)); }
+      .button { width: 100%; }
+      .navlinks .button { width: auto; }
+      .note { width: 100%; }
+      .phone { width: 18.5rem; }
+      .seal { right: -.2rem; }
+      .step { grid-template-columns: 2.4rem 1fr; }
+      .quote::after { font-size: 8rem; bottom: -2.7rem; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .reveal { opacity: 1; transform: none; }
     }
   </style>
 </head>
-
 <body>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="orb orb-one" aria-hidden="true"></div>
-  <div class="orb orb-two" aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
 
-  <header class="topbar">
-    <a class="monogram" href="#home" aria-label="Back to top">A<span>&</span>N</a>
-    <a class="top-link" href="#rsvp">RSVP</a>
+  <header>
+    <nav class="wrap" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="Tali home">
+        <svg class="knot" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M6 11c4-6 12-5 14 1 2 7-8 9-11 4-4-6 5-11 11-7 6 4 5 13-2 16-6 3-12-1-12-7 0-5 5-8 9-6 5 2 5 10 0 13"/>
+        </svg>
+        Tali
+      </a>
+      <div class="navlinks">
+        <a href="#included">What's included</a>
+        <a href="#process">How it works</a>
+        <a class="button" href="mailto:taliweddingsph@gmail.com?subject=Start%20my%20Tali%20wedding%20website">Start your Tali</a>
+      </div>
+    </nav>
   </header>
 
-  <main>
-    <section class="hero" id="home">
-      <div class="hero-copy reveal">
-        <p class="eyebrow">Together with their families</p>
-
-        <h1>
-          Amelia
-          <span class="ampersand">&</span>
-          Noah
-        </h1>
-
-        <p class="date-line">Saturday, June 12, 2027 · The Glasshouse</p>
-
-        <div class="hero-actions">
-          <a class="button button-primary" href="#countdown">Count with us</a>
-          <a class="text-link" href="#details">View details <span>↘</span></a>
+  <main id="main">
+    <section class="hero wrap" id="top">
+      <div class="hero-copy reveal visible">
+        <p class="eyebrow">Wedding websites for Filipino couples</p>
+        <h1 class="serif">One link for your <em>one day.</em></h1>
+        <p class="lead">A modern, personal home for your wedding details—RSVP, schedule, maps, dress code, photos, and the little things guests always ask about.</p>
+        <div class="actions">
+          <a class="button" href="mailto:taliweddingsph@gmail.com?subject=Start%20my%20Tali%20wedding%20website">Create our page <span aria-hidden="true">↗</span></a>
+          <a class="button secondary" href="#included">See what is included</a>
+          <span class="note">Packages from ₱3,500</span>
         </div>
       </div>
 
-      <button
-        class="invitation-card reveal delay-one"
-        id="invitationCard"
-        type="button"
-        aria-label="Open a note from the couple"
-      >
-        <span class="card-kicker">You are invited</span>
-        <span class="card-flower" aria-hidden="true">✦</span>
-        <span class="card-title">A celebration<br />of love</span>
-        <span class="card-note">Tap to reveal a note</span>
-      </button>
-
-      <div class="scroll-cue" aria-hidden="true">
-        <span></span>
-        Scroll
+      <div class="preview-wrap" aria-label="Example Tali wedding website preview">
+        <svg class="thread" viewBox="0 0 700 420" aria-hidden="true">
+          <path d="M20 265C135 120 230 410 353 235S532 16 680 160"/>
+        </svg>
+        <div class="phone">
+          <div class="screen">
+            <div class="sample-top"><span>Tali</span><span>Menu</span></div>
+            <div class="sample-copy">
+              <small>We are getting married</small>
+              <h2 class="serif">Mara<br>&amp; Luis</h2>
+              <p>Come celebrate a day of good food, happy tears, and the people we love most.</p>
+            </div>
+            <div class="date-card">
+              <strong>18</strong>
+              <div><b>January 2027</b><span>San Juan, La Union</span></div>
+              <div class="mini-button">View the day</div>
+            </div>
+          </div>
+        </div>
+        <div class="seal">Made with<br>care in the<br>Philippines</div>
       </div>
     </section>
 
-    <section class="countdown-section" id="countdown" aria-labelledby="countdownTitle">
-      <div class="section-heading reveal">
-        <p class="eyebrow">Until we say “I do”</p>
-        <h2 id="countdownTitle">The countdown begins</h2>
-        <p class="countdown-date">June 12, 2027 · 4:00 PM</p>
+    <section class="wrap" id="included">
+      <div class="section-head reveal">
+        <h2 class="serif">Everything guests need. Nothing they don't.</h2>
+        <p>Tali keeps the experience calm and clear. Each page is built around the questions guests actually have, then styled to feel unmistakably yours.</p>
       </div>
-
-      <div class="countdown reveal delay-one" aria-live="polite">
-        <div class="time-block">
-          <strong id="days">000</strong>
-          <span>Days</span>
-        </div>
-
-        <div class="time-divider" aria-hidden="true"></div>
-
-        <div class="time-block">
-          <strong id="hours">00</strong>
-          <span>Hours</span>
-        </div>
-
-        <div class="time-divider" aria-hidden="true"></div>
-
-        <div class="time-block">
-          <strong id="minutes">00</strong>
-          <span>Minutes</span>
-        </div>
-
-        <div class="time-divider" aria-hidden="true"></div>
-
-        <div class="time-block">
-          <strong id="seconds">00</strong>
-          <span>Seconds</span>
-        </div>
-      </div>
-
-      <p class="countdown-message" id="countdownMessage"></p>
-    </section>
-
-    <section class="details-section" id="details">
-      <div class="details-intro reveal">
-        <p class="eyebrow">A beautiful afternoon</p>
-        <h2>One day,<br />three little moments.</h2>
-      </div>
-
-      <div class="timeline">
-        <article class="timeline-item reveal">
-          <p class="timeline-time">3:30 PM</p>
-          <div>
-            <h3>Arrival</h3>
-            <p>Welcome drinks and a quiet moment in the garden.</p>
-          </div>
+      <div class="features reveal">
+        <article class="feature">
+          <span class="feature-num">01 / DETAILS</span>
+          <h3>All the useful things, beautifully arranged.</h3>
+          <p>Ceremony, reception, timeline, dress code, FAQs, accommodations, and maps in one easy link.</p>
         </article>
-
-        <article class="timeline-item reveal delay-one">
-          <p class="timeline-time">4:00 PM</p>
-          <div>
-            <h3>Ceremony</h3>
-            <p>Under soft light, surrounded by our favourite people.</p>
-          </div>
+        <article class="feature">
+          <span class="feature-num">02 / RSVP</span>
+          <h3>A smoother yes, no, or plus-one.</h3>
+          <p>Collect responses, meal preferences, and guest notes without chasing messages across different apps.</p>
         </article>
-
-        <article class="timeline-item reveal delay-two">
-          <p class="timeline-time">6:00 PM</p>
-          <div>
-            <h3>Dinner & dancing</h3>
-            <p>A candlelit feast, heartfelt toasts, and music after dark.</p>
-          </div>
+        <article class="feature">
+          <span class="feature-num">03 / PERSONALITY</span>
+          <h3>Made to match your day—not a template trend.</h3>
+          <p>We shape the type, color, spacing, wording, and small details around your story and celebration.</p>
         </article>
       </div>
     </section>
 
-    <section class="venue-section">
-      <div class="venue-card reveal">
-        <div>
-          <p class="eyebrow">The venue</p>
-          <h2>The Glasshouse</h2>
-          <p>
-            18 Willow Lane<br />
-            Somerset, England
-          </p>
-        </div>
-
-        <a
-          class="circle-link"
-          href="https://maps.google.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open venue in Google Maps"
-        >
-          <span>Map</span>
-          <span aria-hidden="true">↗</span>
-        </a>
+    <section class="wrap process" id="process">
+      <aside class="process-card reveal">
+        <p class="eyebrow" style="color:#dfc1b5">Simple by design</p>
+        <h2 class="serif" style="font-size:clamp(2.5rem,5vw,4.2rem);line-height:.95;margin:.4rem 0 1rem">From scattered details to one lovely place.</h2>
+        <p>You send the essentials. We organize, design, refine, and publish your page—so you can get back to planning the actual celebration.</p>
+      </aside>
+      <div class="steps reveal">
+        <article class="step">
+          <b>01</b>
+          <div><h3>Share your details</h3><p>Send your date, venue, photos, entourage, RSVP questions, and visual references.</p></div>
+        </article>
+        <article class="step">
+          <b>02</b>
+          <div><h3>We tie it together</h3><p>We turn everything into a clear, mobile-first page with your own look and voice.</p></div>
+        </article>
+        <article class="step">
+          <b>03</b>
+          <div><h3>Review and refine</h3><p>You check every detail. We handle revisions and make sure the guest journey feels effortless.</p></div>
+        </article>
+        <article class="step">
+          <b>04</b>
+          <div><h3>Share one link</h3><p>Add it to your invitations, QR code, group chats, and save-the-dates. Done.</p></div>
+        </article>
       </div>
     </section>
 
-    <section class="rsvp-section" id="rsvp">
-      <div class="rsvp-copy reveal">
-        <p class="eyebrow">Kindly respond by April 10</p>
-        <h2>Will you join us?</h2>
-        <p>We would be honoured to celebrate this day with you.</p>
+    <section class="wrap">
+      <div class="quote reveal">
+        <blockquote>Designed for real guests, not just pretty screenshots.</blockquote>
+        <p>Fast on mobile. Easy to scan. Personal enough to remember.</p>
       </div>
+    </section>
 
-      <form class="rsvp-form reveal delay-one" id="rsvpForm">
-        <label>
-          <span>Your name</span>
-          <input
-            id="guestName"
-            name="name"
-            type="text"
-            placeholder="Enter your full name"
-            required
-          />
-        </label>
-
-        <fieldset>
-          <legend>Attendance</legend>
-
-          <label class="choice">
-            <input type="radio" name="attendance" value="joyfully accepts" checked />
-            <span>Joyfully accepts</span>
-          </label>
-
-          <label class="choice">
-            <input type="radio" name="attendance" value="regretfully declines" />
-            <span>Regretfully declines</span>
-          </label>
-        </fieldset>
-
-        <label>
-          <span>A note for the couple</span>
-          <textarea name="message" rows="3" placeholder="Optional"></textarea>
-        </label>
-
-        <button class="button button-primary submit-button" type="submit">
-          Send response
-          <span aria-hidden="true">→</span>
-        </button>
-
-        <p class="form-response" id="formResponse" role="status"></p>
-      </form>
+    <section class="wrap cta reveal">
+      <p class="eyebrow" style="justify-content:center">Your story, neatly tied</p>
+      <h2 class="serif">Ready to make your wedding easier to find?</h2>
+      <p>Tell us about the day you are planning. We will reply with the best package and the details needed to begin.</p>
+      <a class="button" href="mailto:taliweddingsph@gmail.com?subject=Start%20my%20Tali%20wedding%20website">Start your Tali <span aria-hidden="true">↗</span></a>
     </section>
   </main>
 
   <footer>
-    <p>Amelia <span>&</span> Noah</p>
-    <small>12 · 06 · 2027</small>
+    <div class="wrap footer-row">
+      <span>© <span id="year"></span> Tali Philippines</span>
+      <span>Wedding websites, tied together with care.</span>
+      <a href="mailto:taliweddingsph@gmail.com">taliweddingsph@gmail.com</a>
+    </div>
   </footer>
 
-  <dialog class="note-dialog" id="noteDialog">
-    <button class="dialog-close" id="dialogClose" type="button" aria-label="Close note">
-      ×
-    </button>
-
-    <p class="eyebrow">A small note</p>
-    <h2>Our favourite chapter begins with you there.</h2>
-    <p>
-      Thank you for being part of our story. We cannot wait to share this day,
-      this table, and the dance floor with you.
-    </p>
-
-    <button class="button button-primary" id="dialogAccept" type="button">
-      With love
-    </button>
-  </dialog>
-
   <script>
-    // Change this date to your wedding date and local ceremony time.
-    const weddingDate = new Date("2027-06-12T16:00:00");
-
-    const timerElements = {
-      days: document.getElementById("days"),
-      hours: document.getElementById("hours"),
-      minutes: document.getElementById("minutes"),
-      seconds: document.getElementById("seconds")
-    };
-
-    const countdownMessage = document.getElementById("countdownMessage");
-
-    function formatTime(value, length = 2) {
-      return String(value).padStart(length, "0");
-    }
-
-    function animateTick(element, nextValue) {
-      if (element.textContent === nextValue) return;
-
-      element.classList.add("tick");
-
-      window.setTimeout(() => {
-        element.textContent = nextValue;
-        element.classList.remove("tick");
-      }, 90);
-    }
-
-    function updateCountdown() {
-      const now = new Date();
-      const distance = weddingDate.getTime() - now.getTime();
-
-      if (distance <= 0) {
-        timerElements.days.textContent = "000";
-        timerElements.hours.textContent = "00";
-        timerElements.minutes.textContent = "00";
-        timerElements.seconds.textContent = "00";
-        countdownMessage.textContent =
-          "Today is the day — let the celebration begin.";
-        return;
-      }
-
-      const totalSeconds = Math.floor(distance / 1000);
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      animateTick(timerElements.days, formatTime(days, 3));
-      animateTick(timerElements.hours, formatTime(hours));
-      animateTick(timerElements.minutes, formatTime(minutes));
-      animateTick(timerElements.seconds, formatTime(seconds));
-
-      countdownMessage.textContent =
-        days === 1
-          ? "Only one beautiful day remains."
-          : "Every second brings us closer.";
-    }
-
-    updateCountdown();
-    window.setInterval(updateCountdown, 1000);
-
-    const revealElements = document.querySelectorAll(".reveal");
-
-    if ("IntersectionObserver" in window) {
-      const observer = new IntersectionObserver(
-        entries => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("is-visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.14 }
-      );
-
-      revealElements.forEach(element => observer.observe(element));
-    } else {
-      revealElements.forEach(element => element.classList.add("is-visible"));
-    }
-
-    const invitationCard = document.getElementById("invitationCard");
-    const noteDialog = document.getElementById("noteDialog");
-    const dialogClose = document.getElementById("dialogClose");
-    const dialogAccept = document.getElementById("dialogAccept");
-
-    function openNote() {
-      if (typeof noteDialog.showModal === "function") {
-        noteDialog.showModal();
-      } else {
-        noteDialog.setAttribute("open", "");
-      }
-    }
-
-    function closeNote() {
-      if (typeof noteDialog.close === "function") {
-        noteDialog.close();
-      } else {
-        noteDialog.removeAttribute("open");
-      }
-    }
-
-    invitationCard.addEventListener("click", openNote);
-    dialogClose.addEventListener("click", closeNote);
-    dialogAccept.addEventListener("click", closeNote);
-
-    noteDialog.addEventListener("click", event => {
-      const bounds = noteDialog.getBoundingClientRect();
-      const clickedOutside =
-        event.clientX < bounds.left ||
-        event.clientX > bounds.right ||
-        event.clientY < bounds.top ||
-        event.clientY > bounds.bottom;
-
-      if (clickedOutside) closeNote();
-    });
-
-    if (window.matchMedia("(pointer: fine)").matches) {
-      invitationCard.addEventListener("pointermove", event => {
-        const bounds = invitationCard.getBoundingClientRect();
-        const x = (event.clientX - bounds.left) / bounds.width - 0.5;
-        const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-
-        invitationCard.style.transform =
-          `perspective(900px) rotateY(${x * 9}deg) rotateX(${-y * 9}deg) translateY(-4px)`;
-      });
-
-      invitationCard.addEventListener("pointerleave", () => {
-        invitationCard.style.transform = "";
-      });
-    }
-
-    const rsvpForm = document.getElementById("rsvpForm");
-    const guestName = document.getElementById("guestName");
-    const formResponse = document.getElementById("formResponse");
-
-    rsvpForm.addEventListener("submit", event => {
-      event.preventDefault();
-
-      const formData = new FormData(rsvpForm);
-      const name = formData.get("name").trim();
-      const attendance = formData.get("attendance");
-
-      if (!name) {
-        formResponse.textContent = "Please add your name before responding.";
-        guestName.focus();
-        return;
-      }
-
-      const accepting = attendance === "joyfully accepts";
-
-      formResponse.textContent = accepting
-        ? `Thank you, ${name}. We cannot wait to celebrate with you.`
-        : `Thank you for letting us know, ${name}. You will be missed.`;
-
-      rsvpForm.reset();
-    });
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => entry.isIntersecting && entry.target.classList.add('visible'));
+    }, { threshold: .14 });
+    document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
   </script>
 </body>
 </html>
