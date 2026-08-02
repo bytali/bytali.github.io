@@ -270,6 +270,183 @@
     .feature h3 { margin: 4.4rem 0 .65rem; font: 400 1.65rem/1.05 Georgia, serif; }
     .feature p { margin: 0; color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
 
+    .templates-section {
+      position: relative;
+    }
+
+    .templates-section::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 12% -18vw 3% 40%;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(223,193,181,.34), transparent 68%);
+      pointer-events: none;
+    }
+
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .template-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) * 1.1);
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      box-shadow: 0 1rem 2.5rem rgba(31,33,30,.07);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 1.4rem 3rem rgba(31,33,30,.11);
+    }
+
+    .template-browser {
+      min-width: 0;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .template-toolbar {
+      min-height: 2.8rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: .75rem;
+      padding: .65rem .85rem;
+      border-bottom: 1px solid rgba(31,33,30,.1);
+      background: #efe8dd;
+      color: #6c665e;
+      font-size: .66rem;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .template-toolbar > span:nth-child(2) { text-align: center; }
+    .template-toolbar a { justify-self: end; color: var(--accent); text-decoration: none; }
+    .template-toolbar a:hover { text-decoration: underline; text-underline-offset: .2rem; }
+
+    .template-preview-shell {
+      position: relative;
+      overflow: hidden;
+      background: #f7f1e8;
+    }
+
+    .template-frame {
+      display: block;
+      width: 100%;
+      height: clamp(23rem, 42vw, 31rem);
+      border: 0;
+      background: #f7f1e8;
+      pointer-events: none;
+      filter: blur(1.6px) saturate(.82);
+      transform: scale(1.008);
+      transform-origin: center top;
+      transition: filter .3s ease, transform .3s ease;
+    }
+
+    .template-preview-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(31,33,30,.03), rgba(31,33,30,.13));
+      transition: opacity .3s ease;
+    }
+
+    .template-activate {
+      position: absolute;
+      z-index: 2;
+      inset: 50% auto auto 50%;
+      display: inline-flex;
+      align-items: center;
+      gap: .65rem;
+      min-height: 3rem;
+      padding: .75rem 1rem;
+      border: 1px solid rgba(255,255,255,.72);
+      border-radius: 999px;
+      background: rgba(31,33,30,.88);
+      color: #fff;
+      font: inherit;
+      font-size: .82rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 .9rem 2rem rgba(31,33,30,.24);
+      transform: translate(-50%, -50%);
+      transition: transform .2s ease, background .2s ease, opacity .2s ease;
+    }
+
+    .template-activate:hover { background: var(--accent); transform: translate(-50%, calc(-50% - 2px)); }
+    .template-activate:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3px; }
+    .template-activate svg { width: 1rem; height: 1rem; fill: currentColor; }
+
+    .template-preview-shell.is-active .template-frame {
+      pointer-events: auto;
+      filter: none;
+      transform: none;
+    }
+
+    .template-preview-shell.is-active::after { opacity: 0; }
+    .template-preview-shell.is-active .template-activate { opacity: 0; pointer-events: none; }
+
+    .template-copy { padding: clamp(1.35rem, 3vw, 2rem); }
+
+    .template-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+
+    .template-index {
+      color: var(--accent);
+      font-size: .7rem;
+      font-weight: 850;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .template-copy h3 {
+      margin: 0;
+      font: 400 clamp(2.1rem, 4vw, 3.2rem)/.95 Georgia, serif;
+      letter-spacing: -.045em;
+    }
+
+    .template-copy p {
+      max-width: 34rem;
+      margin: .85rem 0 1.25rem;
+      color: var(--muted);
+    }
+
+    .template-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; }
+    .template-actions .button { min-height: 2.65rem; padding: .65rem .9rem; font-size: .84rem; }
+    .template-note { color: var(--muted); font-size: .78rem; }
+
+    .template-included {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem 2rem;
+      margin-top: 1rem;
+      padding: 1.25rem 1.4rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.28);
+    }
+
+    .template-included p { margin: 0; color: var(--muted); }
+    .template-included strong { color: var(--ink); }
+    .template-included a { color: var(--accent); font-weight: 800; text-decoration: none; white-space: nowrap; }
+    .template-included a:hover { text-decoration: underline; text-underline-offset: .2rem; }
+
     .packages-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
@@ -627,6 +804,8 @@
       .actions { justify-content: center; }
       .preview-wrap { min-height: 40rem; }
       .section-head, .process, .package-extras { grid-template-columns: 1fr; }
+      .template-grid { grid-template-columns: 1fr; }
+      .template-frame { height: min(68vw, 32rem); }
       .packages-grid { grid-template-columns: 1fr; }
       .package-card.featured { grid-row: auto; }
       .features { grid-template-columns: 1fr; }
@@ -658,6 +837,11 @@
       .preview-panel:nth-child(2) { min-height: 6rem; }
       .preview-tool { align-items: flex-start; flex-direction: column; gap: .15rem; }
       .preview-tool small { text-align: left; }
+      .template-toolbar { grid-template-columns: 1fr auto; }
+      .template-toolbar > span:nth-child(2) { display: none; }
+      .template-frame { height: 28rem; }
+      .template-meta, .template-included { align-items: flex-start; flex-direction: column; }
+      .template-included a { white-space: normal; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -680,6 +864,7 @@
       </a>
       <div class="navlinks">
         <a href="#included">What's included</a>
+        <a href="#templates">Templates</a>
         <a href="#packages">Packages</a>
         <a href="#process">How it works</a>
         <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20TaliPH%20wedding%20website">Start your TaliPH</a>
@@ -747,6 +932,80 @@
       </div>
     </section>
 
+    <section class="wrap templates-section" id="templates">
+      <div class="section-head reveal">
+        <h2 class="serif">Choose the look that feels like your day.</h2>
+        <p>Every Essential website starts with a premium wedding landing page, then gets personalized with your names, photos, wording, colors, and celebration details. Preview both starting points below.</p>
+      </div>
+
+      <div class="template-grid reveal" aria-label="Premium wedding landing page templates">
+        <article class="template-card" id="template-hiraya" data-template-alias="hiraya">
+          <div class="template-browser">
+            <div class="template-toolbar">
+              <span class="preview-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span>Live template preview</span>
+              <a href="temp/1/index.html" target="_blank" rel="noopener">Open ↗</a>
+            </div>
+            <div class="template-preview-shell">
+              <iframe class="template-frame" src="temp/1/index.html" title="Hiraya premium wedding landing page template preview" loading="lazy" tabindex="-1">
+                <a href="temp/1/index.html">Open the Hiraya template preview</a>
+              </iframe>
+              <button class="template-activate" type="button" aria-label="Activate and scroll the Hiraya template preview" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>
+                <span>Explore preview</span>
+              </button>
+            </div>
+          </div>
+          <div class="template-copy">
+            <div class="template-meta">
+              <span class="template-index">Template 01</span>
+            </div>
+            <h3>Hiraya</h3>
+            <p>A polished starting point for your wedding story. Open the full preview, then imagine it tailored with your own photographs, details, and personality.</p>
+            <div class="template-actions">
+              <a class="button secondary" href="temp/1/index.html" target="_blank" rel="noopener">View full template <span aria-hidden="true">↗</span></a>
+              <span class="template-note">Included with Essential</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="template-card" id="template-sinta" data-template-alias="sinta">
+          <div class="template-browser">
+            <div class="template-toolbar">
+              <span class="preview-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span>Live template preview</span>
+              <a href="temp/2/index.html" target="_blank" rel="noopener">Open ↗</a>
+            </div>
+            <div class="template-preview-shell">
+              <iframe class="template-frame" src="temp/2/index.html" title="Sinta premium wedding landing page template preview" loading="lazy" tabindex="-1">
+                <a href="temp/2/index.html">Open the Sinta template preview</a>
+              </iframe>
+              <button class="template-activate" type="button" aria-label="Activate and scroll the Sinta template preview" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>
+                <span>Explore preview</span>
+              </button>
+            </div>
+          </div>
+          <div class="template-copy">
+            <div class="template-meta">
+              <span class="template-index">Template 02</span>
+            </div>
+            <h3>Sinta</h3>
+            <p>A second premium direction for couples who want a different rhythm and mood. We personalize the chosen layout so the finished page still feels unmistakably yours.</p>
+            <div class="template-actions">
+              <a class="button secondary" href="temp/2/index.html" target="_blank" rel="noopener">View full template <span aria-hidden="true">↗</span></a>
+              <span class="template-note">Included with Essential</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="template-included reveal">
+        <p><strong>Not an off-the-shelf page.</strong> Your chosen template is adapted to your wedding content, visual direction, and guest experience.</p>
+        <a href="#packages">See package details ↓</a>
+      </div>
+    </section>
+
     <section class="wrap" id="packages">
       <div class="section-head reveal">
         <h2 class="serif">A thoughtful page for every kind of celebration.</h2>
@@ -761,7 +1020,7 @@
           <p class="package-intro">Perfect for couples who want a beautiful digital invitation at an affordable price.</p>
           <ul class="package-list">
             <li>Premium wedding landing page</li>
-            <li>Choose from our available templates</li>
+            <li>Choose between the Hiraya and Sinta templates</li>
             <li>RSVP form</li>
             <li>Wedding details: date, time, and venue</li>
             <li>Google Maps integration</li>
@@ -936,6 +1195,17 @@
       entries.forEach(entry => entry.isIntersecting && entry.target.classList.add('visible'));
     }, { threshold: .14 });
     document.querySelectorAll('.reveal:not(.visible)').forEach(el => observer.observe(el));
+
+    document.querySelectorAll('.template-activate').forEach(button => {
+      button.addEventListener('click', () => {
+        const shell = button.closest('.template-preview-shell');
+        const frame = shell.querySelector('.template-frame');
+        shell.classList.add('is-active');
+        button.setAttribute('aria-pressed', 'true');
+        frame.setAttribute('tabindex', '0');
+        frame.focus();
+      });
+    });
   </script>
 </body>
 </html>
