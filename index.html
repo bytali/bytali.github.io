@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f3eee5">
-  <meta name="description" content="Tali creates modern, personal wedding websites for Filipino couples—complete with RSVP, schedules, maps, and guest details.">
-  <title>Tali — Wedding websites, tied together with care</title>
+  <meta name="description" content="TaliPH creates modern, personal wedding websites for Filipino couples—complete with RSVP, schedules, maps, and guest details.">
+  <title>TaliPH — Wedding websites, tied together with care</title>
   <style>
     :root {
       --paper: #f3eee5;
@@ -20,7 +20,7 @@
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; max-width: 100%; overflow-x: hidden; }
     body {
       margin: 0;
       color: var(--ink);
@@ -31,11 +31,14 @@
       background-size: 3rem 3rem;
       font: 400 1rem/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       text-rendering: optimizeLegibility;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     a { color: inherit; }
     button, a { -webkit-tap-highlight-color: transparent; }
-    .wrap { width: min(calc(100% - 2rem), var(--max)); margin-inline: auto; }
+    .wrap { width: min(calc(100% - 2rem), var(--max)); min-width: 0; margin-inline: auto; }
     .serif { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
 
     .skip {
@@ -249,25 +252,29 @@
 
     .features {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: 100%;
+      min-width: 0;
       border-top: 1px solid var(--line);
       border-left: 1px solid var(--line);
     }
     .feature {
+      min-width: 0;
       min-height: 17rem;
       padding: 1.5rem;
       border-right: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
       background: color-mix(in srgb, var(--card) 80%, transparent);
     }
-    .feature:nth-child(2) { transform: translateY(1.5rem); }
     .feature-num { color: var(--accent); font-size: .75rem; letter-spacing: .12em; }
     .feature h3 { margin: 4.4rem 0 .65rem; font: 400 1.65rem/1.05 Georgia, serif; }
-    .feature p { margin: 0; color: var(--muted); font-size: .92rem; }
+    .feature p { margin: 0; color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
 
     .packages-grid {
       display: grid;
-      grid-template-columns: 1.2fr .8fr;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
+      width: 100%;
+      min-width: 0;
       gap: 1rem;
       align-items: stretch;
     }
@@ -276,7 +283,9 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      min-height: 100%;
+      min-width: 0;
+      max-width: 100%;
+      min-height: 0;
       padding: clamp(1.4rem, 3vw, 2rem);
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -294,24 +303,29 @@
     .package-card.coming-soon {
       min-height: 18rem;
       justify-content: space-between;
+      padding-right: clamp(4.5rem, 7vw, 6rem);
       background: rgba(255,255,255,.28);
     }
 
     .package-card.coming-soon::after {
       content: "Coming soon";
       position: absolute;
-      right: -2.7rem;
-      top: 2.2rem;
-      width: 11rem;
-      padding: .45rem 0;
-      transform: rotate(38deg);
+      z-index: 1;
+      top: 2.05rem;
+      right: -3.65rem;
+      width: 13rem;
+      padding: .55rem 0;
+      transform: rotate(45deg);
+      transform-origin: center;
       background: var(--accent);
       color: white;
       text-align: center;
-      font-size: .7rem;
+      white-space: nowrap;
+      font-size: .68rem;
       font-weight: 800;
-      letter-spacing: .12em;
+      letter-spacing: .13em;
       text-transform: uppercase;
+      box-shadow: 0 .35rem .8rem rgba(31,33,30,.08);
     }
 
     .package-label {
@@ -353,17 +367,20 @@
     .package-meta span { display: block; color: rgba(255,255,255,.56); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
     .package-meta strong { display: block; margin-top: .25rem; font-size: .88rem; line-height: 1.35; overflow-wrap: anywhere; }
 
-    .coming-copy { max-width: 23rem; margin: 1rem 0 2rem; color: var(--muted); }
+    .coming-copy { max-width: 23rem; margin: 1rem 0 2rem; color: var(--muted); overflow-wrap: anywhere; }
     .coming-tag { display: inline-flex; align-self: flex-start; padding: .55rem .75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .78rem; font-weight: 750; }
 
     .package-extras {
       display: grid;
-      grid-template-columns: 1.25fr .75fr;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr);
+      min-width: 0;
       gap: 1rem;
       margin-top: 1rem;
     }
 
     .extras-card {
+      min-width: 0;
+      max-width: 100%;
       padding: clamp(1.4rem, 3vw, 2rem);
       border: 1px solid var(--line);
       border-radius: var(--radius);
@@ -381,21 +398,150 @@
     .terms-list li::before { content: "•"; position: absolute; left: .35rem; color: var(--accent); font-weight: 900; }
 
     .future-card {
+      position: relative;
+      min-width: 0;
+      max-width: 100%;
       margin-top: 1rem;
       padding: clamp(1.4rem, 3vw, 2rem);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: #d9c7b4;
+      overflow: hidden;
     }
 
-    .future-card h3 { margin: 0; font: 400 clamp(1.8rem, 3vw, 2.5rem)/1.05 Georgia, serif; }
-    .future-card > p { max-width: 44rem; margin: .65rem 0 1.25rem; color: #554e46; }
-    .future-list { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; padding: 0; list-style: none; }
-    .future-list li { padding: .55rem .75rem; border: 1px solid rgba(31,33,30,.18); border-radius: 999px; background: rgba(255,255,255,.3); font-size: .8rem; font-weight: 700; }
+    .future-intro {
+      display: grid;
+      grid-template-columns: .65fr 1fr;
+      gap: 1rem 2rem;
+      align-items: end;
+      margin-bottom: 1.25rem;
+    }
+
+    .future-intro h3 {
+      max-width: 14ch;
+      margin: 0;
+      font: 400 clamp(2rem, 4vw, 3.5rem)/.98 Georgia, serif;
+      letter-spacing: -.045em;
+    }
+
+    .future-intro p:last-child {
+      max-width: 38rem;
+      margin: 0 0 .2rem;
+      color: #62584f;
+    }
+
+    .future-preview {
+      position: relative;
+      min-width: 0;
+      max-width: 100%;
+      height: 19rem;
+      overflow: hidden;
+      border: 1px solid rgba(31,33,30,.18);
+      border-radius: calc(var(--radius) * .9);
+      background: rgba(247,241,232,.92);
+      box-shadow: 0 1.2rem 2.6rem rgba(69,57,47,.12);
+    }
+
+    .future-preview::after {
+      content: "";
+      position: absolute;
+      z-index: 3;
+      inset: auto 0 0;
+      height: 54%;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(247,241,232,0), rgba(239,229,218,.58) 34%, rgba(217,199,180,.96) 100%);
+      backdrop-filter: blur(2px);
+    }
+
+    .future-preview-bar {
+      position: relative;
+      z-index: 1;
+      min-height: 2.85rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: .7rem 1rem;
+      border-bottom: 1px solid rgba(31,33,30,.12);
+      color: #70675f;
+      font-size: .68rem;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .future-preview-bar > span:last-child { text-align: right; }
+    .preview-dots { display: flex; gap: .3rem; }
+    .preview-dots i { width: .45rem; height: .45rem; border-radius: 50%; background: rgba(31,33,30,.24); }
+
+    .future-preview-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: .8rem;
+      padding: 1rem;
+    }
+
+    .preview-panel {
+      min-height: 7.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(31,33,30,.12);
+      border-radius: .95rem;
+      background: rgba(255,255,255,.62);
+    }
+
+    .preview-kicker {
+      display: block;
+      margin-bottom: .6rem;
+      color: var(--accent);
+      font-size: .66rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .preview-panel strong { display: block; font: 400 1.9rem/1 Georgia, serif; }
+    .preview-panel small { display: block; margin-top: .35rem; color: var(--muted); }
+
+    .preview-progress {
+      height: .42rem;
+      margin-top: 1rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(31,33,30,.1);
+    }
+
+    .preview-progress span { display: block; width: 68%; height: 100%; border-radius: inherit; background: var(--accent); }
+
+    .future-preview-tools {
+      display: grid;
+      gap: .55rem;
+      padding: 0 1rem 4.5rem;
+      filter: blur(3.5px);
+      opacity: .5;
+      transform: scale(1.015);
+      transform-origin: top center;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .preview-tool {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: .8rem 1rem;
+      border: 1px solid rgba(31,33,30,.1);
+      border-radius: .85rem;
+      background: rgba(255,255,255,.5);
+    }
+
+    .preview-tool span { font-weight: 750; }
+    .preview-tool small { color: var(--muted); text-align: right; }
+
 
     .process {
       display: grid;
-      grid-template-columns: .8fr 1.2fr;
+      grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
       gap: clamp(2rem, 8vw, 8rem);
       align-items: start;
     }
@@ -423,7 +569,7 @@
       overflow: hidden;
     }
     .quote::after {
-      content: "tali";
+      content: "TaliPH";
       position: absolute;
       right: -1rem;
       bottom: -4.5rem;
@@ -439,7 +585,24 @@
     .cta p { max-width: 34rem; margin: 0 auto 2rem; color: var(--muted); }
 
     footer { padding: 2rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
-    .footer-row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .footer-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .footer-socials { display: flex; align-items: center; gap: .55rem; }
+    .footer-icon {
+      width: 2.55rem;
+      height: 2.55rem;
+      display: inline-grid;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--ink);
+      text-decoration: none;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .footer-icon:hover { transform: translateY(-2px); border-color: var(--ink); background: rgba(255,255,255,.36); }
+    .footer-icon svg { width: 1.05rem; height: 1.05rem; }
+    .footer-icon.mail svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .footer-icon.tiktok svg { fill: currentColor; }
 
     .reveal { opacity: 0; transform: translateY(1.25rem); transition: opacity .65s ease, transform .65s ease; }
     .reveal.visible { opacity: 1; transform: none; }
@@ -447,6 +610,14 @@
     @keyframes draw { from { stroke-dashoffset: 70; } to { stroke-dashoffset: 0; } }
     @keyframes drift { to { stroke-dashoffset: -160; } }
     @keyframes float { 0%,100% { transform: translate(-50%, -50%) rotate(2.7deg); } 50% { transform: translate(-50%, calc(-50% - 9px)) rotate(1.8deg); } }
+
+    @media (max-width: 1100px) {
+      .packages-grid, .package-extras { grid-template-columns: 1fr; }
+      .package-card.featured { grid-row: auto; }
+      .features { grid-template-columns: 1fr; }
+      .feature { min-height: auto; }
+      .feature h3 { margin-top: 2.5rem; }
+    }
 
     @media (max-width: 820px) {
       .navlinks > a:not(.button) { display: none; }
@@ -459,7 +630,7 @@
       .packages-grid { grid-template-columns: 1fr; }
       .package-card.featured { grid-row: auto; }
       .features { grid-template-columns: 1fr; }
-      .feature, .feature:nth-child(2) { min-height: auto; transform: none; }
+      .feature { min-height: auto; }
       .feature h3 { margin-top: 2.5rem; }
       .process-card { position: relative; top: 0; }
     }
@@ -474,7 +645,19 @@
       .step { grid-template-columns: 2.4rem 1fr; }
       .quote::after { font-size: 8rem; bottom: -2.7rem; }
       .package-meta { grid-template-columns: 1fr; }
+      .package-card.coming-soon { min-height: 16rem; padding-right: 3.8rem; }
+      .package-card.coming-soon::after { right: -3.7rem; top: 1.85rem; width: 11.5rem; font-size: .58rem; }
+      .footer-row { align-items: center; }
       .addons li { align-items: flex-start; }
+      .future-intro { grid-template-columns: 1fr; }
+      .future-intro h3 { max-width: 16ch; }
+      .future-preview { height: 20rem; }
+      .future-preview-bar { grid-template-columns: 1fr auto; }
+      .future-preview-bar > span:last-child { display: none; }
+      .future-preview-grid { grid-template-columns: 1fr; }
+      .preview-panel:nth-child(2) { min-height: 6rem; }
+      .preview-tool { align-items: flex-start; flex-direction: column; gap: .15rem; }
+      .preview-tool small { text-align: left; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -489,17 +672,17 @@
 
   <header>
     <nav class="wrap" aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="Tali home">
+      <a class="brand" href="#top" aria-label="TaliPH home">
         <svg class="knot" viewBox="0 0 32 32" aria-hidden="true">
           <path d="M6 11c4-6 12-5 14 1 2 7-8 9-11 4-4-6 5-11 11-7 6 4 5 13-2 16-6 3-12-1-12-7 0-5 5-8 9-6 5 2 5 10 0 13"/>
         </svg>
-        Tali
+        TaliPH
       </a>
       <div class="navlinks">
         <a href="#included">What's included</a>
         <a href="#packages">Packages</a>
         <a href="#process">How it works</a>
-        <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Start your Tali</a>
+        <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20TaliPH%20wedding%20website">Start your TaliPH</a>
       </div>
     </nav>
   </header>
@@ -511,19 +694,19 @@
         <h1 class="serif">One link for your <em>one day.</em></h1>
         <p class="lead">A modern, personal home for your wedding details—RSVP, schedule, maps, dress code, photos, and the little things guests always ask about.</p>
         <div class="actions">
-          <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Create our page <span aria-hidden="true">↗</span></a>
+          <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20TaliPH%20wedding%20website">Create our page <span aria-hidden="true">↗</span></a>
           <a class="button secondary" href="#packages">View packages</a>
           <span class="note">Packages from ₱3,990</span>
         </div>
       </div>
 
-      <div class="preview-wrap" aria-label="Example Tali wedding website preview">
+      <div class="preview-wrap" aria-label="Example TaliPH wedding website preview">
         <svg class="thread" viewBox="0 0 700 420" aria-hidden="true">
           <path d="M20 265C135 120 230 410 353 235S532 16 680 160"/>
         </svg>
         <div class="phone">
           <div class="screen">
-            <div class="sample-top"><span>Tali</span><span>Menu</span></div>
+            <div class="sample-top"><span>TaliPH</span><span>Menu</span></div>
             <div class="sample-copy">
               <small>We are getting married</small>
               <h2 class="serif">Mara<br>&amp; Luis</h2>
@@ -543,7 +726,7 @@
     <section class="wrap" id="included">
       <div class="section-head reveal">
         <h2 class="serif">Everything guests need. Nothing they don't.</h2>
-        <p>Tali keeps the experience calm and clear. Each page is built around the questions guests actually have, then styled to feel unmistakably yours.</p>
+        <p>TaliPH keeps the experience calm and clear. Each page is built around the questions guests actually have, then styled to feel unmistakably yours.</p>
       </div>
       <div class="features reveal">
         <article class="feature">
@@ -646,20 +829,43 @@
         </article>
       </div>
 
-      <article class="future-card reveal">
-        <p class="package-label">On the way</p>
-        <h3>More helpful wedding tools are coming soon.</h3>
-        <p>We are continuing to improve Tali with easier guest management and more ways to share your celebration.</p>
-        <ul class="future-list">
-          <li>RSVP admin dashboard</li>
-          <li>Real-time RSVP tracking</li>
-          <li>Guest list management</li>
-          <li>Email notifications</li>
-          <li>Digital save-the-date</li>
-          <li>Online photo album</li>
-          <li>Guestbook</li>
-          <li>Wedding countdown widget</li>
-        </ul>
+      <article class="future-card reveal" aria-label="Upcoming TaliPH tools preview">
+        <div class="future-intro">
+          <div>
+            <p class="package-label">In development</p>
+            <h3>A little more ease behind the scenes.</h3>
+          </div>
+          <p>We’re shaping new tools to help keep guest replies, details, and shared memories together in one calm workspace.</p>
+        </div>
+        <div class="future-preview">
+          <div class="future-preview-bar">
+            <span class="preview-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>TaliPH dashboard</span>
+            <span>Wedding workspace</span>
+          </div>
+
+          <div class="future-preview-grid">
+            <div class="preview-panel">
+              <span class="preview-kicker">Guest overview</span>
+              <strong>128 invited</strong>
+              <small>87 replies collected so far</small>
+              <div class="preview-progress" aria-hidden="true"><span></span></div>
+            </div>
+            <div class="preview-panel">
+              <span class="preview-kicker">Latest activity</span>
+              <strong>12 new RSVPs</strong>
+              <small>Responses received this week</small>
+            </div>
+          </div>
+
+          <div class="future-preview-tools">
+            <div class="preview-tool"><span>RSVP admin dashboard</span><small>Manage replies in one place</small></div>
+            <div class="preview-tool"><span>Guest list management</span><small>Organize guests and plus-ones</small></div>
+            <div class="preview-tool"><span>Email notifications</span><small>Stay updated automatically</small></div>
+            <div class="preview-tool"><span>Photo album and guestbook</span><small>Collect memories after the day</small></div>
+          </div>
+
+        </div>
       </article>
     </section>
 
@@ -700,15 +906,27 @@
       <p class="eyebrow" style="justify-content:center">Your story, neatly tied</p>
       <h2 class="serif">Ready to make your wedding easier to find?</h2>
       <p>Tell us about the day you are planning. The Essential package is available now, with more options coming soon.</p>
-      <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Start your Tali <span aria-hidden="true">↗</span></a>
+      <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20TaliPH%20wedding%20website">Start your TaliPH <span aria-hidden="true">↗</span></a>
     </section>
   </main>
 
   <footer>
     <div class="wrap footer-row">
-      <span>© <span id="year"></span> Tali Philippines</span>
+      <span>© <span id="year"></span> TaliPH</span>
       <span>Wedding websites, tied together with care.</span>
-      <a href="mailto:taliph@proton.me">taliph@proton.me</a>
+      <div class="footer-socials" aria-label="TaliPH social links">
+        <a class="footer-icon mail" href="mailto:taliph@proton.me" aria-label="Email TaliPH" title="Email TaliPH">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+            <path d="m4 7 8 6 8-6"></path>
+          </svg>
+        </a>
+        <a class="footer-icon tiktok" href="https://www.tiktok.com/@taliphilippines" target="_blank" rel="noopener noreferrer" aria-label="TaliPH on TikTok" title="TaliPH on TikTok">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.25 2h3.02c.18 1.26.86 2.39 1.87 3.16A6.23 6.23 0 0 0 22 6.31v3.05a9.15 9.15 0 0 1-4.61-1.31v7.1a6.84 6.84 0 1 1-5.9-6.77v3.1a3.83 3.83 0 1 0 2.76 3.67V2Z"></path>
+          </svg>
+        </a>
+      </div>
     </div>
   </footer>
 
