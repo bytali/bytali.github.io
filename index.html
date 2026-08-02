@@ -265,6 +265,134 @@
     .feature h3 { margin: 4.4rem 0 .65rem; font: 400 1.65rem/1.05 Georgia, serif; }
     .feature p { margin: 0; color: var(--muted); font-size: .92rem; }
 
+    .packages-grid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .package-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: clamp(1.4rem, 3vw, 2rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--card) 88%, transparent);
+      overflow: hidden;
+    }
+
+    .package-card.featured {
+      grid-row: span 2;
+      background: var(--ink);
+      color: white;
+      box-shadow: 0 1.4rem 3rem rgba(31,33,30,.14);
+    }
+
+    .package-card.coming-soon {
+      min-height: 18rem;
+      justify-content: space-between;
+      background: rgba(255,255,255,.28);
+    }
+
+    .package-card.coming-soon::after {
+      content: "Coming soon";
+      position: absolute;
+      right: -2.7rem;
+      top: 2.2rem;
+      width: 11rem;
+      padding: .45rem 0;
+      transform: rotate(38deg);
+      background: var(--accent);
+      color: white;
+      text-align: center;
+      font-size: .7rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .package-label {
+      margin: 0 0 .75rem;
+      color: var(--accent);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .featured .package-label { color: var(--accent-soft); }
+    .package-card h3 { margin: 0; font: 400 clamp(2rem, 3vw, 2.7rem)/1 Georgia, serif; }
+    .package-price { margin: .8rem 0 .2rem; font-size: clamp(2.2rem, 4vw, 3.5rem); font-weight: 800; letter-spacing: -.05em; }
+    .package-intro { margin: .45rem 0 1.4rem; color: var(--muted); }
+    .featured .package-intro { color: rgba(255,255,255,.7); }
+
+    .package-list {
+      display: grid;
+      gap: .62rem;
+      margin: 0 0 1.5rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .package-list li { display: grid; grid-template-columns: 1rem 1fr; gap: .65rem; font-size: .92rem; }
+    .package-list li::before { content: "✓"; color: var(--accent-soft); font-weight: 900; }
+
+    .package-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin-top: auto;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,.16);
+    }
+
+    .package-meta div { min-width: 0; }
+    .package-meta span { display: block; color: rgba(255,255,255,.56); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+    .package-meta strong { display: block; margin-top: .25rem; font-size: .88rem; line-height: 1.35; overflow-wrap: anywhere; }
+
+    .coming-copy { max-width: 23rem; margin: 1rem 0 2rem; color: var(--muted); }
+    .coming-tag { display: inline-flex; align-self: flex-start; padding: .55rem .75rem; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: .78rem; font-weight: 750; }
+
+    .package-extras {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .extras-card {
+      padding: clamp(1.4rem, 3vw, 2rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.3);
+    }
+
+    .extras-card h3 { margin: 0 0 1rem; font: 400 1.7rem/1.05 Georgia, serif; }
+    .addons { display: grid; gap: .72rem; margin: 0; padding: 0; list-style: none; }
+    .addons li { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: .65rem; border-bottom: 1px dashed var(--line); font-size: .9rem; }
+    .addons li:last-child { padding-bottom: 0; border-bottom: 0; }
+    .addons strong { white-space: nowrap; }
+
+    .terms-list { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+    .terms-list li { padding-left: 1.4rem; position: relative; color: var(--muted); }
+    .terms-list li::before { content: "•"; position: absolute; left: .35rem; color: var(--accent); font-weight: 900; }
+
+    .future-card {
+      margin-top: 1rem;
+      padding: clamp(1.4rem, 3vw, 2rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #d9c7b4;
+    }
+
+    .future-card h3 { margin: 0; font: 400 clamp(1.8rem, 3vw, 2.5rem)/1.05 Georgia, serif; }
+    .future-card > p { max-width: 44rem; margin: .65rem 0 1.25rem; color: #554e46; }
+    .future-list { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0; padding: 0; list-style: none; }
+    .future-list li { padding: .55rem .75rem; border: 1px solid rgba(31,33,30,.18); border-radius: 999px; background: rgba(255,255,255,.3); font-size: .8rem; font-weight: 700; }
+
     .process {
       display: grid;
       grid-template-columns: .8fr 1.2fr;
@@ -327,7 +455,9 @@
       h1, .lead { margin-inline: auto; }
       .actions { justify-content: center; }
       .preview-wrap { min-height: 40rem; }
-      .section-head, .process { grid-template-columns: 1fr; }
+      .section-head, .process, .package-extras { grid-template-columns: 1fr; }
+      .packages-grid { grid-template-columns: 1fr; }
+      .package-card.featured { grid-row: auto; }
       .features { grid-template-columns: 1fr; }
       .feature, .feature:nth-child(2) { min-height: auto; transform: none; }
       .feature h3 { margin-top: 2.5rem; }
@@ -343,6 +473,8 @@
       .seal { right: -.2rem; }
       .step { grid-template-columns: 2.4rem 1fr; }
       .quote::after { font-size: 8rem; bottom: -2.7rem; }
+      .package-meta { grid-template-columns: 1fr; }
+      .addons li { align-items: flex-start; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -365,6 +497,7 @@
       </a>
       <div class="navlinks">
         <a href="#included">What's included</a>
+        <a href="#packages">Packages</a>
         <a href="#process">How it works</a>
         <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Start your Tali</a>
       </div>
@@ -379,8 +512,8 @@
         <p class="lead">A modern, personal home for your wedding details—RSVP, schedule, maps, dress code, photos, and the little things guests always ask about.</p>
         <div class="actions">
           <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Create our page <span aria-hidden="true">↗</span></a>
-          <a class="button secondary" href="#included">See what is included</a>
-          <span class="note">Packages from ₱3,500</span>
+          <a class="button secondary" href="#packages">View packages</a>
+          <span class="note">Packages from ₱3,990</span>
         </div>
       </div>
 
@@ -431,6 +564,105 @@
       </div>
     </section>
 
+    <section class="wrap" id="packages">
+      <div class="section-head reveal">
+        <h2 class="serif">A thoughtful page for every kind of celebration.</h2>
+        <p>Start with the essentials today. Premium and Signature packages are being carefully prepared and will be available soon.</p>
+      </div>
+
+      <div class="packages-grid reveal">
+        <article class="package-card featured">
+          <p class="package-label">Available now</p>
+          <h3>Essential</h3>
+          <p class="package-price">₱3,990</p>
+          <p class="package-intro">Perfect for couples who want a beautiful digital invitation at an affordable price.</p>
+          <ul class="package-list">
+            <li>Premium wedding landing page</li>
+            <li>Choose from our available templates</li>
+            <li>RSVP form</li>
+            <li>Wedding details: date, time, and venue</li>
+            <li>Google Maps integration</li>
+            <li>Countdown timer</li>
+            <li>Photo gallery</li>
+            <li>Dress code section</li>
+            <li>Gift or registry section</li>
+            <li>Mobile-friendly design</li>
+            <li>Hosted on GitHub Pages</li>
+            <li>7 days of free minor updates</li>
+          </ul>
+          <div class="package-meta">
+            <div><span>Website address</span><strong>yourwedding.github.io</strong></div>
+            <div><span>Delivery</span><strong>2–3 business days</strong></div>
+          </div>
+          <a class="button" style="margin-top:1.25rem;background:#fff;color:var(--ink);border-color:#fff" href="mailto:taliph@proton.me?subject=Essential%20Wedding%20Website%20Package">Choose Essential <span aria-hidden="true">↗</span></a>
+        </article>
+
+        <article class="package-card coming-soon">
+          <div>
+            <p class="package-label">Next release</p>
+            <h3>Premium</h3>
+            <p class="coming-copy">A complete wedding website with a professional custom domain, QR code, and added launch support.</p>
+          </div>
+          <span class="coming-tag">Coming soon</span>
+        </article>
+
+        <article class="package-card coming-soon">
+          <div>
+            <p class="package-label">Future offering</p>
+            <h3>Signature</h3>
+            <p class="coming-copy">A fully personalized experience with custom design, animations, tailored sections, and priority support.</p>
+          </div>
+          <span class="coming-tag">Coming soon</span>
+        </article>
+      </div>
+
+      <div class="package-extras reveal">
+        <article class="extras-card">
+          <p class="package-label">Optional add-ons</p>
+          <h3>Small upgrades, added when you need them.</h3>
+          <ul class="addons">
+            <li><span>Additional event page</span><strong>₱500</strong></li>
+            <li><span>Love story timeline</span><strong>₱500</strong></li>
+            <li><span>Guest photo upload</span><strong>₱1,000</strong></li>
+            <li><span>Password-protected website</span><strong>₱500</strong></li>
+            <li><span>Photo slideshow</span><strong>₱500</strong></li>
+            <li><span>Background music</span><strong>₱300</strong></li>
+            <li><span>Additional language</span><strong>₱800</strong></li>
+            <li><span>One-year website maintenance</span><strong>₱1,000</strong></li>
+            <li><span>Rush delivery</span><strong>₱1,500</strong></li>
+          </ul>
+        </article>
+
+        <article class="extras-card">
+          <p class="package-label">Simple terms</p>
+          <h3>Clear from the start.</h3>
+          <ul class="terms-list">
+            <li>50% down payment to begin the project.</li>
+            <li>50% balance upon completion, before launch.</li>
+            <li>Beautiful, modern, mobile-friendly design.</li>
+            <li>Fast loading and easy RSVP collection.</li>
+            <li>Personalized support throughout the process.</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="future-card reveal">
+        <p class="package-label">On the way</p>
+        <h3>More helpful wedding tools are coming soon.</h3>
+        <p>We are continuing to improve Tali with easier guest management and more ways to share your celebration.</p>
+        <ul class="future-list">
+          <li>RSVP admin dashboard</li>
+          <li>Real-time RSVP tracking</li>
+          <li>Guest list management</li>
+          <li>Email notifications</li>
+          <li>Digital save-the-date</li>
+          <li>Online photo album</li>
+          <li>Guestbook</li>
+          <li>Wedding countdown widget</li>
+        </ul>
+      </article>
+    </section>
+
     <section class="wrap process" id="process">
       <aside class="process-card reveal">
         <p class="eyebrow" style="color:#dfc1b5">Simple by design</p>
@@ -467,7 +699,7 @@
     <section class="wrap cta reveal">
       <p class="eyebrow" style="justify-content:center">Your story, neatly tied</p>
       <h2 class="serif">Ready to make your wedding easier to find?</h2>
-      <p>Tell us about the day you are planning. We will reply with the best package and the details needed to begin.</p>
+      <p>Tell us about the day you are planning. The Essential package is available now, with more options coming soon.</p>
       <a class="button" href="mailto:taliph@proton.me?subject=Start%20my%20Tali%20wedding%20website">Start your Tali <span aria-hidden="true">↗</span></a>
     </section>
   </main>
