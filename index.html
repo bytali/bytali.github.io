@@ -286,7 +286,7 @@
 
     .template-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 1rem;
       min-width: 0;
     }
@@ -789,6 +789,7 @@
     @keyframes float { 0%,100% { transform: translate(-50%, -50%) rotate(2.7deg); } 50% { transform: translate(-50%, calc(-50% - 9px)) rotate(1.8deg); } }
 
     @media (max-width: 1100px) {
+      .template-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .packages-grid, .package-extras { grid-template-columns: 1fr; }
       .package-card.featured { grid-row: auto; }
       .features { grid-template-columns: 1fr; }
@@ -935,7 +936,7 @@
     <section class="wrap templates-section" id="templates">
       <div class="section-head reveal">
         <h2 class="serif">Choose the look that feels like your day.</h2>
-        <p>Every Essential website starts with a premium wedding landing page, then gets personalized with your names, photos, wording, colors, and celebration details. Preview both starting points below.</p>
+        <p>Every Essential website starts with a premium wedding landing page, then gets personalized with your names, photos, wording, colors, and celebration details. Preview the three starting points below.</p>
       </div>
 
       <div class="template-grid reveal" aria-label="Premium wedding landing page templates">
@@ -998,6 +999,36 @@
             </div>
           </div>
         </article>
+
+        <article class="template-card" id="template-luningning" data-template-alias="luningning">
+          <div class="template-browser">
+            <div class="template-toolbar">
+              <span class="preview-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span>Live template preview</span>
+              <a href="temp/3/index.html" target="_blank" rel="noopener">Open ↗</a>
+            </div>
+            <div class="template-preview-shell">
+              <iframe class="template-frame" src="temp/3/index.html" title="Luningning premium wedding landing page template preview" loading="lazy" tabindex="-1">
+                <a href="temp/3/index.html">Open the Luningning template preview</a>
+              </iframe>
+              <button class="template-activate" type="button" aria-label="Activate and scroll the Luningning template preview" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5-10-6.5Z"/></svg>
+                <span>Explore preview</span>
+              </button>
+            </div>
+          </div>
+          <div class="template-copy">
+            <!-- <div class="template-meta">
+              <span class="template-index">Template 03</span>
+            </div> -->
+            <h3>Luningning</h3>
+            <p>An elegant, minimalist direction with generous spacing, soft neutral tones, refined typography, and subtle movement for a calm, modern celebration.</p>
+            <div class="template-actions">
+              <a class="button secondary" href="temp/3/index.html" target="_blank" rel="noopener">View full template <span aria-hidden="true">↗</span></a>
+              <span class="template-note">Included with Essential</span>
+            </div>
+          </div>
+        </article>
       </div>
 
       <div class="template-included reveal">
@@ -1020,7 +1051,7 @@
           <p class="package-intro">Perfect for couples who want a beautiful digital invitation at an affordable price.</p>
           <ul class="package-list">
             <li>Premium wedding landing page</li>
-            <li>Choose between the Hiraya and Sinta templates</li>
+            <li>Choose from the Hiraya, Sinta, and Luningning templates</li>
             <li>RSVP form</li>
             <li>Wedding details: date, time, and venue</li>
             <li>Google Maps integration</li>

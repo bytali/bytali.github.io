@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A modern, elegant wedding website for Sofia and Elias." />
+  <meta name="theme-color" content="#f7f3ee" />
+
+  <title>Sofia & Elias — Wedding</title>
+
+  <!-- Optional web fonts. The page includes graceful system fallbacks. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --paper: #f7f3ee;
+      --paper-deep: #eee7df;
+      --ink: #2f312d;
+      --muted: #76776f;
+      --sage: #77806f;
+      --sage-soft: #dfe4db;
+      --white: #fffdf9;
+      --line: rgba(47, 49, 45, 0.13);
+      --shadow: 0 24px 70px rgba(58, 55, 49, 0.12);
+      --serif: "Cormorant Garamond", Georgia, serif;
+      --sans: "Manrope", Arial, sans-serif;
+      --radius: 28px;
+      --container: min(1120px, calc(100% - 40px));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.28;
+      z-index: 999;
+      background-image:
+        radial-gradient(rgba(47,49,45,0.12) 0.5px, transparent 0.5px);
+      background-size: 6px 6px;
+      mix-blend-mode: multiply;
+    }
+
+    img {
+      display: block;
+      width: 100%;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .container {
+      width: var(--container);
+      margin-inline: auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--sage);
+      font-size: 0.73rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .section {
+      padding: 110px 0;
+    }
+
+    .section-title {
+      max-width: 780px;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(3rem, 7vw, 5.7rem);
+      font-weight: 500;
+      line-height: 0.95;
+      letter-spacing: -0.035em;
+    }
+
+    .section-copy {
+      max-width: 650px;
+      color: var(--muted);
+    }
+
+    .soft-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 249, 0.62);
+      box-shadow: 0 15px 50px rgba(60, 57, 50, 0.05);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Navigation */
+    .nav-wrap {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      z-index: 50;
+      width: min(960px, calc(100% - 28px));
+      transform: translateX(-50%);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 12px 14px 12px 22px;
+      border: 1px solid rgba(255,255,255,0.38);
+      border-radius: 999px;
+      background: rgba(247, 243, 238, 0.78);
+      box-shadow: 0 12px 40px rgba(49, 48, 43, 0.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      font-size: 0.82rem;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 180ms ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .nav-cta,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 22px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--white);
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition:
+        transform 200ms ease,
+        background 200ms ease,
+        color 200ms ease,
+        box-shadow 200ms ease;
+    }
+
+    .nav-cta {
+      min-height: 42px;
+      padding-inline: 18px;
+      font-size: 0.82rem;
+    }
+
+    .button:hover,
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(47, 49, 45, 0.18);
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--ink);
+    }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      display: grid;
+      min-height: 100svh;
+      place-items: center;
+      padding: 145px 0 72px;
+      overflow: hidden;
+    }
+
+    .hero-orb {
+      position: absolute;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      filter: blur(2px);
+      opacity: 0.8;
+      background:
+        radial-gradient(circle at 32% 28%, #fffdf9 0 10%, #e5e8df 40%, #cfd7ca 100%);
+      animation: float 9s ease-in-out infinite;
+    }
+
+    .hero-orb.one {
+      top: -210px;
+      right: -150px;
+    }
+
+    .hero-orb.two {
+      bottom: -310px;
+      left: -230px;
+      width: 620px;
+      height: 620px;
+      animation-delay: -3.5s;
+      background:
+        radial-gradient(circle at 60% 35%, #fffdf9 0 10%, #eee4dc 42%, #dccfc5 100%);
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      align-items: center;
+      gap: clamp(45px, 7vw, 100px);
+    }
+
+    .hero-copy {
+      max-width: 650px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(5.4rem, 13vw, 10.5rem);
+      font-weight: 500;
+      line-height: 0.72;
+      letter-spacing: -0.07em;
+    }
+
+    .hero h1 span {
+      display: block;
+      margin-left: clamp(30px, 7vw, 95px);
+      color: var(--sage);
+      font-size: 0.73em;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .hero-intro {
+      max-width: 520px;
+      margin: 42px 0 32px;
+      color: var(--muted);
+      font-size: 1.03rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .portrait {
+      position: relative;
+      min-height: 640px;
+      overflow: hidden;
+      border-radius: 220px 220px 34px 34px;
+      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, rgba(47,49,45,0.02), rgba(47,49,45,0.32)),
+        url("https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85")
+        center/cover;
+    }
+
+    .portrait::after {
+      content: "14 · 02 · 2027";
+      position: absolute;
+      right: 24px;
+      bottom: 22px;
+      color: white;
+      font-size: 0.73rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .seal {
+      position: absolute;
+      left: -55px;
+      bottom: 90px;
+      display: grid;
+      width: 116px;
+      height: 116px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--white);
+      box-shadow: 0 12px 45px rgba(48, 47, 42, 0.15);
+      font-family: var(--serif);
+      font-size: 1.45rem;
+      animation: spin 24s linear infinite;
+    }
+
+    /* Announcement */
+    .announcement {
+      position: relative;
+      z-index: 3;
+      margin-top: -38px;
+    }
+
+    .announcement-inner {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 26px;
+      padding: 24px 30px;
+    }
+
+    .monogram {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font-family: var(--serif);
+      font-size: 1.4rem;
+    }
+
+    .announcement strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: 1.5rem;
+      font-weight: 500;
+    }
+
+    .announcement p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .announcement .tiny {
+      color: var(--sage);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* Story */
+    .story-grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: clamp(45px, 8vw, 120px);
+      align-items: start;
+    }
+
+    .story-stat {
+      position: sticky;
+      top: 130px;
+      padding: 38px;
+    }
+
+    .story-stat .number {
+      display: block;
+      font-family: var(--serif);
+      font-size: 7rem;
+      line-height: 0.8;
+    }
+
+    .story-stat p {
+      margin-bottom: 0;
+      color: var(--muted);
+    }
+
+    .story-copy p {
+      margin: 32px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .signature {
+      margin-top: 38px;
+      color: var(--sage);
+      font-family: var(--serif);
+      font-size: 2rem;
+      font-style: italic;
+    }
+
+    /* Details */
+    .details {
+      background: var(--ink);
+      color: var(--white);
+    }
+
+    .details .eyebrow {
+      color: #c8cfc2;
+    }
+
+    .details-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 40px;
+      margin-bottom: 55px;
+    }
+
+    .details-head p {
+      max-width: 430px;
+      margin: 0;
+      color: rgba(255,255,255,0.62);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .detail-card {
+      min-height: 310px;
+      padding: 42px 34px;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .detail-card:last-child {
+      border-right: 0;
+    }
+
+    .detail-card .index {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+    }
+
+    .detail-card h3 {
+      margin: 80px 0 8px;
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .detail-card p {
+      margin: 0;
+      color: rgba(255,255,255,0.62);
+    }
+
+    /* Countdown */
+    .countdown-wrap {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 55px;
+      align-items: center;
+    }
+
+    .countdown-copy .section-title {
+      font-size: clamp(3.5rem, 8vw, 7rem);
+    }
+
+    .countdown {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .time-box {
+      min-height: 175px;
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+
+    .time-box strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 5vw, 4.4rem);
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .time-box span {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.67rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* Gallery */
+    .gallery-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 40px;
+      margin-bottom: 46px;
+    }
+
+    .gallery-head p {
+      max-width: 380px;
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 18px;
+    }
+
+    .gallery-stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .gallery-card {
+      position: relative;
+      min-height: 330px;
+      overflow: hidden;
+      border-radius: 22px;
+      background: var(--paper-deep);
+    }
+
+    .gallery-card.large {
+      min-height: 680px;
+    }
+
+    .gallery-card img {
+      height: 100%;
+      object-fit: cover;
+      transition: transform 800ms cubic-bezier(.2,.7,.2,1);
+    }
+
+    .gallery-card:hover img {
+      transform: scale(1.035);
+    }
+
+    .gallery-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(34,35,31,0.26));
+      pointer-events: none;
+    }
+
+    /* Dress code / gifts */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .info-card {
+      min-height: 430px;
+      padding: 44px;
+      overflow: hidden;
+    }
+
+    .info-card h3 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 3rem;
+      font-weight: 500;
+    }
+
+    .info-card p {
+      max-width: 490px;
+      color: var(--muted);
+    }
+
+    .swatches {
+      display: flex;
+      gap: 12px;
+      margin-top: 48px;
+    }
+
+    .swatch {
+      width: 54px;
+      height: 54px;
+      border: 6px solid rgba(255,255,255,0.65);
+      border-radius: 50%;
+      box-shadow: 0 4px 18px rgba(47,49,45,0.08);
+    }
+
+    .swatch:nth-child(1) { background: #71806b; }
+    .swatch:nth-child(2) { background: #b7aa97; }
+    .swatch:nth-child(3) { background: #d8c7bc; }
+    .swatch:nth-child(4) { background: #f3eee6; }
+
+    .gift-note {
+      margin-top: 52px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+      font-family: var(--serif);
+      font-size: 1.65rem;
+      font-style: italic;
+      line-height: 1.25;
+    }
+
+    /* Map */
+    .map-card {
+      overflow: hidden;
+    }
+
+    .map-card iframe {
+      display: block;
+      width: 100%;
+      min-height: 480px;
+      border: 0;
+      filter: grayscale(1) contrast(0.9);
+    }
+
+    .map-meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 30px;
+      align-items: center;
+      padding: 30px 34px;
+      border-top: 1px solid var(--line);
+    }
+
+    .map-meta h3 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 2.15rem;
+      font-weight: 500;
+    }
+
+    .map-meta p {
+      margin: 3px 0 0;
+      color: var(--muted);
+    }
+
+    /* RSVP */
+    .rsvp {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(47,49,45,0.52), rgba(47,49,45,0.7)),
+        url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85")
+        center/cover;
+      color: white;
+    }
+
+    .rsvp::before {
+      content: "";
+      position: absolute;
+      inset: 24px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 28px;
+      pointer-events: none;
+    }
+
+    .rsvp-grid {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .rsvp .eyebrow {
+      color: #e5eadf;
+    }
+
+    .rsvp-copy p {
+      max-width: 520px;
+      color: rgba(255,255,255,0.72);
+    }
+
+    .rsvp-form {
+      padding: 34px;
+      border: 1px solid rgba(255,255,255,0.32);
+      border-radius: 24px;
+      background: rgba(247,243,238,0.11);
+      backdrop-filter: blur(18px);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.34);
+      border-radius: 12px;
+      outline: none;
+      background: rgba(255,255,255,0.09);
+      color: white;
+      padding: 14px 15px;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: white;
+      background: rgba(255,255,255,0.14);
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: rgba(255,255,255,0.56);
+    }
+
+    .field select option {
+      color: var(--ink);
+    }
+
+    .rsvp-form .button {
+      width: 100%;
+      border-color: white;
+      background: white;
+      color: var(--ink);
+    }
+
+    .form-note {
+      margin: 12px 0 0;
+      color: rgba(255,255,255,0.58);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    /* Footer */
+    footer {
+      padding: 70px 0 36px;
+      background: var(--ink);
+      color: white;
+    }
+
+    .footer-top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 35px;
+      padding-bottom: 46px;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .footer-name {
+      font-family: var(--serif);
+      font-size: clamp(3.2rem, 8vw, 7rem);
+      line-height: 0.9;
+    }
+
+    .footer-top p {
+      max-width: 320px;
+      margin: 0;
+      color: rgba(255,255,255,0.58);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding-top: 26px;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.78rem;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 100;
+      max-width: 340px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+      color: var(--ink);
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Subtle reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition:
+        opacity 800ms ease,
+        transform 800ms cubic-bezier(.2,.7,.2,1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(0, 18px, 0) scale(1.02); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 900px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero-grid,
+      .story-grid,
+      .countdown-wrap,
+      .rsvp-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-copy {
+        text-align: center;
+        margin-inline: auto;
+      }
+
+      .hero h1 span {
+        margin-left: 0;
+      }
+
+      .hero-intro {
+        margin-inline: auto;
+      }
+
+      .hero-actions {
+        justify-content: center;
+      }
+
+      .portrait {
+        width: min(620px, 100%);
+        min-height: 600px;
+        margin-inline: auto;
+      }
+
+      .seal {
+        left: 18px;
+      }
+
+      .story-stat {
+        position: relative;
+        top: auto;
+      }
+
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-card {
+        min-height: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.15);
+      }
+
+      .detail-card:last-child {
+        border-bottom: 0;
+      }
+
+      .detail-card h3 {
+        margin-top: 40px;
+      }
+
+      .gallery-grid,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .gallery-card.large {
+        min-height: 540px;
+      }
+
+      .details-head,
+      .gallery-head,
+      .footer-top {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --container: min(100% - 28px, 1120px);
+      }
+
+      .section {
+        padding: 82px 0;
+      }
+
+      .nav-wrap {
+        top: 10px;
+      }
+
+      .nav {
+        padding-left: 16px;
+      }
+
+      .nav-cta {
+        min-height: 38px;
+        padding-inline: 14px;
+      }
+
+      .hero {
+        padding-top: 120px;
+      }
+
+      .hero h1 {
+        font-size: clamp(4.8rem, 27vw, 7rem);
+      }
+
+      .portrait {
+        min-height: 500px;
+      }
+
+      .announcement-inner {
+        grid-template-columns: auto 1fr;
+      }
+
+      .announcement .tiny {
+        grid-column: 1 / -1;
+      }
+
+      .countdown {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .time-box {
+        min-height: 140px;
+      }
+
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rsvp-form,
+      .info-card {
+        padding: 26px;
+      }
+
+      .map-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!--
+    QUICK CUSTOMIZATION GUIDE
+    1. Replace "Sofia & Elias" throughout the file.
+    2. Change the date in visible text and in data-date below.
+    3. Update venue details and the Google Maps query.
+    4. Replace the sample Unsplash image URLs with your own photos.
+    5. Connect the RSVP form to Formspree, Google Forms, or your preferred service.
+  -->
+
+  <header class="nav-wrap">
+    <nav class="nav" aria-label="Primary navigation">
+      <a class="brand" href="#home">S & E</a>
+
+      <div class="nav-links">
+        <a href="#story">Our Story</a>
+        <a href="#details">Details</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#venue">Venue</a>
+      </div>
+
+      <a class="nav-cta" href="#rsvp">RSVP</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-orb one" aria-hidden="true"></div>
+      <div class="hero-orb two" aria-hidden="true"></div>
+
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Together with our families</p>
+          <h1>Sofia <span>& Elias</span></h1>
+          <p class="hero-intro">
+            We invite you to share in a day filled with love, laughter,
+            and the beginning of our forever.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button" href="#rsvp">Confirm Attendance</a>
+            <a class="button secondary" href="#details">View Details</a>
+          </div>
+        </div>
+
+        <div class="portrait reveal" aria-label="Wedding couple portrait">
+          <div class="seal" aria-hidden="true">S & E</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container announcement reveal">
+      <div class="announcement-inner soft-panel">
+        <div class="monogram">S</div>
+        <div>
+          <strong>Save the date</strong>
+          <p>Sunday, February 14, 2027 · Pasig City, Philippines</p>
+        </div>
+        <div class="tiny">You are invited</div>
+      </div>
+    </div>
+
+    <section class="section" id="story">
+      <div class="container story-grid">
+        <aside class="story-stat soft-panel reveal">
+          <span class="number">08</span>
+          <p>
+            Years of shared dreams, quiet mornings, spontaneous road trips,
+            and choosing each other every day.
+          </p>
+        </aside>
+
+        <div class="story-copy reveal">
+          <p class="eyebrow">Our story</p>
+          <h2 class="section-title">A simple hello became a lifetime.</h2>
+          <p>
+            We met on an ordinary afternoon that quickly became unforgettable.
+            From coffee dates and long conversations to building a home full of
+            warmth, our story has always felt beautifully natural.
+          </p>
+          <p>
+            Now, surrounded by the people who shaped and supported us, we are
+            ready to begin our next chapter. We would be honored to celebrate it
+            with you.
+          </p>
+          <div class="signature">With love, Sofia & Elias</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section details" id="details">
+      <div class="container">
+        <div class="details-head reveal">
+          <div>
+            <p class="eyebrow">Wedding details</p>
+            <h2 class="section-title">The day, at a glance.</h2>
+          </div>
+          <p>
+            Please arrive 30 minutes before the ceremony. Light refreshments
+            will be served before dinner.
+          </p>
+        </div>
+
+        <div class="details-grid reveal">
+          <article class="detail-card">
+            <span class="index">01 / DATE</span>
+            <h3>February 14</h3>
+            <p>Sunday, 2027</p>
+          </article>
+
+          <article class="detail-card">
+            <span class="index">02 / TIME</span>
+            <h3>Four O’Clock</h3>
+            <p>Ceremony begins at 4:00 PM</p>
+          </article>
+
+          <article class="detail-card">
+            <span class="index">03 / PLACE</span>
+            <h3>The Glass Garden</h3>
+            <p>Pasig City, Metro Manila</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="countdown-title">
+      <div class="container countdown-wrap">
+        <div class="countdown-copy reveal">
+          <p class="eyebrow">Counting down</p>
+          <h2 class="section-title" id="countdown-title">Until we say “I do.”</h2>
+        </div>
+
+        <!-- Change this ISO date to your wedding date and local time. -->
+        <div class="countdown" data-date="2027-02-14T16:00:00+08:00" aria-live="polite">
+          <div class="time-box soft-panel">
+            <strong id="days">000</strong>
+            <span>Days</span>
+          </div>
+          <div class="time-box soft-panel">
+            <strong id="hours">00</strong>
+            <span>Hours</span>
+          </div>
+          <div class="time-box soft-panel">
+            <strong id="minutes">00</strong>
+            <span>Minutes</span>
+          </div>
+          <div class="time-box soft-panel">
+            <strong id="seconds">00</strong>
+            <span>Seconds</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="gallery">
+      <div class="container">
+        <div class="gallery-head reveal">
+          <div>
+            <p class="eyebrow">A few memories</p>
+            <h2 class="section-title">Moments we keep close.</h2>
+          </div>
+          <p>
+            A small collection of the days, places, and people that brought us here.
+          </p>
+        </div>
+
+        <div class="gallery-grid">
+          <figure class="gallery-card large reveal">
+            <img
+              src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=85"
+              alt="Elegant wedding ceremony details"
+              loading="lazy"
+            />
+          </figure>
+
+          <div class="gallery-stack">
+            <figure class="gallery-card reveal">
+              <img
+                src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1000&q=85"
+                alt="Wedding reception table setting"
+                loading="lazy"
+              />
+            </figure>
+
+            <figure class="gallery-card reveal">
+              <img
+                src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85"
+                alt="Couple celebrating together"
+                loading="lazy"
+              />
+            </figure>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container info-grid">
+        <article class="info-card soft-panel reveal">
+          <p class="eyebrow">Dress code</p>
+          <h3>Modern Formal</h3>
+          <p>
+            We would love to see you in soft neutrals, muted earth tones,
+            and elegant garden-inspired shades.
+          </p>
+
+          <div class="swatches" aria-label="Suggested wedding color palette">
+            <span class="swatch" title="Sage"></span>
+            <span class="swatch" title="Taupe"></span>
+            <span class="swatch" title="Blush"></span>
+            <span class="swatch" title="Ivory"></span>
+          </div>
+        </article>
+
+        <article class="info-card soft-panel reveal">
+          <p class="eyebrow">Gifts</p>
+          <h3>Your presence is enough.</h3>
+          <p>
+            Celebrating with you is the greatest gift. For those who still wish
+            to give, a small contribution toward our future home would be deeply
+            appreciated.
+          </p>
+
+          <div class="gift-note">
+            More than anything, we are grateful to share this day with you.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="venue">
+      <div class="container">
+        <div class="gallery-head reveal">
+          <div>
+            <p class="eyebrow">Venue</p>
+            <h2 class="section-title">Find your way.</h2>
+          </div>
+          <p>
+            Parking is available at the venue. Ride-hailing drop-off is located
+            at the main entrance.
+          </p>
+        </div>
+
+        <div class="map-card soft-panel reveal">
+          <!-- Update the q= query below with the exact venue name or address. -->
+          <iframe
+            title="Map to The Glass Garden in Pasig City"
+            src="https://www.google.com/maps?q=The%20Glass%20Garden%20Pasig%20City&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+
+          <div class="map-meta">
+            <div>
+              <h3>The Glass Garden</h3>
+              <p>257 Evangelista Avenue, Pasig City, Metro Manila</p>
+            </div>
+            <a
+              class="button secondary"
+              href="https://www.google.com/maps/search/?api=1&query=The+Glass+Garden+Pasig+City"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open in Maps
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section rsvp" id="rsvp">
+      <div class="container rsvp-grid">
+        <div class="rsvp-copy reveal">
+          <p class="eyebrow">Kindly reply by January 10, 2027</p>
+          <h2 class="section-title">Will you join us?</h2>
+          <p>
+            Please let us know whether you can celebrate with us. We cannot wait
+            to make beautiful memories together.
+          </p>
+        </div>
+
+        <!--
+          This demo form works on the page but does not send data to a server.
+          Connect it to Formspree, Google Forms, or another form service before launch.
+        -->
+        <form class="rsvp-form reveal" id="rsvpForm">
+          <div class="field-grid">
+            <div class="field">
+              <label for="guestName">Full name</label>
+              <input id="guestName" name="guestName" type="text" placeholder="Your name" required />
+            </div>
+
+            <div class="field">
+              <label for="attendance">Attendance</label>
+              <select id="attendance" name="attendance" required>
+                <option value="">Please select</option>
+                <option>Joyfully accepts</option>
+                <option>Regretfully declines</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="guests">Number of guests</label>
+              <select id="guests" name="guests">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="meal">Meal preference</label>
+              <select id="meal" name="meal">
+                <option>No preference</option>
+                <option>Chicken</option>
+                <option>Fish</option>
+                <option>Vegetarian</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message">Message for the couple</label>
+            <textarea id="message" name="message" placeholder="Share a note, allergy, or special request"></textarea>
+          </div>
+
+          <button class="button" type="submit">Send RSVP</button>
+          <p class="form-note">Demo form — connect your preferred RSVP service before publishing.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-name">Sofia & Elias</div>
+        <p>
+          February 14, 2027 · The Glass Garden, Pasig City
+        </p>
+      </div>
+
+      <div class="footer-bottom">
+        <span>Made with love for our favorite people.</span>
+        <span>Essential Wedding Website Template</span>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status">
+    Thank you. Your RSVP has been recorded in this demo.
+  </div>
+
+  <script>
+    // Reveal sections as they enter the viewport.
+    const revealItems = document.querySelectorAll(".reveal");
+
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    revealItems.forEach((item) => revealObserver.observe(item));
+
+    // Live countdown.
+    const countdown = document.querySelector(".countdown");
+    const weddingDate = new Date(countdown.dataset.date).getTime();
+
+    const countdownEls = {
+      days: document.getElementById("days"),
+      hours: document.getElementById("hours"),
+      minutes: document.getElementById("minutes"),
+      seconds: document.getElementById("seconds"),
+    };
+
+    const pad = (value, size = 2) => String(value).padStart(size, "0");
+
+    function updateCountdown() {
+      const distance = weddingDate - Date.now();
+
+      if (distance <= 0) {
+        countdownEls.days.textContent = "000";
+        countdownEls.hours.textContent = "00";
+        countdownEls.minutes.textContent = "00";
+        countdownEls.seconds.textContent = "00";
+        return;
+      }
+
+      const days = Math.floor(distance / 86400000);
+      const hours = Math.floor((distance % 86400000) / 3600000);
+      const minutes = Math.floor((distance % 3600000) / 60000);
+      const seconds = Math.floor((distance % 60000) / 1000);
+
+      countdownEls.days.textContent = pad(days, 3);
+      countdownEls.hours.textContent = pad(hours);
+      countdownEls.minutes.textContent = pad(minutes);
+      countdownEls.seconds.textContent = pad(seconds);
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Demo RSVP interaction.
+    const rsvpForm = document.getElementById("rsvpForm");
+    const toast = document.getElementById("toast");
+
+    rsvpForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      toast.classList.add("show");
+      rsvpForm.reset();
+
+      window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3600);
+    });
+  </script>
+</body>
+</html>
