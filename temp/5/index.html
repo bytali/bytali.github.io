@@ -1,627 +1,541 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#16362f">
-  <meta name="description" content="Celebrate the wedding of Isabel and Mateo in Tagaytay on January 23, 2027. Find the schedule, venue, travel notes, dress code, registry, FAQs, and RSVP form in one place.">
-  <meta property="og:title" content="Isabel & Mateo — January 23, 2027">
-  <meta property="og:description" content="We would love to celebrate our wedding day with you in Tagaytay.">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=82">
-  <title>Harana — Isabel & Mateo</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7f2ec" />
+  <meta name="description" content="Join John and Jane as they celebrate their wedding day." />
+  <meta property="og:title" content="John & Jane — Our Wedding" />
+  <meta property="og:description" content="We would be delighted to celebrate our special day with you." />
+  <meta property="og:type" content="website" />
+  <title>John & Jane — Our Wedding</title>
 
-  <!-- Harana / Template 04: edit names and copy directly in the HTML, then update CONFIG near the closing body tag. -->
-  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
-  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1800&q=82" fetchpriority="high">
+  <!-- Replace this URL with your preferred hero photo. -->
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=82" />
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
 
   <style>
     :root {
-      --forest: #16362f;
-      --forest-2: #234b41;
-      --paper: #f4efe6;
-      --paper-2: #ebe2d4;
-      --cream: #fffaf1;
-      --ink: #1c2824;
-      --muted: #69736e;
-      --gold: #bb9562;
-      --rose: #b86f66;
-      --line: rgba(28, 40, 36, .16);
-      --white-line: rgba(255,255,255,.2);
-      --shadow: 0 1.8rem 5rem rgba(22,54,47,.16);
-      --radius: 1.35rem;
-      --max: 74rem;
+      --paper: #fbf8f4;
+      --paper-2: #f4eee7;
+      --ink: #28221e;
+      --muted: #716860;
+      --sage: #6f806f;
+      --sage-dark: #455747;
+      --blush: #d9b9aa;
+      --gold: #ad8a53;
+      --white: #ffffff;
+      --line: rgba(40, 34, 30, 0.12);
+      --shadow: 0 24px 70px rgba(53, 42, 34, 0.11);
+      --radius: 26px;
       --serif: Georgia, "Times New Roman", serif;
-      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; max-width: 100%; overflow-x: hidden; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      min-width: 20rem;
       color: var(--ink);
       background: var(--paper);
-      font: 400 1rem/1.65 var(--sans);
-      text-rendering: optimizeLegibility;
-      -webkit-font-smoothing: antialiased;
+      font-family: var(--sans);
+      line-height: 1.6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
 
     img { display: block; width: 100%; }
     button, input, select, textarea { font: inherit; }
     a { color: inherit; }
-    button, a { -webkit-tap-highlight-color: transparent; }
-    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-
-    .wrap { width: min(calc(100% - 2rem), var(--max)); margin-inline: auto; }
-    .serif { font-family: var(--serif); font-weight: 400; }
-    .section { padding-block: clamp(5rem, 10vw, 9rem); }
-    .section-dark { color: #fff; background: var(--forest); }
-    .section-light { background: var(--cream); }
 
     .skip-link {
       position: fixed;
-      z-index: 100;
-      top: -5rem;
       left: 1rem;
+      top: -5rem;
+      z-index: 9999;
       padding: .75rem 1rem;
       border-radius: 999px;
-      background: #fff;
-      color: var(--forest);
-      font-weight: 800;
+      background: var(--ink);
+      color: var(--white);
       transition: top .2s ease;
     }
     .skip-link:focus { top: 1rem; }
 
-    .announcement {
-      padding: .6rem 1rem;
-      background: var(--gold);
-      color: #152620;
-      text-align: center;
-      font-size: .75rem;
-      font-weight: 850;
-      letter-spacing: .08em;
+    .page-noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      opacity: .035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+    }
+
+    .container { width: min(1120px, calc(100% - 2rem)); margin-inline: auto; }
+    .section { padding: clamp(5rem, 10vw, 8.5rem) 0; position: relative; }
+    .section-soft { background: var(--paper-2); }
+
+    .eyebrow {
+      margin: 0 0 .8rem;
+      color: var(--sage-dark);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .19em;
       text-transform: uppercase;
     }
+    .section-title {
+      max-width: 760px;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(2.6rem, 6vw, 5.2rem);
+      font-weight: 400;
+      line-height: .98;
+      letter-spacing: -.045em;
+    }
+    .section-copy {
+      max-width: 640px;
+      margin: 1.3rem 0 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.8vw, 1.12rem);
+    }
+    .centered { text-align: center; }
+    .centered .section-title, .centered .section-copy { margin-inline: auto; }
 
     .site-header {
-      position: sticky;
-      z-index: 20;
-      top: 0;
-      color: #fff;
-      background: rgba(22,54,47,.94);
-      border-bottom: 1px solid var(--white-line);
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 1000;
+      border-bottom: 1px solid transparent;
+      transition: background .25s ease, border-color .25s ease, backdrop-filter .25s ease;
+    }
+    .site-header.scrolled {
+      background: rgba(251, 248, 244, .84);
+      border-color: var(--line);
       backdrop-filter: blur(14px);
     }
-
     .nav {
-      min-height: 4.7rem;
+      min-height: 76px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
     }
-
     .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: .75rem;
-      color: #fff;
       text-decoration: none;
-      font: 400 1.35rem/1 var(--serif);
-      letter-spacing: -.025em;
+      font-family: var(--serif);
+      font-size: 1.45rem;
+      letter-spacing: -.03em;
     }
-
-    .brand-mark {
-      width: 2.3rem;
-      aspect-ratio: 1;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(255,255,255,.56);
-      border-radius: 50%;
-      color: var(--gold);
-      font-size: .82rem;
-    }
-
-    .nav-links { display: flex; align-items: center; gap: 1.25rem; }
+    .brand span { color: var(--gold); }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
     .nav-links a {
-      color: rgba(255,255,255,.76);
       text-decoration: none;
-      font-size: .78rem;
-      font-weight: 780;
+      font-size: .82rem;
+      font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
     }
-    .nav-links a:hover { color: #fff; }
-
-    .nav-links .nav-rsvp {
-      min-height: 2.65rem;
-      display: inline-flex;
-      align-items: center;
-      padding: .65rem .95rem;
-      border: 1px solid rgba(255,255,255,.58);
+    .nav-links a:hover { color: var(--sage-dark); }
+    .nav-cta {
+      padding: .75rem 1.05rem;
+      border: 1px solid rgba(40,34,30,.28);
       border-radius: 999px;
-      color: #fff;
     }
-
     .menu-button {
       display: none;
-      width: 2.8rem;
-      height: 2.8rem;
-      border: 1px solid rgba(255,255,255,.35);
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--line);
       border-radius: 50%;
-      background: transparent;
-      color: #fff;
+      background: rgba(255,255,255,.7);
+      color: var(--ink);
       cursor: pointer;
     }
 
     .hero {
-      min-height: calc(100svh - 7.25rem);
+      min-height: 100svh;
       display: grid;
-      grid-template-columns: minmax(0,.92fr) minmax(0,1.08fr);
-      background: var(--forest);
-      color: #fff;
-      overflow: hidden;
-    }
-
-    .hero-copy {
-      min-height: 42rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: clamp(4rem, 8vw, 8rem) max(1rem, calc((100vw - var(--max))/2));
-      padding-right: clamp(2rem, 6vw, 6rem);
-      position: relative;
+      place-items: end center;
+      color: var(--white);
       isolation: isolate;
+      background:
+        linear-gradient(180deg, rgba(24,21,18,.18), rgba(24,21,18,.27) 35%, rgba(24,21,18,.78)),
+        url("https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=82") center 42% / cover no-repeat;
     }
-
-    .hero-copy::before {
+    .hero::after {
       content: "";
       position: absolute;
+      inset: auto 0 0;
+      height: 18%;
+      background: linear-gradient(transparent, rgba(8,8,8,.25));
       z-index: -1;
-      inset: auto auto -9rem -10rem;
-      width: 24rem;
-      aspect-ratio: 1;
-      border: 1px solid rgba(187,149,98,.28);
-      border-radius: 50%;
-      box-shadow: 0 0 0 4rem rgba(187,149,98,.04), 0 0 0 8rem rgba(187,149,98,.025);
     }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: .7rem;
-      margin: 0 0 1rem;
-      color: var(--gold);
-      font-size: .72rem;
-      font-weight: 850;
-      letter-spacing: .16em;
-      text-transform: uppercase;
+    .hero-content {
+      width: min(1040px, calc(100% - 2rem));
+      padding: 8rem 0 clamp(4rem, 8vw, 7rem);
+      text-align: center;
     }
-    .eyebrow::before { content: ""; width: 1.8rem; border-top: 1px solid currentColor; }
-
-    h1, h2, h3, p { overflow-wrap: anywhere; }
-
-    .hero h1 {
-      max-width: 8ch;
-      margin: 0;
-      font: 400 clamp(4.8rem, 10vw, 9.4rem)/.78 var(--serif);
-      letter-spacing: -.075em;
-    }
-    .hero h1 span { display: block; color: var(--gold); font-size: .56em; font-style: italic; line-height: .96; letter-spacing: -.04em; }
-
-    .hero-lead {
-      max-width: 35rem;
-      margin: 2rem 0 0;
-      color: rgba(255,255,255,.7);
-      font-size: clamp(1rem, 1.5vw, 1.12rem);
-    }
-
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .65rem 1.2rem;
-      margin-top: 2rem;
-      color: rgba(255,255,255,.9);
+    .hero-kicker {
+      margin: 0 0 1.25rem;
       font-size: .78rem;
       font-weight: 800;
-      letter-spacing: .1em;
+      letter-spacing: .28em;
       text-transform: uppercase;
     }
+    .hero h1 {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(4.6rem, 13vw, 10.5rem);
+      font-weight: 400;
+      line-height: .76;
+      letter-spacing: -.065em;
+      text-shadow: 0 14px 40px rgba(0,0,0,.22);
+    }
+    .hero h1 em {
+      display: block;
+      margin: .14em 0 .1em;
+      font-size: .45em;
+      font-weight: 400;
+      letter-spacing: .03em;
+    }
+    .hero-meta {
+      margin: 2.25rem auto 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: .9rem;
+      flex-wrap: wrap;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: .82rem;
+    }
+    .hero-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .75; }
+    .hero-actions { margin-top: 2rem; display: flex; justify-content: center; gap: .8rem; flex-wrap: wrap; }
 
-    .hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
-
-    .button {
-      min-height: 3rem;
+    .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: .55rem;
-      padding: .78rem 1.1rem;
+      min-height: 50px;
+      padding: .9rem 1.3rem;
       border: 1px solid transparent;
       border-radius: 999px;
-      background: var(--gold);
-      color: #17332c;
       text-decoration: none;
-      font-size: .84rem;
-      font-weight: 850;
+      font-weight: 800;
+      font-size: .86rem;
+      letter-spacing: .04em;
       cursor: pointer;
-      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      transition: transform .2s ease, background .2s ease, border-color .2s ease;
     }
-    .button:hover { transform: translateY(-2px); box-shadow: 0 .8rem 1.8rem rgba(0,0,0,.13); }
-    .button.secondary { color: #fff; background: transparent; border-color: rgba(255,255,255,.42); }
-    .button.ink { color: #fff; background: var(--forest); }
-    .button.outline { color: var(--ink); background: transparent; border-color: var(--line); }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-light { background: var(--white); color: var(--ink); }
+    .btn-ghost { color: var(--white); border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.08); backdrop-filter: blur(8px); }
+    .btn-dark { background: var(--ink); color: var(--white); }
+    .btn-outline { background: transparent; color: var(--ink); border-color: rgba(40,34,30,.22); }
 
-    .hero-visual { position: relative; min-height: 42rem; background: #203f37; overflow: hidden; }
-    .hero-visual img { height: 100%; object-fit: cover; object-position: center; filter: saturate(.82) contrast(.96); }
-    .hero-visual::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: linear-gradient(90deg, rgba(22,54,47,.26), transparent 35%), linear-gradient(0deg, rgba(22,54,47,.3), transparent 35%);
-    }
-
-    .date-seal {
-      position: absolute;
-      z-index: 2;
-      right: clamp(1rem, 4vw, 4rem);
-      bottom: clamp(1rem, 4vw, 4rem);
-      width: 8.5rem;
-      aspect-ratio: 1;
+    .monogram {
+      width: 82px;
+      height: 82px;
       display: grid;
       place-items: center;
-      border: 1px solid rgba(255,255,255,.72);
+      margin: 0 auto 2rem;
+      border: 1px solid rgba(173,138,83,.55);
       border-radius: 50%;
-      background: rgba(22,54,47,.7);
-      color: #fff;
-      text-align: center;
-      font: 400 .86rem/1.25 var(--serif);
-      backdrop-filter: blur(10px);
-      transform: rotate(-7deg);
+      color: var(--gold);
+      font-family: var(--serif);
+      font-size: 1.55rem;
+      transform: rotate(-6deg);
     }
 
-    .intro-grid, .venue-grid, .dress-grid, .gift-grid, .rsvp-grid {
+    .intro-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: clamp(2rem, 7vw, 6rem);
+      grid-template-columns: .86fr 1.14fr;
+      gap: clamp(2rem, 6vw, 6.5rem);
       align-items: center;
     }
-
-    .section-kicker {
-      margin: 0 0 .8rem;
-      color: var(--rose);
-      font-size: .72rem;
-      font-weight: 850;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .section-title {
-      max-width: 15ch;
-      margin: 0;
-      font: 400 clamp(2.8rem, 6vw, 5.4rem)/.96 var(--serif);
-      letter-spacing: -.055em;
-    }
-
-    .section-copy { max-width: 40rem; margin: 1.2rem 0 0; color: var(--muted); }
-    .section-dark .section-copy { color: rgba(255,255,255,.68); }
-
-    .editorial-image {
-      position: relative;
-      min-height: 36rem;
-      border-radius: 12rem 12rem var(--radius) var(--radius);
-      overflow: hidden;
+    .portrait-stack { position: relative; min-height: 650px; }
+    .portrait-main {
+      width: 80%;
+      height: 570px;
+      object-fit: cover;
+      border-radius: 180px 180px 24px 24px;
       box-shadow: var(--shadow);
     }
-    .editorial-image img { height: 100%; min-height: 36rem; object-fit: cover; }
-    .editorial-caption {
+    .portrait-small {
       position: absolute;
-      right: 1rem;
-      bottom: 1rem;
-      left: 1rem;
-      padding: 1rem 1.1rem;
-      border-radius: .95rem;
-      background: rgba(255,250,241,.84);
-      color: var(--ink);
-      font-size: .82rem;
-      backdrop-filter: blur(10px);
+      right: 0;
+      bottom: 0;
+      width: 48%;
+      height: 310px;
+      object-fit: cover;
+      border: 10px solid var(--paper);
+      border-radius: 150px 150px 22px 22px;
+      box-shadow: var(--shadow);
+    }
+    .intro-note {
+      margin-top: 2rem;
+      padding-left: 1.2rem;
+      border-left: 2px solid var(--gold);
+      color: var(--muted);
+      font-family: var(--serif);
+      font-size: 1.12rem;
+      font-style: italic;
     }
 
-    .story-note {
-      margin: 2rem 0 0;
-      padding: 1.25rem 0 0 1.4rem;
-      border-top: 1px solid var(--line);
-      border-left: 3px solid var(--gold);
-      color: var(--forest-2);
-      font: 400 1.35rem/1.45 var(--serif);
-    }
-
-    .countdown-panel {
+    .countdown-wrap {
+      margin-top: 3rem;
       display: grid;
-      grid-template-columns: minmax(0,.75fr) minmax(0,1.25fr);
-      gap: clamp(2rem, 7vw, 6rem);
-      align-items: end;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
     }
-
-    .countdown {
-      display: grid;
-      grid-template-columns: repeat(4,minmax(0,1fr));
-      border-top: 1px solid var(--white-line);
-      border-left: 1px solid var(--white-line);
-    }
-
     .count-box {
-      min-height: 9.5rem;
+      padding: 1.5rem .8rem;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,255,255,.55);
+      text-align: center;
+    }
+    .count-box strong {
+      display: block;
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 400;
+      line-height: 1;
+    }
+    .count-box span { color: var(--muted); font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; }
+
+    .details-grid {
+      margin-top: 3.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    .detail-card {
+      min-height: 320px;
+      padding: 2rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.66);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 1rem;
-      border-right: 1px solid var(--white-line);
-      border-bottom: 1px solid var(--white-line);
     }
-    .count-box strong { font: 400 clamp(2.6rem, 5vw, 4.8rem)/1 var(--serif); color: var(--gold); }
-    .count-box span { color: rgba(255,255,255,.58); font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .detail-number { color: var(--gold); font-family: var(--serif); font-size: 1.3rem; }
+    .detail-card h3 { margin: 2.5rem 0 .55rem; font-family: var(--serif); font-size: 2rem; font-weight: 400; }
+    .detail-card p { margin: 0; color: var(--muted); }
+    .detail-card a { margin-top: 1.5rem; font-size: .82rem; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; text-underline-offset: 5px; }
 
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: repeat(4,minmax(0,1fr));
-      margin-top: 3rem;
-      border-top: 1px solid var(--line);
-      border-left: 1px solid var(--line);
-    }
-
-    .schedule-card {
-      min-height: 17rem;
-      padding: 1.35rem;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.24);
-    }
-    .schedule-card time { color: var(--rose); font-size: .72rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
-    .schedule-card h3 { margin: auto 0 .65rem; font: 400 1.8rem/1.05 var(--serif); }
-    .schedule-card p { margin: 0; color: var(--muted); font-size: .9rem; }
-
-    .venue-card {
-      min-height: 31rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding: clamp(1.5rem,4vw,3rem);
+    .map-shell {
+      margin-top: 2rem;
       border-radius: var(--radius);
-      color: #fff;
-      background:
-        linear-gradient(180deg, rgba(17,35,30,.05), rgba(17,35,30,.82)),
-        url("https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1400&q=80") center / cover;
-      box-shadow: var(--shadow);
-    }
-    .venue-card h3 { max-width: 12ch; margin: 0; font: 400 clamp(2.5rem,5vw,4.5rem)/.96 var(--serif); letter-spacing: -.045em; }
-    .venue-card p { max-width: 31rem; margin: 1rem 0 0; color: rgba(255,255,255,.75); }
-
-    .map-shell { min-height: 31rem; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--paper-2); }
-    .map-shell iframe { width: 100%; height: 31rem; display: block; border: 0; }
-
-    .guest-notes {
-      display: grid;
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .note-card {
-      min-height: 12rem;
-      padding: 1.25rem;
+      overflow: hidden;
       border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.34);
-    }
-    .note-card span { color: var(--rose); font-size: .7rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
-    .note-card h3 { margin: 2rem 0 .55rem; font: 400 1.45rem/1.1 var(--serif); }
-    .note-card p, .note-card a { margin: 0; color: var(--muted); font-size: .9rem; }
-
-    .travel-grid {
-      display: grid;
-      grid-template-columns: repeat(3,minmax(0,1fr));
-      gap: 1rem;
-      margin-top: 3rem;
-    }
-
-    .travel-card {
-      padding: 1.4rem;
-      border: 1px solid var(--white-line);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.04);
-    }
-    .travel-card h3 { margin: 0 0 .65rem; color: var(--gold); font: 400 1.55rem/1.1 var(--serif); }
-    .travel-card p { margin: 0; color: rgba(255,255,255,.67); font-size: .9rem; }
-    .travel-card a { display: inline-block; margin-top: .9rem; color: #fff; font-size: .8rem; font-weight: 800; text-underline-offset: .2rem; }
-
-    .dress-visual {
-      min-height: 33rem;
-      border-radius: var(--radius);
-      background:
-        linear-gradient(180deg, transparent, rgba(19,42,35,.35)),
-        url("https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=1300&q=80") center / cover;
       box-shadow: var(--shadow);
+      background: #ddd;
     }
-
-    .palette { display: flex; flex-wrap: wrap; gap: .55rem; margin: 1.7rem 0; }
-    .swatch { width: 2.7rem; aspect-ratio: 1; border: .35rem solid rgba(255,255,255,.75); border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
-    .swatch:nth-child(1) { background: #d7c3a4; }
-    .swatch:nth-child(2) { background: #8b6d54; }
-    .swatch:nth-child(3) { background: #526c5f; }
-    .swatch:nth-child(4) { background: #934e49; }
-    .swatch:nth-child(5) { background: #243b34; }
-
-    .dress-list { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
-    .dress-list li { padding-bottom: .75rem; border-bottom: 1px solid var(--line); color: var(--muted); }
+    .map-shell iframe { display: block; width: 100%; height: 430px; border: 0; }
 
     .gallery-grid {
-      display: grid;
-      grid-template-columns: 1.1fr .9fr .9fr;
-      grid-auto-rows: 15rem;
-      gap: .8rem;
       margin-top: 3rem;
+      display: grid;
+      grid-template-columns: 1.25fr .75fr .75fr;
+      grid-auto-rows: 250px;
+      gap: .8rem;
     }
-    .gallery-grid figure { margin: 0; border-radius: var(--radius); overflow: hidden; background: #d8d0c4; }
-    .gallery-grid figure:first-child { grid-row: span 2; }
-    .gallery-grid figure:nth-child(4) { grid-column: span 2; }
-    .gallery-grid img { height: 100%; object-fit: cover; transition: transform .45s ease; }
-    .gallery-grid figure:hover img { transform: scale(1.035); }
+    .gallery-item { overflow: hidden; border-radius: 18px; background: #ddd; }
+    .gallery-item:nth-child(1) { grid-row: span 2; }
+    .gallery-item:nth-child(4) { grid-column: span 2; }
+    .gallery-item img { height: 100%; object-fit: cover; transition: transform .55s ease; }
+    .gallery-item:hover img { transform: scale(1.035); }
 
-    .gift-card {
-      padding: clamp(1.5rem,4vw,3rem);
+    .split-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       border: 1px solid var(--line);
+      border-radius: 32px;
+      overflow: hidden;
+      background: rgba(255,255,255,.58);
+      box-shadow: var(--shadow);
+    }
+    .split-card > div { padding: clamp(2rem, 5vw, 4.4rem); }
+    .split-card .visual-panel {
+      min-height: 520px;
+      color: var(--white);
+      background:
+        linear-gradient(180deg, rgba(29,39,31,.1), rgba(29,39,31,.55)),
+        url("https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=1100&q=80") center / cover;
+      display: flex;
+      align-items: end;
+    }
+    .visual-panel blockquote { margin: 0; max-width: 410px; font-family: var(--serif); font-size: 2rem; line-height: 1.18; }
+
+    .palette { display: flex; gap: .8rem; margin: 2rem 0; flex-wrap: wrap; }
+    .swatch { width: 54px; height: 54px; border-radius: 50%; border: 5px solid rgba(255,255,255,.8); box-shadow: 0 0 0 1px rgba(40,34,30,.1); }
+    .swatch:nth-child(1) { background: #f1eadf; }
+    .swatch:nth-child(2) { background: #b7c0ae; }
+    .swatch:nth-child(3) { background: #8f725d; }
+    .swatch:nth-child(4) { background: #d7b8a6; }
+    .swatch:nth-child(5) { background: #343a35; }
+    .dress-list { padding: 0; margin: 1.5rem 0 0; list-style: none; color: var(--muted); }
+    .dress-list li { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+
+    .registry-grid {
+      margin-top: 3rem;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 1rem;
+    }
+    .registry-card {
+      padding: clamp(2rem, 5vw, 3.4rem);
       border-radius: var(--radius);
-      background: rgba(255,255,255,.34);
+      border: 1px solid var(--line);
+      background: var(--white);
     }
-    .gift-card h3 { margin: 0; font: 400 2rem/1.05 var(--serif); }
-    .gift-card p { color: var(--muted); }
-    .account-box { margin-top: 1rem; padding: 1rem; border-radius: .9rem; background: var(--paper-2); }
-    .account-box span, .account-box strong { display: block; }
-    .account-box span { color: var(--muted); font-size: .7rem; letter-spacing: .11em; text-transform: uppercase; }
-    .account-box strong { margin-top: .35rem; }
-
-    .faq-list { max-width: 54rem; margin: 3rem auto 0; border-top: 1px solid var(--line); }
-    .faq-list details { border-bottom: 1px solid var(--line); }
-    .faq-list summary {
-      padding: 1.25rem 2.5rem 1.25rem 0;
-      position: relative;
-      cursor: pointer;
-      list-style: none;
-      font: 400 1.35rem/1.25 var(--serif);
+    .registry-card h3 { margin: 0 0 .7rem; font-family: var(--serif); font-size: 2rem; font-weight: 400; }
+    .registry-card p { color: var(--muted); }
+    .bank-box {
+      margin-top: 1.5rem;
+      padding: 1.2rem;
+      border-radius: 18px;
+      background: var(--paper-2);
     }
-    .faq-list summary::-webkit-details-marker { display: none; }
-    .faq-list summary::after { content: "+"; position: absolute; right: .25rem; top: 1rem; color: var(--rose); font: 400 1.8rem/1 var(--serif); }
-    .faq-list details[open] summary::after { content: "−"; }
-    .faq-list details p { max-width: 46rem; margin: -.25rem 0 1.25rem; color: var(--muted); }
+    .bank-box span { display: block; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; }
+    .bank-box strong { display: block; margin-top: .25rem; font-size: 1rem; }
 
+    .rsvp-shell {
+      display: grid;
+      grid-template-columns: .78fr 1.22fr;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: rgba(255,255,255,.6);
+      box-shadow: var(--shadow);
+    }
     .rsvp-aside {
-      min-height: 40rem;
+      padding: clamp(2rem, 4vw, 3.5rem);
+      border-radius: 26px;
+      color: var(--white);
+      background: var(--sage-dark);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: clamp(1.5rem,4vw,3rem);
-      border-radius: var(--radius);
-      color: #fff;
-      background: var(--forest-2);
-      overflow: hidden;
-      position: relative;
+      min-height: 610px;
     }
-    .rsvp-aside::after {
-      content: "I + M";
-      position: absolute;
-      right: -1rem;
-      bottom: -2.4rem;
-      color: rgba(255,255,255,.07);
-      font: 400 8rem/1 var(--serif);
-    }
-    .rsvp-aside h2 { position: relative; z-index: 1; margin: 0; font: 400 clamp(3rem,6vw,5.5rem)/.9 var(--serif); letter-spacing: -.055em; }
-    .rsvp-aside p { position: relative; z-index: 1; color: rgba(255,255,255,.68); }
-
-    .rsvp-form {
-      padding: clamp(1.25rem,4vw,2.25rem);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--cream);
-    }
-
-    .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
-    .field { min-width: 0; }
+    .rsvp-aside .section-title { font-size: clamp(2.8rem, 5vw, 4.8rem); }
+    .rsvp-deadline { margin-top: 2rem; color: rgba(255,255,255,.74); }
+    .rsvp-form { padding: clamp(1.5rem, 4vw, 3rem); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field { display: grid; gap: .45rem; }
     .field.full { grid-column: 1 / -1; }
-    .field label:not(.radio-option) { display: block; margin-bottom: .35rem; font-size: .78rem; font-weight: 800; }
-    .field input, .field select, .field textarea {
+    label { font-size: .8rem; font-weight: 800; letter-spacing: .04em; }
+    input, select, textarea {
       width: 100%;
-      min-height: 3.1rem;
-      padding: .75rem .85rem;
-      border: 1px solid var(--line);
-      border-radius: .75rem;
-      background: #fff;
+      padding: .95rem 1rem;
+      border: 1px solid rgba(40,34,30,.16);
+      border-radius: 14px;
+      background: rgba(255,255,255,.78);
       color: var(--ink);
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
     }
-    .field textarea { min-height: 7.5rem; resize: vertical; }
-    .radio-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .7rem; }
-    .radio-option { display: flex; align-items: center; gap: .55rem; min-height: 3rem; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: .75rem; background: #fff; cursor: pointer; }
-    .radio-option input { width: auto; min-height: auto; accent-color: var(--forest); }
-    .acceptance-fields[hidden] { display: none; }
-    .form-note { margin: .7rem 0 0; color: var(--muted); font-size: .76rem; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 4px rgba(111,128,111,.12);
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    .radio-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .radio-option { display: flex; gap: .5rem; align-items: center; font-weight: 600; }
+    .radio-option input { width: auto; }
+    .form-note { margin: 1rem 0 0; color: var(--muted); font-size: .82rem; }
 
-    .footer { padding: 3rem 0; color: rgba(255,255,255,.7); background: #102921; }
-    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-    .footer strong { color: #fff; font: 400 1.35rem/1 var(--serif); }
-    .footer a { color: #fff; text-underline-offset: .2rem; }
+    .footer {
+      padding: 5rem 0 2rem;
+      color: rgba(255,255,255,.84);
+      background: #272b27;
+      text-align: center;
+    }
+    .footer-monogram { font-family: var(--serif); font-size: clamp(4rem, 10vw, 8rem); line-height: 1; color: var(--white); }
+    .footer p { margin: 1rem auto 0; max-width: 520px; color: rgba(255,255,255,.62); }
+    .footer-bottom {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,.12);
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: .78rem;
+      color: rgba(255,255,255,.48);
+    }
 
     .toast {
       position: fixed;
-      z-index: 50;
       right: 1rem;
       bottom: 1rem;
-      max-width: min(24rem, calc(100% - 2rem));
-      padding: .9rem 1rem;
-      border-radius: .8rem;
-      background: #102921;
-      color: #fff;
-      box-shadow: var(--shadow);
+      z-index: 2000;
+      max-width: min(420px, calc(100% - 2rem));
+      padding: 1rem 1.15rem;
+      border-radius: 15px;
+      color: var(--white);
+      background: var(--ink);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      transform: translateY(130%);
+      transition: transform .3s ease;
+    }
+    .toast.show { transform: translateY(0); }
+
+    [data-reveal] {
       opacity: 0;
-      transform: translateY(1rem);
-      pointer-events: none;
-      transition: opacity .2s ease, transform .2s ease;
+      transform: translateY(24px);
+      transition: opacity .75s ease, transform .75s ease;
     }
-    .toast.show { opacity: 1; transform: none; }
+    [data-reveal].visible { opacity: 1; transform: translateY(0); }
 
-    [data-reveal] { opacity: 0; transform: translateY(1.2rem); transition: opacity .6s ease, transform .6s ease; }
-    [data-reveal].visible { opacity: 1; transform: none; }
-
-    @media (max-width: 980px) {
-      .hero, .intro-grid, .venue-grid, .dress-grid, .gift-grid, .rsvp-grid, .countdown-panel { grid-template-columns: 1fr; }
-      .hero-copy { min-height: auto; padding-left: max(1rem, calc((100vw - var(--max))/2)); }
-      .hero-visual { min-height: 38rem; }
-      .schedule-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .travel-grid, .guest-notes { grid-template-columns: 1fr; }
-      .editorial-image { order: -1; }
-    }
-
-    @media (max-width: 760px) {
+    @media (max-width: 900px) {
       .nav-links {
-        position: absolute;
-        top: 100%;
-        right: 1rem;
-        left: 1rem;
-        display: none;
-        align-items: stretch;
-        padding: 1rem;
-        border: 1px solid var(--white-line);
-        border-radius: 1rem;
-        background: rgba(16,41,33,.98);
+        position: fixed;
+        inset: 76px 1rem auto;
+        padding: 1.2rem;
+        display: grid;
+        gap: .4rem;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(251,248,244,.96);
         box-shadow: var(--shadow);
+        transform: translateY(-12px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
       }
-      .nav-links.open { display: grid; }
-      .nav-links a { padding: .65rem; }
-      .menu-button { display: inline-grid; place-items: center; }
-      .countdown { grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .gallery-grid figure:first-child { grid-row: span 2; }
-      .gallery-grid figure:nth-child(4) { grid-column: auto; }
-      .date-seal { width: 7rem; }
+      .nav-links.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+      .nav-links a { padding: .75rem; }
+      .menu-button { display: grid; place-items: center; }
+      .intro-grid, .split-card, .registry-grid, .rsvp-shell { grid-template-columns: 1fr; }
+      .portrait-stack { min-height: 580px; }
+      .portrait-main { height: 500px; }
+      .details-grid { grid-template-columns: 1fr; }
+      .rsvp-aside { min-height: auto; }
+      .gallery-grid { grid-template-columns: 1fr 1fr; }
+      .gallery-item:nth-child(1) { grid-row: span 2; }
+      .gallery-item:nth-child(4) { grid-column: auto; }
     }
 
-    @media (max-width: 540px) {
-      .wrap { width: min(calc(100% - 1.25rem), var(--max)); }
-      .hero h1 { font-size: clamp(4.4rem, 23vw, 7rem); }
-      .hero-visual { min-height: 31rem; }
-      .button { width: 100%; }
-      .nav-links .nav-rsvp { width: auto; }
-      .schedule-grid, .form-grid, .radio-row, .gallery-grid { grid-template-columns: 1fr; }
-      .gallery-grid { grid-auto-rows: 18rem; }
-      .gallery-grid figure:first-child { grid-row: auto; }
+    @media (max-width: 620px) {
+      .container { width: min(100% - 1.15rem, 1120px); }
+      .section { padding-block: 4.6rem; }
+      .hero h1 { font-size: clamp(4rem, 25vw, 6.8rem); }
+      .hero-meta { gap: .55rem; font-size: .7rem; }
+      .countdown-wrap { grid-template-columns: repeat(2, 1fr); }
+      .portrait-stack { min-height: 470px; }
+      .portrait-main { width: 86%; height: 400px; }
+      .portrait-small { width: 52%; height: 230px; border-width: 7px; }
+      .gallery-grid { grid-template-columns: 1fr; grid-auto-rows: 300px; }
+      .gallery-item:nth-child(1) { grid-row: auto; }
+      .form-grid { grid-template-columns: 1fr; }
       .field.full { grid-column: auto; }
-      .count-box { min-height: 8rem; }
-      .editorial-image, .editorial-image img { min-height: 29rem; }
-      .footer-row { align-items: flex-start; flex-direction: column; }
+      .footer-bottom { justify-content: center; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -633,63 +547,61 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="announcement">Kindly RSVP by December 20, 2026 · Seats are reserved by name</div>
+  <div class="page-noise" aria-hidden="true"></div>
 
-  <header class="site-header">
-    <nav class="nav wrap" aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="Isabel and Mateo home"><span class="brand-mark">I&M</span> Harana</a>
-      <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">☰</button>
+  <header class="site-header" id="siteHeader">
+    <nav class="nav container" aria-label="Main navigation">
+      <a class="brand" href="#home">J <span>&</span> J</a>
+      <button class="menu-button" id="menuButton" type="button" aria-expanded="false" aria-controls="navLinks" aria-label="Open menu">
+        <span aria-hidden="true">☰</span>
+      </button>
       <div class="nav-links" id="navLinks">
-        <a href="#story">Our story</a>
-        <a href="#schedule">The day</a>
-        <a href="#travel">Travel</a>
-        <a href="#faq">FAQ</a>
-        <a class="nav-rsvp" href="#rsvp">RSVP</a>
+        <a href="#story">Our Day</a>
+        <a href="#details">Details</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#dress-code">Dress Code</a>
+        <a class="nav-cta" href="#rsvp">RSVP</a>
       </div>
     </nav>
   </header>
 
   <main id="main">
-    <section class="hero" id="top">
-      <div class="hero-copy" data-reveal>
-        <p class="eyebrow">Together with our families</p>
-        <h1>Isabel <span>& Mateo</span></h1>
-        <p class="hero-lead">We found a love that feels like home. Please join us for an intimate celebration among the cool hills of Tagaytay.</p>
-        <div class="hero-meta"><span>January 23, 2027</span><span>Tagaytay, Philippines</span></div>
+    <section class="hero" id="home" aria-label="Wedding hero section">
+      <div class="hero-content" data-reveal>
+        <p class="hero-kicker">Together with our families</p>
+        <h1>John <em>&</em> Jane</h1>
+        <div class="hero-meta" aria-label="Wedding date and place">
+          <span>December 18, 2026</span><span class="dot" aria-hidden="true"></span><span>Manila, Philippines</span>
+        </div>
         <div class="hero-actions">
-          <a class="button" href="#rsvp">Respond to invitation</a>
-          <button class="button secondary" id="calendarButton" type="button">Add to calendar</button>
-        </div>
-      </div>
-      <div class="hero-visual">
-        <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1800&q=82" alt="A newlywed couple walking together outdoors" width="1800" height="1200" fetchpriority="high" decoding="async">
-        <div class="date-seal">Saturday<br>23 January<br>2027</div>
-      </div>
-    </section>
-
-    <section class="section section-light" id="story">
-      <div class="wrap intro-grid">
-        <div class="editorial-image" data-reveal>
-          <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80" alt="Wedding rings beside delicate flowers" width="1200" height="1600" loading="lazy" decoding="async">
-          <div class="editorial-caption">From a shared coffee after class to a lifetime of choosing one another.</div>
-        </div>
-        <div data-reveal>
-          <p class="section-kicker">Our beginning</p>
-          <h2 class="section-title">A quiet hello became our favorite story.</h2>
-          <p class="section-copy">We met through friends, stayed for the conversation, and slowly built a life filled with Sunday breakfasts, long drives, and laughter that arrives at exactly the right time. We are deeply grateful to celebrate this next chapter with the people who shaped us.</p>
-          <p class="story-note">“May this day feel like us: warm, unhurried, joyful, and full of the people we love.”</p>
+          <a class="btn btn-light" href="#rsvp">Kindly RSVP</a>
+          <a class="btn btn-ghost" href="#details">View Details</a>
         </div>
       </div>
     </section>
 
-    <section class="section section-dark" aria-labelledby="countdownTitle">
-      <div class="wrap countdown-panel">
-        <div data-reveal>
-          <p class="eyebrow">Save the date</p>
-          <h2 class="section-title" id="countdownTitle">Counting down to our harana.</h2>
-          <p class="section-copy">Saturday, January 23, 2027 · Ceremony begins at 3:30 PM.</p>
+    <section class="section" id="story">
+      <div class="container intro-grid">
+        <div class="portrait-stack" data-reveal>
+          <img class="portrait-main" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80" alt="A newlywed couple walking outdoors" width="900" height="1200" decoding="async" />
+          <img class="portrait-small" src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=700&q=80" alt="Wedding rings and flowers" width="700" height="900" loading="lazy" decoding="async" />
         </div>
-        <div class="countdown" id="countdown" aria-live="polite" data-reveal>
+        <div data-reveal>
+          <div class="monogram" aria-hidden="true">J&J</div>
+          <p class="eyebrow">A celebration of love</p>
+          <h2 class="section-title">We cannot wait to celebrate with you.</h2>
+          <p class="section-copy">After years of laughter, adventures, and choosing each other every day, we are joyfully beginning our next chapter. Your presence would make our day even more meaningful.</p>
+          <p class="intro-note">“Wherever life takes us, home will always be wherever we are together.”</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-soft" aria-labelledby="countdownTitle">
+      <div class="container centered" data-reveal>
+        <p class="eyebrow">Save the date</p>
+        <h2 class="section-title" id="countdownTitle">Counting down to forever</h2>
+        <p class="section-copy">Friday, December 18, 2026 at 3:00 PM</p>
+        <div class="countdown-wrap" id="countdown" aria-live="polite">
           <div class="count-box"><strong id="days">000</strong><span>Days</span></div>
           <div class="count-box"><strong id="hours">00</strong><span>Hours</span></div>
           <div class="count-box"><strong id="minutes">00</strong><span>Minutes</span></div>
@@ -698,163 +610,186 @@
       </div>
     </section>
 
-    <section class="section" id="schedule">
-      <div class="wrap">
-        <div data-reveal>
-          <p class="section-kicker">The wedding day</p>
-          <h2 class="section-title">A simple rhythm for the day.</h2>
-          <p class="section-copy">Please arrive 30 minutes before the ceremony. The celebration will take place in one venue, so guests can settle in and enjoy the evening without transferring locations.</p>
+    <section class="section" id="details">
+      <div class="container">
+        <div class="centered" data-reveal>
+          <p class="eyebrow">The wedding day</p>
+          <h2 class="section-title">When & where</h2>
+          <p class="section-copy">Please arrive a little early so we can begin the ceremony on time.</p>
         </div>
-        <div class="schedule-grid" data-reveal>
-          <article class="schedule-card"><time>3:00 PM</time><h3>Guest arrival</h3><p>Welcome drinks, registration, and time to find your seat.</p></article>
-          <article class="schedule-card"><time>3:30 PM</time><h3>Ceremony</h3><p>An unplugged garden ceremony overlooking the Tagaytay ridge.</p></article>
-          <article class="schedule-card"><time>5:00 PM</time><h3>Cocktails</h3><p>Canapés, photographs, and a golden-hour toast on the lawn.</p></article>
-          <article class="schedule-card"><time>6:00 PM</time><h3>Dinner & dancing</h3><p>Reception dinner, speeches, and dancing until 10:30 PM.</p></article>
-        </div>
-      </div>
-    </section>
 
-    <section class="section section-light" id="venue">
-      <div class="wrap venue-grid">
-        <article class="venue-card" data-reveal>
-          <p class="eyebrow">Ceremony & reception</p>
-          <h3>Hillcreek Gardens Tagaytay</h3>
-          <p>134 Tagaytay–Alfonso Road, Alfonso, Cavite. The ceremony and reception are both within the property.</p>
-          <div class="hero-actions">
-            <a class="button" href="https://maps.google.com/?q=Hillcreek+Gardens+Tagaytay" target="_blank" rel="noopener noreferrer">Open directions</a>
-          </div>
-        </article>
+        <div class="details-grid">
+          <article class="detail-card" data-reveal>
+            <span class="detail-number">01</span>
+            <div>
+              <h3>Ceremony</h3>
+              <p>3:00 PM<br />San Agustin Church<br />Intramuros, Manila</p>
+            </div>
+            <a href="https://maps.google.com/?q=San+Agustin+Church+Manila" target="_blank" rel="noopener">Open in Google Maps</a>
+          </article>
+          <article class="detail-card" data-reveal>
+            <span class="detail-number">02</span>
+            <div>
+              <h3>Reception</h3>
+              <p>5:30 PM<br />The Bayleaf Sky Deck<br />Intramuros, Manila</p>
+            </div>
+            <a href="https://maps.google.com/?q=The+Bayleaf+Intramuros" target="_blank" rel="noopener">Open in Google Maps</a>
+          </article>
+          <article class="detail-card" data-reveal>
+            <span class="detail-number">03</span>
+            <div>
+              <h3>RSVP</h3>
+              <p>Kindly respond on or before November 20, 2026. We have reserved seats especially for you.</p>
+            </div>
+            <a href="#rsvp">Send your response</a>
+          </article>
+        </div>
+
         <div class="map-shell" data-reveal>
-          <iframe title="Map to Hillcreek Gardens Tagaytay" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Hillcreek%20Gardens%20Tagaytay&output=embed" allowfullscreen></iframe>
+          <!-- Replace the query below with your venue or use a Google Maps embed URL. -->
+          <iframe
+            title="Wedding venue map"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=San%20Agustin%20Church%20Manila&output=embed"
+            allowfullscreen>
+          </iframe>
         </div>
-      </div>
-      <div class="wrap guest-notes" data-reveal>
-        <article class="note-card"><span>Arrival</span><h3>Come a little early</h3><p>Guest registration opens at 3:00 PM. Please be seated by 3:25 PM.</p></article>
-        <article class="note-card"><span>Parking</span><h3>On-site parking</h3><p>Complimentary parking is available. Follow the event signs and attendants upon arrival.</p></article>
-        <article class="note-card"><span>Accessibility</span><h3>Guest assistance</h3><p>Step-free access and reserved senior/PWD drop-off can be arranged through our coordinator.</p></article>
       </div>
     </section>
 
-    <section class="section section-dark" id="travel">
-      <div class="wrap">
-        <div data-reveal>
-          <p class="eyebrow">Travel & stay</p>
-          <h2 class="section-title">Plan a comfortable weekend.</h2>
-          <p class="section-copy">Tagaytay traffic can be busy on Saturdays. Allow extra travel time and consider staying nearby if you prefer an unhurried evening.</p>
+    <section class="section section-soft" id="gallery">
+      <div class="container">
+        <div class="centered" data-reveal>
+          <p class="eyebrow">Our favorite moments</p>
+          <h2 class="section-title">A little glimpse of us</h2>
+          <p class="section-copy">A few memories from the beautiful road that brought us here.</p>
         </div>
-        <div class="travel-grid" data-reveal>
-          <article class="travel-card"><h3>From Metro Manila</h3><p>Allow approximately 2.5–3.5 hours depending on traffic. Waze or Google Maps may reroute through CALAX.</p><a href="https://maps.google.com/?q=Hillcreek+Gardens+Tagaytay" target="_blank" rel="noopener noreferrer">View route ↗</a></article>
-          <article class="travel-card"><h3>Shuttle interest</h3><p>A shared shuttle from Makati may be arranged if enough guests request it. Indicate your interest in the RSVP form.</p><a href="#rsvp">Request a seat ↓</a></article>
-          <article class="travel-card"><h3>Nearby stays</h3><p>Suggested areas include Twin Lakes, Alfonso, and central Tagaytay. Book early for January weekends.</p><a href="https://www.google.com/maps/search/hotels+near+Hillcreek+Gardens+Tagaytay" target="_blank" rel="noopener noreferrer">Explore hotels ↗</a></article>
+        <div class="gallery-grid">
+          <figure class="gallery-item" data-reveal><img src="https://images.unsplash.com/photo-1529634597503-139d3726fed5?auto=format&fit=crop&w=1000&q=80" alt="Couple sharing a quiet moment outdoors" width="1000" height="1400" loading="lazy" decoding="async" /></figure>
+          <figure class="gallery-item" data-reveal><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=78" alt="Couple holding hands" width="800" height="800" loading="lazy" decoding="async" /></figure>
+          <figure class="gallery-item" data-reveal><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=800&q=78" alt="Wedding bouquet detail" width="800" height="800" loading="lazy" decoding="async" /></figure>
+          <figure class="gallery-item" data-reveal><img src="https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=1200&q=80" alt="Wedding table setting" width="1200" height="700" loading="lazy" decoding="async" /></figure>
+          <figure class="gallery-item" data-reveal><img src="https://images.unsplash.com/photo-1519741347686-c1e331ec7e93?auto=format&fit=crop&w=800&q=78" alt="Bride and groom smiling" width="800" height="800" loading="lazy" decoding="async" /></figure>
         </div>
       </div>
     </section>
 
     <section class="section" id="dress-code">
-      <div class="wrap dress-grid">
-        <div class="dress-visual" data-reveal role="img" aria-label="Elegant candlelit wedding table setting"></div>
-        <div data-reveal>
-          <p class="section-kicker">Dress code</p>
-          <h2 class="section-title">Modern Filipiniana or formal garden attire.</h2>
-          <p class="section-copy">We would love to see soft earth tones, deep greens, muted reds, and warm neutrals. Barong Tagalog, ternos, and contemporary Filipiniana details are warmly encouraged.</p>
-          <div class="palette" aria-label="Suggested wedding color palette"><span class="swatch" title="Champagne"></span><span class="swatch" title="Mocha"></span><span class="swatch" title="Sage"></span><span class="swatch" title="Muted red"></span><span class="swatch" title="Forest green"></span></div>
+      <div class="container split-card" data-reveal>
+        <div class="visual-panel">
+          <blockquote>Come dressed to celebrate — elegant, comfortable, and ready to dance.</blockquote>
+        </div>
+        <div>
+          <p class="eyebrow">Attire guide</p>
+          <h2 class="section-title">Garden formal</h2>
+          <p class="section-copy">We would love to see everyone in soft neutrals, warm earth tones, muted greens, or dusty rose.</p>
+          <div class="palette" aria-label="Suggested color palette">
+            <span class="swatch" title="Ivory"></span>
+            <span class="swatch" title="Sage"></span>
+            <span class="swatch" title="Mocha"></span>
+            <span class="swatch" title="Dusty rose"></span>
+            <span class="swatch" title="Forest"></span>
+          </div>
           <ul class="dress-list">
-            <li><strong>Ladies:</strong> Long or midi dresses, elegant jumpsuits, or modern Filipiniana.</li>
-            <li><strong>Gentlemen:</strong> Barong Tagalog, suit, or formal long-sleeved attire with trousers.</li>
-            <li><strong>Practical note:</strong> Some areas are lawn or stone; block heels or comfortable formal shoes are recommended.</li>
-            <li>Please reserve white, ivory, and bridal champagne for the bride.</li>
+            <li><strong>Ladies:</strong> Midi or long dresses, dressy separates, or elegant jumpsuits</li>
+            <li><strong>Gentlemen:</strong> Suit or long-sleeved shirt with trousers</li>
+            <li>Please reserve white and ivory for the bride.</li>
           </ul>
         </div>
       </div>
     </section>
 
-    <section class="section section-light" id="gallery">
-      <div class="wrap">
-        <div data-reveal>
-          <p class="section-kicker">Collected moments</p>
-          <h2 class="section-title">The road that brought us here.</h2>
-          <p class="section-copy">A few memories before the next beautiful chapter begins.</p>
+    <section class="section section-soft" id="gifts">
+      <div class="container">
+        <div class="centered" data-reveal>
+          <p class="eyebrow">With gratitude</p>
+          <h2 class="section-title">Gifts & registry</h2>
+          <p class="section-copy">Your presence is the greatest gift. For loved ones who have asked, a contribution toward our future home would be warmly appreciated.</p>
         </div>
-        <div class="gallery-grid">
-          <figure data-reveal><img src="https://images.unsplash.com/photo-1529634597503-139d3726fed5?auto=format&fit=crop&w=1000&q=78" alt="Couple sharing a quiet moment outdoors" width="1000" height="1400" loading="lazy" decoding="async"></figure>
-          <figure data-reveal><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=76" alt="Couple holding hands" width="800" height="800" loading="lazy" decoding="async"></figure>
-          <figure data-reveal><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=800&q=76" alt="Wedding bouquet in soft natural colors" width="800" height="800" loading="lazy" decoding="async"></figure>
-          <figure data-reveal><img src="https://images.unsplash.com/photo-1519741347686-c1e331ec7e93?auto=format&fit=crop&w=1200&q=78" alt="Bride and groom smiling together" width="1200" height="800" loading="lazy" decoding="async"></figure>
-          <figure data-reveal><img src="https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=800&q=76" alt="Warm wedding reception lights" width="800" height="800" loading="lazy" decoding="async"></figure>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="gifts">
-      <div class="wrap">
-        <div data-reveal>
-          <p class="section-kicker">With gratitude</p>
-          <h2 class="section-title">Your presence is our greatest gift.</h2>
-          <p class="section-copy">We are fortunate to have what we need. For guests who have asked, we have included a few optional ways to celebrate with us.</p>
-        </div>
-        <div class="gift-grid" style="margin-top:3rem">
-          <article class="gift-card" data-reveal><h3>Future home fund</h3><p>A contribution toward the home and life we are building together would be received with heartfelt thanks.</p><div class="account-box"><span>E-wallet / bank details</span><strong>GCash · 09XX XXX XXXX</strong><strong>Account name · Isabel Reyes</strong></div></article>
-          <article class="gift-card" data-reveal><h3>Gift registry</h3><p>Prefer a traditional gift? Replace this placeholder with your registry, home store, or honeymoon fund link.</p><a class="button outline" href="#" id="registryButton">View registry</a></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section section-light" id="faq">
-      <div class="wrap">
-        <div style="text-align:center" data-reveal>
-          <p class="section-kicker">Before you go</p>
-          <h2 class="section-title" style="margin-inline:auto">Helpful answers for our guests.</h2>
-          <p class="section-copy" style="margin-inline:auto">The details below are placeholders and can be personalized for each couple.</p>
-        </div>
-        <div class="faq-list" data-reveal>
-          <details><summary>What time should I arrive?</summary><p>Registration opens at 3:00 PM. Please arrive no later than 3:15 PM and be seated by 3:25 PM for the 3:30 PM ceremony.</p></details>
-          <details><summary>Can I bring a plus-one?</summary><p>Because the venue has a fixed capacity, seats are reserved for the names listed on the invitation. Your RSVP form will show the number of seats held for your party.</p></details>
-          <details><summary>Are children invited?</summary><p>We love your little ones. Unless a child is named on the invitation, however, the ceremony and reception will be an adults-only celebration.</p></details>
-          <details><summary>Will the ceremony be unplugged?</summary><p>Yes. Please keep phones and cameras away during the ceremony. Our photo team will capture everything, and you are welcome to take photos during cocktails and the reception.</p></details>
-          <details><summary>What if I have allergies or dietary restrictions?</summary><p>Please add them to your RSVP response. Our caterer will do their best to provide a suitable meal when informed before the RSVP deadline.</p></details>
-          <details><summary>What is the weather usually like?</summary><p>Tagaytay evenings in January can feel cool and breezy. Bring a light wrap or jacket, especially if you plan to enjoy the outdoor areas after sunset.</p></details>
-          <details><summary>Who can I contact on the wedding day?</summary><p>Please avoid calling the couple while they prepare. Contact our coordinator, Ana, at +63 917 123 4567 for urgent venue, transport, or accessibility questions.</p></details>
+        <div class="registry-grid">
+          <article class="registry-card" data-reveal>
+            <h3>Home Fund</h3>
+            <p>For the little things that will help us build a warm, happy home together.</p>
+            <div class="bank-box">
+              <span>Bank / e-wallet</span>
+              <strong>GCash — 09XX XXX XXXX</strong>
+              <strong>Account Name: John & Jane</strong>
+            </div>
+          </article>
+          <article class="registry-card" data-reveal>
+            <h3>Gift Registry</h3>
+            <p>Prefer a traditional gift? Add your registry link here, or replace this card with the stores of your choice.</p>
+            <a class="btn btn-outline" href="#" onclick="event.preventDefault(); showToast('Replace this button with your registry link.');">View Registry</a>
+          </article>
         </div>
       </div>
     </section>
 
     <section class="section" id="rsvp">
-      <div class="wrap rsvp-grid">
-        <aside class="rsvp-aside" data-reveal>
+      <div class="container rsvp-shell" data-reveal>
+        <aside class="rsvp-aside">
           <div>
-            <p class="eyebrow">Be our guest</p>
-            <h2>Will you celebrate with us?</h2>
-            <p>Please respond by December 20, 2026. Submit one response per household and include the names of everyone attending.</p>
+            <p class="eyebrow" style="color:rgba(255,255,255,.72)">Be our guest</p>
+            <h2 class="section-title">Will you join us?</h2>
+            <p class="rsvp-deadline">Please respond by November 20, 2026. One response per household is perfectly fine.</p>
           </div>
-          <p>Need help? Contact our coordinator at <a href="tel:+639171234567">+63 917 123 4567</a>.</p>
+          <p>Questions? Contact our coordinator at <a href="tel:+639171234567">+63 917 123 4567</a>.</p>
         </aside>
 
-        <!-- Static hosting setup: add a Formspree endpoint in CONFIG. Without one, the form opens an email draft. -->
-        <form class="rsvp-form" id="rsvpForm" novalidate data-reveal>
+        <!--
+          RSVP setup for GitHub Pages:
+          1. Create a free form endpoint at Formspree (or your preferred form service).
+          2. In the CONFIG object near the bottom, replace FORM_ENDPOINT with your endpoint URL.
+          3. Without an endpoint, this form opens the guest's email app as a fallback.
+        -->
+        <form class="rsvp-form" id="rsvpForm" novalidate>
           <div class="form-grid">
-            <div class="field full"><label for="name">Full name *</label><input id="name" name="name" autocomplete="name" required placeholder="Name on your invitation"></div>
-            <div class="field"><label for="email">Email address *</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></div>
-            <div class="field"><label for="phone">Mobile number</label><input id="phone" name="phone" autocomplete="tel" inputmode="tel" placeholder="09XX XXX XXXX"></div>
+            <div class="field full">
+              <label for="name">Full name *</label>
+              <input id="name" name="name" autocomplete="name" required placeholder="Your full name" />
+            </div>
+            <div class="field">
+              <label for="email">Email address *</label>
+              <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+            </div>
+            <div class="field">
+              <label for="phone">Mobile number</label>
+              <input id="phone" name="phone" autocomplete="tel" inputmode="tel" placeholder="09XX XXX XXXX" />
+            </div>
             <div class="field full">
               <label>Will you attend? *</label>
               <div class="radio-row">
-                <label class="radio-option"><input type="radio" name="attendance" value="Joyfully accepts" required> Joyfully accepts</label>
-                <label class="radio-option"><input type="radio" name="attendance" value="Regretfully declines" required> Regretfully declines</label>
+                <label class="radio-option"><input type="radio" name="attendance" value="Joyfully accepts" required /> Joyfully accepts</label>
+                <label class="radio-option"><input type="radio" name="attendance" value="Regretfully declines" required /> Regretfully declines</label>
               </div>
             </div>
-
-            <div class="field full acceptance-fields" id="acceptanceFields">
-              <div class="form-grid">
-                <div class="field"><label for="guests">Seats attending</label><select id="guests" name="guests"><option value="1">1 guest</option><option value="2">2 guests</option><option value="3">3 guests</option><option value="4">4 guests</option></select></div>
-                <div class="field"><label for="meal">Main meal preference</label><select id="meal" name="meal"><option>No preference</option><option>Beef</option><option>Chicken</option><option>Fish</option><option>Vegetarian</option></select></div>
-                <div class="field full"><label for="guestNames">Names of accompanying guests</label><input id="guestNames" name="guestNames" placeholder="Enter each invited guest's full name"></div>
-                <div class="field"><label for="shuttle">Interested in Makati shuttle?</label><select id="shuttle" name="shuttle"><option>No</option><option>Yes — 1 seat</option><option>Yes — 2 seats</option><option>Yes — 3 seats</option><option>Yes — 4 seats</option></select></div>
-                <div class="field"><label for="dietary">Dietary needs</label><input id="dietary" name="dietary" placeholder="Allergies or restrictions"></div>
-              </div>
+            <div class="field">
+              <label for="guests">Number of guests</label>
+              <select id="guests" name="guests">
+                <option value="1">1 guest</option>
+                <option value="2">2 guests</option>
+                <option value="3">3 guests</option>
+                <option value="4">4 guests</option>
+              </select>
             </div>
-
-            <div class="field full"><label for="message">Message or song request</label><textarea id="message" name="message" placeholder="Leave a note for the couple"></textarea></div>
-            <div class="field full"><button class="button ink" type="submit" id="submitButton">Send RSVP</button><p class="form-note">Your details will only be used to coordinate this wedding.</p></div>
+            <div class="field">
+              <label for="meal">Meal preference</label>
+              <select id="meal" name="meal">
+                <option>No preference</option>
+                <option>Chicken</option>
+                <option>Fish</option>
+                <option>Vegetarian</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="message">Message for the couple</label>
+              <textarea id="message" name="message" placeholder="Share a note, song request, or dietary concern"></textarea>
+            </div>
+            <div class="field full">
+              <button class="btn btn-dark" type="submit" id="submitButton">Send RSVP</button>
+              <p class="form-note">Your information will only be used for wedding coordination.</p>
+            </div>
           </div>
         </form>
       </div>
@@ -862,64 +797,71 @@
   </main>
 
   <footer class="footer">
-    <div class="wrap footer-row">
-      <strong>Isabel & Mateo</strong>
-      <span>January 23, 2027 · Tagaytay</span>
-      <a href="#top">Back to top ↑</a>
+    <div class="container">
+      <div class="footer-monogram">J & J</div>
+      <p>Thank you for being part of our story. We are so excited to celebrate this new beginning with you.</p>
+      <div class="footer-bottom">
+        <span>December 18, 2026 · Manila</span>
+        <span>Made with love for our favorite people.</span>
+      </div>
     </div>
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
+    /* =========================
+       QUICK EDIT SETTINGS
+       ========================= */
     const CONFIG = {
-      WEDDING_START: "2027-01-23T15:30:00+08:00",
-      WEDDING_END: "2027-01-23T22:30:00+08:00",
-      RSVP_EMAIL: "isabelandmateo@example.com",
-      FORM_ENDPOINT: "",
-      CALENDAR_TITLE: "Isabel & Mateo's Wedding",
-      CALENDAR_LOCATION: "Hillcreek Gardens Tagaytay, Alfonso, Cavite",
-      CALENDAR_DESCRIPTION: "Ceremony begins at 3:30 PM. Please arrive by 3:15 PM."
+      WEDDING_DATE: "2026-12-18T15:00:00+08:00",
+      RSVP_EMAIL: "johnandjane@example.com",
+      FORM_ENDPOINT: "" // Example: "https://formspree.io/f/your-form-id"
     };
 
+    const header = document.getElementById("siteHeader");
     const menuButton = document.getElementById("menuButton");
     const navLinks = document.getElementById("navLinks");
     const toast = document.getElementById("toast");
-    const acceptanceFields = document.getElementById("acceptanceFields");
+
+    const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 30);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     menuButton.addEventListener("click", () => {
       const open = navLinks.classList.toggle("open");
       menuButton.setAttribute("aria-expanded", String(open));
       menuButton.setAttribute("aria-label", open ? "Close menu" : "Open menu");
-      menuButton.textContent = open ? "×" : "☰";
     });
 
-    navLinks.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
-      navLinks.classList.remove("open");
-      menuButton.setAttribute("aria-expanded", "false");
-      menuButton.setAttribute("aria-label", "Open menu");
-      menuButton.textContent = "☰";
-    }));
+    navLinks.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navLinks.classList.remove("open");
+        menuButton.setAttribute("aria-expanded", "false");
+      });
+    });
 
     function showToast(message) {
       toast.textContent = message;
       toast.classList.add("show");
-      clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.remove("show"), 4200);
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 4200);
     }
+    window.showToast = showToast;
 
     function updateCountdown() {
-      const distance = new Date(CONFIG.WEDDING_START).getTime() - Date.now();
-      const remaining = Math.max(0, distance);
-      const values = {
-        days: Math.floor(remaining / 86400000),
-        hours: Math.floor((remaining % 86400000) / 3600000),
-        minutes: Math.floor((remaining % 3600000) / 60000),
-        seconds: Math.floor((remaining % 60000) / 1000)
-      };
+      const distance = new Date(CONFIG.WEDDING_DATE).getTime() - Date.now();
+      const values = distance > 0
+        ? {
+            days: Math.floor(distance / 86400000),
+            hours: Math.floor((distance % 86400000) / 3600000),
+            minutes: Math.floor((distance % 3600000) / 60000),
+            seconds: Math.floor((distance % 60000) / 1000)
+          }
+        : { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
       Object.entries(values).forEach(([key, value]) => {
-        const element = document.getElementById(key);
-        element.textContent = String(value).padStart(key === "days" ? 3 : 2, "0");
+        document.getElementById(key).textContent = String(value).padStart(key === "days" ? 3 : 2, "0");
       });
     }
     updateCountdown();
@@ -927,72 +869,32 @@
 
     const revealObserver = "IntersectionObserver" in window
       ? new IntersectionObserver((entries, observer) => {
-          entries.forEach(entry => {
+          entries.forEach((entry) => {
             if (entry.isIntersecting) {
               entry.target.classList.add("visible");
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: .12 })
+        }, { threshold: 0.12 })
       : null;
 
-    document.querySelectorAll("[data-reveal]").forEach(element => {
+    document.querySelectorAll("[data-reveal]").forEach((element) => {
       if (revealObserver) revealObserver.observe(element);
       else element.classList.add("visible");
-    });
-
-    document.querySelectorAll('input[name="attendance"]').forEach(input => {
-      input.addEventListener("change", () => {
-        acceptanceFields.hidden = input.value === "Regretfully declines" && input.checked;
-      });
-    });
-
-    function toICSDate(value) {
-      return new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-    }
-
-    document.getElementById("calendarButton").addEventListener("click", () => {
-      const ics = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//TaliPH//Harana Wedding//EN",
-        "BEGIN:VEVENT",
-        `UID:${Date.now()}@taliph`,
-        `DTSTAMP:${toICSDate(new Date())}`,
-        `DTSTART:${toICSDate(CONFIG.WEDDING_START)}`,
-        `DTEND:${toICSDate(CONFIG.WEDDING_END)}`,
-        `SUMMARY:${CONFIG.CALENDAR_TITLE}`,
-        `LOCATION:${CONFIG.CALENDAR_LOCATION}`,
-        `DESCRIPTION:${CONFIG.CALENDAR_DESCRIPTION}`,
-        "END:VEVENT",
-        "END:VCALENDAR"
-      ].join("\r\n");
-      const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "isabel-mateo-wedding.ics";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showToast("Calendar file downloaded.");
-    });
-
-    document.getElementById("registryButton").addEventListener("click", event => {
-      event.preventDefault();
-      showToast("Replace this placeholder with the couple's registry link.");
     });
 
     const rsvpForm = document.getElementById("rsvpForm");
     const submitButton = document.getElementById("submitButton");
 
-    rsvpForm.addEventListener("submit", async event => {
+    rsvpForm.addEventListener("submit", async (event) => {
       event.preventDefault();
+
       if (!rsvpForm.checkValidity()) {
         rsvpForm.reportValidity();
         return;
       }
 
-      const formData = new FormData(rsvpForm);
-      const data = Object.fromEntries(formData.entries());
+      const data = Object.fromEntries(new FormData(rsvpForm).entries());
       submitButton.disabled = true;
       submitButton.textContent = "Sending...";
 
@@ -1000,33 +902,23 @@
         if (CONFIG.FORM_ENDPOINT) {
           const response = await fetch(CONFIG.FORM_ENDPOINT, {
             method: "POST",
-            headers: { Accept: "application/json" },
-            body: formData
+            headers: { "Accept": "application/json" },
+            body: new FormData(rsvpForm)
           });
-          if (!response.ok) throw new Error("RSVP submission failed");
+          if (!response.ok) throw new Error("Form service rejected the submission.");
           rsvpForm.reset();
-          acceptanceFields.hidden = false;
-          showToast("Thank you. Your RSVP has been received.");
+          showToast("Thank you! Your RSVP has been received.");
         } else {
           const subject = encodeURIComponent(`Wedding RSVP — ${data.name}`);
-          const body = encodeURIComponent([
-            `Name: ${data.name}`,
-            `Email: ${data.email}`,
-            `Phone: ${data.phone || "Not provided"}`,
-            `Attendance: ${data.attendance}`,
-            `Guests: ${data.guests || "Not applicable"}`,
-            `Guest names: ${data.guestNames || "Not provided"}`,
-            `Meal: ${data.meal || "Not applicable"}`,
-            `Dietary needs: ${data.dietary || "None"}`,
-            `Shuttle: ${data.shuttle || "Not applicable"}`,
-            `Message: ${data.message || "None"}`
-          ].join("\n"));
-          location.href = `mailto:${CONFIG.RSVP_EMAIL}?subject=${subject}&body=${body}`;
-          showToast("Your email app is opening with the RSVP details.");
+          const body = encodeURIComponent(
+            `Name: ${data.name}\nEmail: ${data.email}\nPhone: ${data.phone || "Not provided"}\nAttendance: ${data.attendance}\nGuests: ${data.guests}\nMeal: ${data.meal}\nMessage: ${data.message || "None"}`
+          );
+          window.location.href = `mailto:${CONFIG.RSVP_EMAIL}?subject=${subject}&body=${body}`;
+          showToast("Your email app is opening with your RSVP details.");
         }
       } catch (error) {
         console.error(error);
-        showToast("We could not send the RSVP. Please contact the coordinator directly.");
+        showToast("We could not send your RSVP. Please try again or contact the couple directly.");
       } finally {
         submitButton.disabled = false;
         submitButton.textContent = "Send RSVP";
