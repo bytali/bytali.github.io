@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-PH">
+<html lang="en-PH" prefix="og: https://ogp.me/ns#">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -13,20 +13,30 @@
   <link rel="alternate" hreflang="en-PH" href="https://bytali.github.io/">
   <link rel="alternate" hreflang="x-default" href="https://bytali.github.io/">
   <link rel="sitemap" type="application/xml" href="https://bytali.github.io/sitemap.xml">
-  <link rel="icon" type="image/png" href="assets/taliph-mark.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/taliph-mark.png">
   <link rel="apple-touch-icon" href="assets/taliph-mark.png">
   <link rel="preload" as="image" href="assets/taliph-logo.webp" type="image/webp">
+  <link rel="image_src" href="https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg">
 
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_PH">
   <meta property="og:site_name" content="TaliPH">
   <meta property="og:url" content="https://bytali.github.io/">
-  <meta property="og:title" content="Wedding Websites Philippines | TaliPH">
-  <meta property="og:description" content="Personalized, mobile-friendly wedding websites for Filipino couples with online RSVP, venue maps, schedules, galleries, dress codes, registry details, and guest FAQs.">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Wedding Websites Philippines | TaliPH">
-  <meta name="twitter:description" content="Personalized wedding websites with RSVP, maps, schedules, galleries, dress codes, registry details, and guest FAQs in one shareable link.">
-  <!-- Add an absolute og:image and twitter:image after creating a 1200 x 630 social preview image. -->
+  <meta property="og:title" content="Wedding Websites for Filipino Couples | TaliPH">
+  <meta property="og:description" content="Create a beautiful, mobile-friendly wedding website with online RSVP, venue maps, schedules, photos, registry details, and guest FAQs—all in one link.">
+  <meta property="og:image" content="https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg">
+  <meta property="og:image:secure_url" content="https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="TaliPH wedding website service preview featuring an elegant wedding page for Filipino couples.">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://bytali.github.io/">
+  <meta name="twitter:title" content="Wedding Websites for Filipino Couples | TaliPH">
+  <meta name="twitter:description" content="Create a beautiful wedding website with online RSVP, venue maps, schedules, photos, registry details, and guest FAQs—all in one link.">
+  <meta name="twitter:image" content="https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg">
+  <meta name="twitter:image:alt" content="TaliPH wedding website service preview featuring an elegant wedding page for Filipino couples.">
 
   <title>Wedding Websites Philippines | RSVP &amp; Templates | TaliPH</title>
   <script>document.documentElement.classList.add('js');</script>
@@ -39,8 +49,12 @@
       "@id": "https://bytali.github.io/#organization",
       "name": "TaliPH",
       "url": "https://bytali.github.io/",
-      "logo": "https://bytali.github.io/assets/taliph-logo.png",
-      "image": "https://bytali.github.io/assets/taliph-logo.png",
+      "logo": {
+        "@id": "https://bytali.github.io/#logo"
+      },
+      "image": {
+        "@id": "https://bytali.github.io/#primaryimage"
+      },
       "description": "TaliPH creates personalized, mobile-friendly wedding websites for Filipino couples.",
       "email": "taliph@proton.me",
       "contactPoint": {
@@ -66,7 +80,27 @@
         "Online wedding RSVP",
         "Wedding guest information",
         "Mobile-friendly wedding websites"
-      ]
+      ],
+      "alternateName": "Tali Philippines"
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://bytali.github.io/#logo",
+      "url": "https://bytali.github.io/assets/taliph-mark.png",
+      "contentUrl": "https://bytali.github.io/assets/taliph-mark.png",
+      "width": 512,
+      "height": 512,
+      "caption": "TaliPH logo mark"
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://bytali.github.io/#primaryimage",
+      "url": "https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg",
+      "contentUrl": "https://bytali.github.io/assets/taliph-wedding-websites-og-v1.jpg",
+      "width": 1200,
+      "height": 630,
+      "caption": "TaliPH wedding websites for Filipino couples",
+      "representativeOfPage": true
     },
     {
       "@type": "WebSite",
@@ -77,6 +111,10 @@
       "inLanguage": "en-PH",
       "publisher": {
         "@id": "https://bytali.github.io/#organization"
+      },
+      "alternateName": "Tali Philippines",
+      "image": {
+        "@id": "https://bytali.github.io/#primaryimage"
       }
     },
     {
@@ -85,7 +123,7 @@
       "url": "https://bytali.github.io/",
       "name": "Wedding Websites Philippines | TaliPH",
       "description": "Personalized wedding website design for Filipino couples, including online RSVP, schedules, venue maps, dress codes, galleries, registry details, and guest information.",
-      "dateModified": "2026-08-05",
+      "dateModified": "2026-08-06",
       "isPartOf": {
         "@id": "https://bytali.github.io/#website"
       },
@@ -95,7 +133,13 @@
       "mainEntity": {
         "@id": "https://bytali.github.io/#wedding-website-service"
       },
-      "inLanguage": "en-PH"
+      "inLanguage": "en-PH",
+      "primaryImageOfPage": {
+        "@id": "https://bytali.github.io/#primaryimage"
+      },
+      "image": {
+        "@id": "https://bytali.github.io/#primaryimage"
+      }
     },
     {
       "@type": "Service",
@@ -117,6 +161,9 @@
       },
       "offers": {
         "@id": "https://bytali.github.io/#essential-offer"
+      },
+      "image": {
+        "@id": "https://bytali.github.io/#primaryimage"
       }
     },
     {
@@ -1186,7 +1233,7 @@
       <a class="brand" href="#top" aria-label="Tali Philippines home">
         <picture>
           <source srcset="assets/taliph-logo.webp" type="image/webp">
-          <img class="brand-logo" src="assets/taliph-logo.png" alt="Tali Philippines" width="286" height="260" decoding="async">
+          <img class="brand-logo" src="assets/taliph-logo.png" alt="Tali Philippines" width="286" height="260" decoding="async" fetchpriority="high">
         </picture>
       </a>
       <div class="navlinks">
