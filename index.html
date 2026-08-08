@@ -396,6 +396,10 @@
     .navlinks > a:not(.button) { color: var(--muted); text-decoration: none; font-size: .92rem; }
     .navlinks > a:hover { color: var(--ink); }
 
+    .mobile-nav { display: none; }
+
+    main section[id] { scroll-margin-top: calc(var(--header-height) + 1rem); }
+
     .button {
       display: inline-flex;
       align-items: center;
@@ -1174,21 +1178,77 @@
     }
 
     @media (max-width: 820px) {
+      body { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+      header { background: color-mix(in srgb, var(--paper) 94%, transparent); }
       .navlinks > a:not(.button) { display: none; }
-      .hero { grid-template-columns: 1fr; min-height: auto; }
+
+      .mobile-nav {
+        position: fixed;
+        z-index: 20;
+        left: 50%;
+        bottom: calc(.65rem + env(safe-area-inset-bottom));
+        width: min(calc(100% - 1.25rem), 36rem);
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: .2rem;
+        padding: .38rem;
+        border: 1px solid rgba(39,38,32,.12);
+        border-radius: 1.35rem;
+        background: color-mix(in srgb, var(--paper) 91%, transparent);
+        box-shadow: 0 1rem 2.7rem rgba(39,38,32,.18);
+        backdrop-filter: blur(18px) saturate(1.15);
+        -webkit-backdrop-filter: blur(18px) saturate(1.15);
+        transform: translateX(-50%);
+      }
+
+      .mobile-nav a {
+        position: relative;
+        min-width: 0;
+        min-height: 3.55rem;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: .18rem;
+        padding: .42rem .2rem;
+        border-radius: 1rem;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: .62rem;
+        font-weight: 750;
+        line-height: 1;
+        letter-spacing: .01em;
+        transition: background .2s ease, color .2s ease, transform .2s ease;
+      }
+
+      .mobile-nav a:active { transform: scale(.96); }
+      .mobile-nav a.is-active { background: rgba(177,156,108,.16); color: var(--ink); }
+      .mobile-nav a:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: -2px; }
+      .mobile-nav svg { width: 1.08rem; height: 1.08rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .mobile-nav .nav-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+      section { padding-block: clamp(3.8rem, 10vw, 5.6rem); }
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: clamp(2.8rem, 8vw, 4rem); padding-bottom: 3.5rem; }
       .hero-copy { text-align: center; }
       h1, .lead { margin-inline: auto; }
+      .lead { max-width: 34rem; margin-top: 1.35rem; margin-bottom: 1.6rem; }
       .actions { justify-content: center; }
-      .preview-wrap { min-height: 40rem; }
+      .preview-wrap { min-height: 38rem; }
       .section-head, .process, .package-extras, .faq-grid, .answer-summary-card { grid-template-columns: 1fr; }
+      .section-head { gap: .85rem; margin-bottom: 1.8rem; }
+      .section-head h2 { max-width: 15ch; }
+      .section-head p { margin-top: 0; max-width: 40rem; }
       .template-grid { grid-template-columns: 1fr; }
       .template-frame { height: min(68vw, 32rem); }
       .packages-grid { grid-template-columns: 1fr; }
       .package-card.featured { grid-row: auto; }
-      .features { grid-template-columns: 1fr; }
-      .feature { min-height: auto; }
-      .feature h3 { margin-top: 2.5rem; }
+      .features { grid-template-columns: 1fr; gap: .75rem; border: 0; }
+      .feature { min-height: auto; border: 1px solid var(--line); border-radius: 1.1rem; }
+      .feature h3 { margin-top: 1.8rem; }
       .process-card { position: relative; top: 0; }
+      .step { padding-block: 1.45rem; }
+      .faq-grid { gap: .7rem; }
+      .faq-item { border-radius: 1rem; }
+      footer { padding-bottom: 1.25rem; }
     }
 
     @media (max-width: 520px) {
@@ -1196,7 +1256,9 @@
       .wrap { width: min(calc(100% - 1.25rem), var(--max)); }
       .brand-logo { width: 4.65rem; }
       .button { width: 100%; }
-      .navlinks .button { width: auto; }
+      .navlinks .button { width: auto; min-height: 2.55rem; padding: .58rem .82rem; font-size: .78rem; }
+      .mobile-nav { width: calc(100% - .9rem); bottom: calc(.45rem + env(safe-area-inset-bottom)); border-radius: 1.2rem; }
+      .mobile-nav a { min-height: 3.35rem; font-size: .59rem; }
       .note { width: 100%; }
       .phone { width: 18.5rem; }
       .seal { right: -.2rem; }
@@ -1252,6 +1314,29 @@
       </div>
     </nav>
   </header>
+
+  <nav class="mobile-nav" aria-label="Quick section navigation">
+    <a href="#included" data-section="included">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg>
+      <span class="nav-label">Included</span>
+    </a>
+    <a href="#templates" data-section="templates">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h5M8 16h7"/></svg>
+      <span class="nav-label">Templates</span>
+    </a>
+    <a href="#packages" data-section="packages">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5h14v11H5z"/><path d="M8 7.5V5h8v2.5M8 12h8"/></svg>
+      <span class="nav-label">Packages</span>
+    </a>
+    <a href="#process" data-section="process">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><path d="M10 6h8M10 12h8M10 18h8"/></svg>
+      <span class="nav-label">Process</span>
+    </a>
+    <a href="#faq" data-section="faq">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9.2a2.5 2.5 0 0 1 4.8.9c0 1.8-2.6 2-2.6 3.6M12 17h.01"/></svg>
+      <span class="nav-label">FAQ</span>
+    </a>
+  </nav>
 
   <main id="main">
     <section class="hero wrap" id="top">
@@ -1767,6 +1852,35 @@
         frame.focus();
       });
     });
+
+
+    const mobileNavLinks = [...document.querySelectorAll('.mobile-nav a[data-section]')];
+    const mobileSections = mobileNavLinks
+      .map(link => document.getElementById(link.dataset.section))
+      .filter(Boolean);
+
+    const setMobileNavActive = id => {
+      mobileNavLinks.forEach(link => {
+        const active = link.dataset.section === id;
+        link.classList.toggle('is-active', active);
+        if (active) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    mobileNavLinks.forEach(link => {
+      link.addEventListener('click', () => setMobileNavActive(link.dataset.section));
+    });
+
+    if ('IntersectionObserver' in window && mobileSections.length) {
+      const navObserver = new IntersectionObserver(entries => {
+        const visible = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setMobileNavActive(visible.target.id);
+      }, { rootMargin: '-18% 0px -62% 0px', threshold: [0, .2, .5] });
+      mobileSections.forEach(section => navObserver.observe(section));
+    }
   </script>
 </body>
 </html>
