@@ -111,15 +111,15 @@
     ------------------------------ */
 
     .app {
-      width: min(100%, 720px);
+      width: min(100%, 1240px);
       min-height: 100vh;
 
       margin: 0 auto;
 
       padding:
         env(safe-area-inset-top)
-        12px
-        calc(var(--nav-height) + env(safe-area-inset-bottom) + 18px);
+        clamp(10px, 2.2vw, 28px)
+        calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
     }
 
     /* ------------------------------
@@ -579,14 +579,16 @@
     .daily-chart {
       display: flex;
 
+      width: 100%;
+      min-width: 0;
       height: 150px;
 
-      gap: 4px;
+      gap: clamp(1px, .7vw, 4px);
       align-items: flex-end;
 
       padding: 10px 0 2px;
 
-      overflow-x: auto;
+      overflow: hidden;
 
       scrollbar-width: none;
     }
@@ -596,7 +598,7 @@
     }
 
     .day-col {
-      flex: 1 0 10px;
+      flex: 1 1 0;
 
       display: grid;
 
@@ -604,7 +606,7 @@
         1fr
         12px;
 
-      min-width: 10px;
+      min-width: 4px;
       height: 130px;
 
       gap: 4px;
@@ -761,6 +763,16 @@
 
     .custom-field[hidden] {
       display: none;
+    }
+
+    .bank-fields {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .bank-fields.has-custom {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .action-row {
@@ -1013,7 +1025,7 @@
       position: fixed;
 
       left: 50%;
-      bottom: 0;
+      bottom: max(8px, env(safe-area-inset-bottom));
 
       z-index: 40;
 
@@ -1022,16 +1034,14 @@
       grid-template-columns:
         repeat(4, 1fr);
 
-      width: min(100%, 720px);
+      width: min(calc(100% - 20px), 480px);
 
-      padding:
-        7px
-        8px
-        calc(7px + env(safe-area-inset-bottom));
+      padding: 6px;
 
       transform: translateX(-50%);
 
-      border-top: 1px solid var(--line);
+      border: 1px solid var(--line);
+      border-radius: 22px;
 
       background:
         color-mix(
@@ -1040,6 +1050,7 @@
           transparent
         );
 
+      box-shadow: var(--shadow);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
     }
@@ -1171,12 +1182,35 @@
        LARGER SCREENS
     ------------------------------ */
 
-    @media (min-width: 700px) {
-      .app {
-        padding-left: 18px;
-        padding-right: 18px;
+    @media (max-width: 420px) {
+      .two,
+      .bank-fields.has-custom {
+        grid-template-columns: 1fr;
       }
 
+      .hero {
+        padding: 16px;
+      }
+
+      .hero-top {
+        gap: 8px;
+      }
+
+      .hero-amount {
+        font-size: clamp(31px, 10vw, 42px);
+      }
+
+      .trend-row {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        gap: 7px;
+      }
+
+      .card {
+        padding: 14px;
+      }
+    }
+
+    @media (min-width: 700px) {
       .stats {
         grid-template-columns:
           repeat(4, minmax(0, 1fr));
@@ -1186,10 +1220,107 @@
         display: grid;
 
         grid-template-columns:
-          1fr
-          1fr;
+          repeat(2, minmax(0, 1fr));
 
         gap: 12px;
+      }
+
+      .daily-chart {
+        height: 190px;
+      }
+
+      .day-col {
+        height: 168px;
+      }
+
+      #view-add .form-card {
+        width: min(100%, 900px);
+        margin-inline: auto;
+      }
+
+      #view-more {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      #view-more > :last-child {
+        grid-column: 1 / -1;
+      }
+
+      .bottom-nav {
+        bottom: 16px;
+        width: min(calc(100% - 48px), 560px);
+      }
+    }
+
+    @media (min-width: 1000px) {
+      #view-home {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      #view-home > .hero {
+        grid-column: span 5;
+      }
+
+      #view-home > .stats {
+        grid-column: span 7;
+      }
+
+      #view-home > .daily-title {
+        grid-column: 1 / 8;
+        grid-row: 2;
+      }
+
+      #view-home > .daily-card {
+        grid-column: 1 / 8;
+        grid-row: 3;
+      }
+
+      #view-home > .analytics-pair {
+        grid-column: 8 / -1;
+        grid-row: 2 / span 2;
+        grid-template-columns: 1fr;
+      }
+
+      #view-home > .trend-title,
+      #view-home > .trend-card {
+        grid-column: 1 / -1;
+      }
+
+      #view-home > .trend-title {
+        grid-row: 4;
+      }
+
+      #view-home > .trend-card {
+        grid-row: 5;
+      }
+
+      .hero {
+        min-height: 100%;
+        padding: 24px;
+      }
+
+      .hero-amount {
+        font-size: clamp(42px, 4.5vw, 64px);
+      }
+
+      .stat {
+        padding: 16px;
+      }
+
+      .daily-chart {
+        height: 230px;
+      }
+
+      .day-col {
+        height: 205px;
+      }
+    }
+
+    @media (min-width: 1400px) {
+      .app {
+        width: min(100%, 1320px);
       }
     }
   </style>
@@ -1402,12 +1533,12 @@
 
       </div>
 
-      <div class="section-title">
+      <div class="section-title daily-title">
         <h2>Daily</h2>
         <span id="homeMonthLabel"></span>
       </div>
 
-      <section class="card">
+      <section class="card daily-card">
         <div
           id="dailyChart"
           class="daily-chart"
@@ -1449,11 +1580,11 @@
 
       </div>
 
-      <div class="section-title">
+      <div class="section-title trend-title">
         <h2>6 months</h2>
       </div>
 
-      <section class="card">
+      <section class="card trend-card">
         <div
           id="sixMonthTrend"
           class="trend"
@@ -1547,6 +1678,59 @@
                 <option>Education</option>
                 <option>Other</option>
               </select>
+
+            </div>
+
+          </div>
+
+          <div
+            class="bank-fields custom-field"
+            id="bankFields"
+            hidden
+          >
+
+            <div class="field">
+
+              <label for="bank">
+                Bank
+              </label>
+
+              <select id="bank">
+                <option value="">Choose bank</option>
+                <option>BDO</option>
+                <option>BPI</option>
+                <option>Metrobank</option>
+                <option>UnionBank</option>
+                <option>Security Bank</option>
+                <option>RCBC</option>
+                <option>PNB</option>
+                <option>LandBank</option>
+                <option>EastWest</option>
+                <option>China Bank</option>
+                <option>Maya Bank</option>
+                <option>GoTyme Bank</option>
+                <option>CIMB Bank</option>
+                <option>SeaBank</option>
+                <option>Other bank</option>
+              </select>
+
+            </div>
+
+            <div
+              class="field custom-field"
+              id="bankOtherWrap"
+              hidden
+            >
+
+              <label for="bankOther">
+                Specify bank
+              </label>
+
+              <input
+                id="bankOther"
+                maxlength="60"
+                placeholder="Bank name"
+              />
 
             </div>
 
@@ -2038,6 +2222,29 @@
         'Bank transfer'
       ];
 
+      const BANK_PAYMENTS = [
+        'Debit card',
+        'Credit card',
+        'Bank transfer'
+      ];
+
+      const STANDARD_BANKS = [
+        'BDO',
+        'BPI',
+        'Metrobank',
+        'UnionBank',
+        'Security Bank',
+        'RCBC',
+        'PNB',
+        'LandBank',
+        'EastWest',
+        'China Bank',
+        'Maya Bank',
+        'GoTyme Bank',
+        'CIMB Bank',
+        'SeaBank'
+      ];
+
       const STANDARD_CATEGORIES = [
         'Food',
         'Transport',
@@ -2125,6 +2332,18 @@
 
         paymentOtherWrap:
           $('paymentOtherWrap'),
+
+        bankFields:
+          $('bankFields'),
+
+        bank:
+          $('bank'),
+
+        bankOther:
+          $('bankOther'),
+
+        bankOtherWrap:
+          $('bankOtherWrap'),
 
         category:
           $('category'),
@@ -2491,6 +2710,15 @@
                   String(
                     item.payment ||
                     'Other'
+                  ).slice(
+                    0,
+                    60
+                  ),
+
+                bank:
+                  String(
+                    item.bank ||
+                    ''
                   ).slice(
                     0,
                     60
@@ -2920,6 +3148,16 @@
           els.category.value ===
           'Other';
 
+        const bankPayment =
+          BANK_PAYMENTS.includes(
+            els.payment.value
+          );
+
+        const bankOther =
+          bankPayment &&
+          els.bank.value ===
+            'Other bank';
+
         els.paymentOtherWrap
           .hidden =
             !paymentOther;
@@ -2935,6 +3173,27 @@
               categoryOther
             );
 
+        els.bankFields
+          .hidden =
+            !bankPayment;
+
+        els.bankFields
+          .classList
+          .toggle(
+            'has-custom',
+            bankOther
+          );
+
+        els.bankOtherWrap
+          .hidden =
+            !bankOther;
+
+        els.bank.required =
+          bankPayment;
+
+        els.bankOther.required =
+          bankOther;
+
         if (!paymentOther) {
           els.paymentOther
             .value = '';
@@ -2943,6 +3202,13 @@
         if (!categoryOther) {
           els.categoryOther
             .value = '';
+        }
+
+        if (!bankPayment) {
+          els.bank.value = '';
+          els.bankOther.value = '';
+        } else if (!bankOther) {
+          els.bankOther.value = '';
         }
       }
 
@@ -2963,6 +3229,31 @@
             .trim() ||
           'Other'
         );
+      }
+
+      function resolvedBank() {
+
+        if (
+          !BANK_PAYMENTS.includes(
+            els.payment.value
+          )
+        ) {
+          return '';
+        }
+
+        if (
+          els.bank.value ===
+          'Other bank'
+        ) {
+          return (
+            els.bankOther
+              .value
+              .trim() ||
+            'Other bank'
+          );
+        }
+
+        return els.bank.value;
       }
 
       function resolvedCategory() {
@@ -3782,6 +4073,15 @@
                         date
                       );
 
+                  const bank =
+                    item.bank
+
+                      ? ` · ${escapeHtml(
+                          item.bank
+                        )}`
+
+                      : '';
+
                   const note =
                     item.note
 
@@ -3819,7 +4119,7 @@
                         <div class="expense-meta">
                           ${escapeHtml(
                             item.payment
-                          )}${note}
+                          )}${bank}${note}
                         </div>
 
                       </div>
@@ -3966,6 +4266,36 @@
                 ? ''
 
                 : item.payment;
+        }
+
+        /* bank */
+
+        if (
+          BANK_PAYMENTS.includes(
+            item.payment
+          ) &&
+          item.bank
+        ) {
+
+          if (
+            STANDARD_BANKS.includes(
+              item.bank
+            )
+          ) {
+            els.bank.value =
+              item.bank;
+            els.bankOther.value =
+              '';
+          } else {
+            els.bank.value =
+              'Other bank';
+            els.bankOther.value =
+              item.bank;
+          }
+
+        } else {
+          els.bank.value = '';
+          els.bankOther.value = '';
         }
 
         /* category */
@@ -4124,6 +4454,12 @@
           toggleOtherFields
         );
 
+      els.bank
+        .addEventListener(
+          'change',
+          toggleOtherFields
+        );
+
       /* ------------------------------
          SAVE EXPENSE
       ------------------------------ */
@@ -4190,6 +4526,40 @@
             }
 
             if (
+              BANK_PAYMENTS.includes(
+                els.payment.value
+              ) &&
+              !els.bank.value
+            ) {
+
+              showToast(
+                'Choose a bank'
+              );
+
+              els.bank.focus();
+
+              return;
+            }
+
+            if (
+              els.bank.value ===
+                'Other bank' &&
+              !els.bankOther
+                .value
+                .trim()
+            ) {
+
+              showToast(
+                'Specify bank'
+              );
+
+              els.bankOther
+                .focus();
+
+              return;
+            }
+
+            if (
               els.category
                 .value ===
                 'Other' &&
@@ -4219,6 +4589,9 @@
 
               payment:
                 resolvedPayment(),
+
+              bank:
+                resolvedBank(),
 
               category:
                 resolvedCategory(),
@@ -4759,6 +5132,7 @@
               'amount',
               'currency',
               'payment',
+              'bank',
               'category',
               'note',
               'createdAt',
@@ -4789,6 +5163,7 @@
                     state.settings
                       .currency,
                     expense.payment,
+                    expense.bank || '',
                     expense.category,
                     expense.note,
                     expense.createdAt,
