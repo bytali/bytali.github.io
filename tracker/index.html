@@ -1017,6 +1017,38 @@
       gap: 8px;
     }
 
+    .budget-insights {
+      display: grid;
+      gap: 12px;
+    }
+
+    .health-budget-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .health-budget-top strong {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 24px;
+      letter-spacing: -.03em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .health-budget-top span {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .health-progress {
+      margin: 14px 0 8px;
+    }
+
     /* ------------------------------
        BOTTOM NAV
     ------------------------------ */
@@ -1216,7 +1248,8 @@
           repeat(4, minmax(0, 1fr));
       }
 
-      .analytics-pair {
+      .analytics-pair,
+      .budget-insights {
         display: grid;
 
         grid-template-columns:
@@ -1283,17 +1316,22 @@
         grid-template-columns: 1fr;
       }
 
+      #view-home > .budget-insights,
       #view-home > .trend-title,
       #view-home > .trend-card {
         grid-column: 1 / -1;
       }
 
-      #view-home > .trend-title {
+      #view-home > .budget-insights {
         grid-row: 4;
       }
 
-      #view-home > .trend-card {
+      #view-home > .trend-title {
         grid-row: 5;
+      }
+
+      #view-home > .trend-card {
+        grid-row: 6;
       }
 
       .hero {
@@ -1445,7 +1483,7 @@
         <div class="hero-top">
 
           <div>
-            <div class="eyebrow">Spent</div>
+            <div class="eyebrow">Total spent</div>
             <div
               class="hero-amount"
               id="spentKpi"
@@ -1486,7 +1524,7 @@
           </div>
 
           <strong id="remainingKpi">—</strong>
-          <span>Left</span>
+          <span>General left</span>
 
         </div>
 
@@ -1527,7 +1565,7 @@
           </div>
 
           <strong id="safeDaily">—</strong>
-          <span>Safe/day</span>
+          <span>General/day</span>
 
         </div>
 
@@ -1572,6 +1610,49 @@
           <section class="card">
             <div
               id="paymentBreakdown"
+              class="breakdown"
+            ></div>
+          </section>
+
+        </div>
+
+      </div>
+
+      <div class="budget-insights">
+
+        <div>
+
+          <div class="section-title">
+            <h2>Health budget</h2>
+          </div>
+
+          <section class="card">
+            <div class="health-budget-top">
+              <strong id="healthBudgetSpent">—</strong>
+              <span id="healthBudgetLimit">No limit</span>
+            </div>
+
+            <div class="progress health-progress">
+              <span id="healthBudgetProgress"></span>
+            </div>
+
+            <div
+              id="healthBudgetStatus"
+              class="pace"
+            >—</div>
+          </section>
+
+        </div>
+
+        <div>
+
+          <div class="section-title">
+            <h2>Credit card banks</h2>
+          </div>
+
+          <section class="card">
+            <div
+              id="creditCardBankBreakdown"
               class="breakdown"
             ></div>
           </section>
@@ -1910,20 +1991,41 @@
           style="margin-top:12px"
         >
 
-          <div class="field">
+          <div class="two">
 
-            <label for="budget">
-              Monthly limit
-            </label>
+            <div class="field">
 
-            <input
-              id="budget"
-              type="number"
-              min="0"
-              step="0.01"
-              inputmode="decimal"
-              placeholder="0.00"
-            />
+              <label for="budget">
+                General limit
+              </label>
+
+              <input
+                id="budget"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="0.00"
+              />
+
+            </div>
+
+            <div class="field">
+
+              <label for="healthBudget">
+                Health limit
+              </label>
+
+              <input
+                id="healthBudget"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="0.00"
+              />
+
+            </div>
 
           </div>
 
@@ -2312,6 +2414,21 @@
         paymentBreakdown:
           $('paymentBreakdown'),
 
+        creditCardBankBreakdown:
+          $('creditCardBankBreakdown'),
+
+        healthBudgetSpent:
+          $('healthBudgetSpent'),
+
+        healthBudgetLimit:
+          $('healthBudgetLimit'),
+
+        healthBudgetProgress:
+          $('healthBudgetProgress'),
+
+        healthBudgetStatus:
+          $('healthBudgetStatus'),
+
         sixMonthTrend:
           $('sixMonthTrend'),
 
@@ -2386,6 +2503,9 @@
 
         budget:
           $('budget'),
+
+        healthBudget:
+          $('healthBudget'),
 
         budgetMonthLabel:
           $('budgetMonthLabel'),
@@ -2610,7 +2730,8 @@
 
           settings: {
             currency: 'PHP',
-            budgets: {}
+            budgets: {},
+            healthBudgets: {}
           },
 
           expenses: []
@@ -2669,6 +2790,41 @@
               Number(amount) >= 0
             ) {
               cleanedBudgets[
+                month
+              ] =
+                Number(amount);
+            }
+          }
+        );
+
+        const healthBudgets =
+          settings.healthBudgets &&
+          typeof settings.healthBudgets ===
+            'object'
+
+            ? settings.healthBudgets
+
+            : {};
+
+        const cleanedHealthBudgets = {};
+
+        Object.entries(
+          healthBudgets
+        ).forEach(
+          ([month, amount]) => {
+
+            if (
+              /^\d{4}-\d{2}$/.test(
+                month
+              ) &&
+
+              Number.isFinite(
+                Number(amount)
+              ) &&
+
+              Number(amount) >= 0
+            ) {
+              cleanedHealthBudgets[
                 month
               ] =
                 Number(amount);
@@ -2809,7 +2965,10 @@
                 : 'PHP',
 
             budgets:
-              cleanedBudgets
+              cleanedBudgets,
+
+            healthBudgets:
+              cleanedHealthBudgets
           },
 
           expenses:
@@ -3294,10 +3453,39 @@
         const totalSpent =
           sum(items);
 
+        const healthItems =
+          items.filter(
+            item =>
+              item.category ===
+              'Health'
+          );
+
+        const generalItems =
+          items.filter(
+            item =>
+              item.category !==
+              'Health'
+          );
+
+        const healthSpent =
+          sum(healthItems);
+
+        const generalSpent =
+          sum(generalItems);
+
         const budget =
           Number(
             state.settings
               .budgets[
+                month
+              ] ||
+            0
+          );
+
+        const healthBudget =
+          Number(
+            state.settings
+              .healthBudgets[
                 month
               ] ||
             0
@@ -3328,14 +3516,28 @@
         const remaining =
           budget > 0
             ? budget -
-              totalSpent
+              generalSpent
             : 0;
 
         const percentage =
           budget > 0
             ? (
-                totalSpent /
+                generalSpent /
                 budget
+              ) * 100
+            : 0;
+
+        const healthRemaining =
+          healthBudget > 0
+            ? healthBudget -
+              healthSpent
+            : 0;
+
+        const healthPercentage =
+          healthBudget > 0
+            ? (
+                healthSpent /
+                healthBudget
               ) * 100
             : 0;
 
@@ -3356,6 +3558,9 @@
         els.budget.value =
           budget || '';
 
+        els.healthBudget.value =
+          healthBudget || '';
+
         els.spentKpi
           .textContent =
             money(
@@ -3364,13 +3569,9 @@
 
         els.spentHint
           .textContent =
-            `${items.length} ` +
-            `item` +
-            (
-              items.length === 1
-                ? ''
-                : 's'
-            );
+            `General · ${shortMoney(
+              generalSpent
+            )}`;
 
         els.remainingKpi
           .textContent =
@@ -3400,7 +3601,98 @@
           .textContent =
             currencySymbol();
 
-        /* BUDGET */
+        /* HEALTH BUDGET */
+
+        els.healthBudgetSpent
+          .textContent =
+            money(
+              healthSpent
+            );
+
+        if (healthBudget > 0) {
+
+          els.healthBudgetLimit
+            .textContent =
+              `of ${money(
+                healthBudget
+              )}`;
+
+          els.healthBudgetProgress
+            .style.width =
+              `${Math.min(
+                100,
+                Math.max(
+                  0,
+                  healthPercentage
+                )
+              )}%`;
+
+          if (healthPercentage > 100) {
+
+            els.healthBudgetProgress
+              .style.background =
+                'var(--bad)';
+
+            els.healthBudgetStatus
+              .className =
+                'pace bad';
+
+            els.healthBudgetStatus
+              .textContent =
+                `${money(
+                  Math.abs(
+                    healthRemaining
+                  )
+                )} over`;
+
+          } else {
+
+            els.healthBudgetProgress
+              .style.background =
+                'var(--good)';
+
+            els.healthBudgetStatus
+              .className =
+                'pace good';
+
+            els.healthBudgetStatus
+              .textContent =
+                `${money(
+                  Math.max(
+                    0,
+                    healthRemaining
+                  )
+                )} left · ${Math.round(
+                  healthPercentage
+                )}% used`;
+          }
+
+        } else {
+
+          els.healthBudgetLimit
+            .textContent =
+              'No limit';
+
+          els.healthBudgetProgress
+            .style.width =
+              '0%';
+
+          els.healthBudgetProgress
+            .style.background =
+              'var(--good)';
+
+          els.healthBudgetStatus
+            .className =
+              'pace';
+
+          els.healthBudgetStatus
+            .textContent =
+              healthSpent > 0
+                ? 'Set Health limit in More'
+                : 'No Health spending';
+        }
+
+        /* GENERAL BUDGET */
 
         if (budget > 0) {
 
@@ -3568,6 +3860,25 @@
           els.paymentBreakdown,
           items,
           'payment'
+        );
+
+        renderBreakdown(
+          els.creditCardBankBreakdown,
+          items
+            .filter(
+              item =>
+                item.payment ===
+                'Credit card'
+            )
+            .map(
+              item => ({
+                ...item,
+                bank:
+                  item.bank ||
+                  'Unspecified bank'
+              })
+            ),
+          'bank'
         );
 
         renderSixMonthTrend(
@@ -4753,11 +5064,22 @@
                 0
               );
 
+            const healthValue =
+              Number(
+                els.healthBudget
+                  .value ||
+                0
+              );
+
             if (
               !Number.isFinite(
                 value
               ) ||
-              value < 0
+              value < 0 ||
+              !Number.isFinite(
+                healthValue
+              ) ||
+              healthValue < 0
             ) {
 
               showToast(
@@ -4786,10 +5108,29 @@
                   value;
             }
 
+            if (
+              healthValue === 0
+            ) {
+
+              delete state
+                .settings
+                .healthBudgets[
+                  month
+                ];
+
+            } else {
+
+              state.settings
+                .healthBudgets[
+                  month
+                ] =
+                  healthValue;
+            }
+
             saveState(
-              value
-                ? 'Budget saved'
-                : 'Budget removed'
+              value || healthValue
+                ? 'Budgets saved'
+                : 'Budgets removed'
             );
 
             render();
@@ -5419,6 +5760,17 @@
                   ...pendingImport
                     .settings
                     .budgets
+                };
+
+              state.settings
+                .healthBudgets = {
+
+                  ...state.settings
+                    .healthBudgets,
+
+                  ...pendingImport
+                    .settings
+                    .healthBudgets
                 };
 
               state.settings
