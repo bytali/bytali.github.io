@@ -422,58 +422,102 @@
     }
 
     /* ------------------------------
-       STATS
+       BUDGET STATS
     ------------------------------ */
 
-    .stats {
+    .budget-overview {
       display: grid;
-
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-      gap: 10px;
+      gap: 12px;
     }
 
-    .stat {
+    .budget-group {
+      display: grid;
       min-width: 0;
-
-      padding: 14px;
-
-      border: 1px solid var(--line);
-      border-radius: 18px;
-
-      background: var(--panel);
+      gap: 6px;
     }
 
-    .stat .mini-icon {
+    .budget-card {
+      display: grid;
+      min-width: 0;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .budget-card-top {
       display: flex;
-
-      margin-bottom: 10px;
-
-      color: var(--muted);
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .stat strong {
+    .budget-card-top > div {
+      min-width: 0;
+    }
+
+    .budget-card-amount {
       display: block;
-
+      margin-top: 4px;
       overflow: hidden;
-
-      font-size: 18px;
-
-      letter-spacing: -.025em;
-
+      font-size: clamp(26px, 7vw, 38px);
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -.045em;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .stat span {
-      display: block;
-
-      margin-top: 3px;
-
+    .budget-card-side {
+      flex: 0 0 auto;
       color: var(--muted);
-
       font-size: 11px;
+      text-align: right;
+    }
+
+    .budget-card-side strong {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .budget-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .budget-mini-stat {
+      min-width: 0;
+      padding: 11px;
+      border-radius: 14px;
+      background: var(--panel-2);
+    }
+
+    .budget-mini-stat strong {
+      display: block;
+      overflow: hidden;
+      font-size: 15px;
+      letter-spacing: -.02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .budget-mini-stat span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .budget-status-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .budget-status-line > strong {
+      flex: 0 0 auto;
+      font-size: 12px;
     }
 
     /* ------------------------------
@@ -1017,36 +1061,12 @@
       gap: 8px;
     }
 
-    .budget-insights {
-      display: grid;
-      gap: 12px;
+    .budget-progress {
+      margin: 2px 0 0;
     }
 
-    .health-budget-top {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .health-budget-top strong {
+    .credit-bank-panel {
       min-width: 0;
-      overflow: hidden;
-      font-size: 24px;
-      letter-spacing: -.03em;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .health-budget-top span {
-      flex: 0 0 auto;
-      color: var(--muted);
-      font-size: 11px;
-      text-align: right;
-    }
-
-    .health-progress {
-      margin: 14px 0 8px;
     }
 
     /* ------------------------------
@@ -1243,13 +1263,12 @@
     }
 
     @media (min-width: 700px) {
-      .stats {
+      .budget-overview {
         grid-template-columns:
-          repeat(4, minmax(0, 1fr));
+          repeat(3, minmax(0, 1fr));
       }
 
-      .analytics-pair,
-      .budget-insights {
+      .analytics-pair {
         display: grid;
 
         grid-template-columns:
@@ -1292,12 +1311,9 @@
         align-items: start;
       }
 
-      #view-home > .hero {
-        grid-column: span 5;
-      }
-
-      #view-home > .stats {
-        grid-column: span 7;
+      #view-home > .budget-overview {
+        grid-column: 1 / -1;
+        grid-row: 1;
       }
 
       #view-home > .daily-title {
@@ -1316,13 +1332,13 @@
         grid-template-columns: 1fr;
       }
 
-      #view-home > .budget-insights,
+      #view-home > .credit-bank-panel,
       #view-home > .trend-title,
       #view-home > .trend-card {
         grid-column: 1 / -1;
       }
 
-      #view-home > .budget-insights {
+      #view-home > .credit-bank-panel {
         grid-row: 4;
       }
 
@@ -1334,17 +1350,8 @@
         grid-row: 6;
       }
 
-      .hero {
-        min-height: 100%;
-        padding: 24px;
-      }
-
-      .hero-amount {
-        font-size: clamp(42px, 4.5vw, 64px);
-      }
-
-      .stat {
-        padding: 16px;
+      .budget-card {
+        padding: 20px;
       }
 
       .daily-chart {
@@ -1478,94 +1485,136 @@
       data-view-panel="home"
     >
 
-      <section class="card hero">
+      <div class="budget-overview">
 
-        <div class="hero-top">
+        <div class="budget-group">
 
-          <div>
-            <div class="eyebrow">Total spent</div>
-            <div
-              class="hero-amount"
-              id="spentKpi"
-            >
-              —
+          <div class="section-title">
+            <h2>Main / Overall</h2>
+          </div>
+
+          <section class="card budget-card">
+
+            <div class="budget-card-top">
+              <div>
+                <div class="eyebrow">Total spent</div>
+                <strong
+                  class="budget-card-amount"
+                  id="spentKpi"
+                >—</strong>
+              </div>
             </div>
-          </div>
 
-          <div class="hero-side">
-            <strong id="budgetPercent">—</strong>
-            <span id="spentHint">0</span>
-          </div>
+            <div class="budget-stat-grid">
+              <div class="budget-mini-stat">
+                <strong id="dailyAvgKpi">—</strong>
+                <span>Daily average</span>
+              </div>
 
-        </div>
+              <div class="budget-mini-stat">
+                <strong id="projectedKpi">—</strong>
+                <span>Projected</span>
+              </div>
+            </div>
 
-        <div class="progress">
-          <span id="budgetProgress"></span>
-        </div>
-
-        <div
-          id="budgetStatus"
-          class="pace"
-        >
-          —
-        </div>
-
-      </section>
-
-      <div class="stats">
-
-        <div class="stat">
-
-          <div class="mini-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"/>
-              <path d="M16 13h4M5 7V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-          </div>
-
-          <strong id="remainingKpi">—</strong>
-          <span>General left</span>
+          </section>
 
         </div>
 
-        <div class="stat">
+        <div class="budget-group">
 
-          <div class="mini-icon">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"/>
-              <path d="M12 7v5l3 2"/>
-            </svg>
+          <div class="section-title">
+            <h2>General</h2>
           </div>
 
-          <strong id="dailyAvgKpi">—</strong>
-          <span>Daily</span>
+          <section class="card budget-card">
+
+            <div class="budget-card-top">
+              <div>
+                <div class="eyebrow">Spent</div>
+                <strong
+                  class="budget-card-amount"
+                  id="generalBudgetSpent"
+                >—</strong>
+              </div>
+
+              <div class="budget-card-side">
+                <strong id="budgetPercent">—</strong>
+                <span id="generalBudgetLimit">No limit</span>
+              </div>
+            </div>
+
+            <div class="progress budget-progress">
+              <span id="budgetProgress"></span>
+            </div>
+
+            <div class="budget-status-line">
+              <div id="budgetStatus" class="pace">—</div>
+            </div>
+
+            <div class="budget-stat-grid">
+              <div class="budget-mini-stat">
+                <strong id="remainingKpi">—</strong>
+                <span>General left</span>
+              </div>
+
+              <div class="budget-mini-stat">
+                <strong id="safeDaily">—</strong>
+                <span>General/day</span>
+              </div>
+            </div>
+
+          </section>
 
         </div>
 
-        <div class="stat">
+        <div class="budget-group">
 
-          <div class="mini-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 18 10 12l4 4 6-8"/>
-              <path d="M16 8h4v4"/>
-            </svg>
+          <div class="section-title">
+            <h2>Health</h2>
           </div>
 
-          <strong id="projectedKpi">—</strong>
-          <span>Projected</span>
+          <section class="card budget-card">
 
-        </div>
+            <div class="budget-card-top">
+              <div>
+                <div class="eyebrow">Spent</div>
+                <strong
+                  class="budget-card-amount"
+                  id="healthBudgetSpent"
+                >—</strong>
+              </div>
 
-        <div class="stat">
+              <div class="budget-card-side">
+                <strong id="healthBudgetPercent">—</strong>
+                <span id="healthBudgetLimit">No limit</span>
+              </div>
+            </div>
 
-          <div class="mini-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </div>
+            <div class="progress budget-progress">
+              <span id="healthBudgetProgress"></span>
+            </div>
 
-          <strong id="safeDaily">—</strong>
-          <span>General/day</span>
+            <div class="budget-status-line">
+              <div
+                id="healthBudgetStatus"
+                class="pace"
+              >—</div>
+            </div>
+
+            <div class="budget-stat-grid">
+              <div class="budget-mini-stat">
+                <strong id="healthRemainingKpi">—</strong>
+                <span>Health left</span>
+              </div>
+
+              <div class="budget-mini-stat">
+                <strong id="healthSafeDaily">—</strong>
+                <span>Health/day</span>
+              </div>
+            </div>
+
+          </section>
 
         </div>
 
@@ -1618,46 +1667,18 @@
 
       </div>
 
-      <div class="budget-insights">
+      <div class="credit-bank-panel">
 
-        <div>
-
-          <div class="section-title">
-            <h2>Health budget</h2>
-          </div>
-
-          <section class="card">
-            <div class="health-budget-top">
-              <strong id="healthBudgetSpent">—</strong>
-              <span id="healthBudgetLimit">No limit</span>
-            </div>
-
-            <div class="progress health-progress">
-              <span id="healthBudgetProgress"></span>
-            </div>
-
-            <div
-              id="healthBudgetStatus"
-              class="pace"
-            >—</div>
-          </section>
-
+        <div class="section-title">
+          <h2>Credit card banks</h2>
         </div>
 
-        <div>
-
-          <div class="section-title">
-            <h2>Credit card banks</h2>
-          </div>
-
-          <section class="card">
-            <div
-              id="creditCardBankBreakdown"
-              class="breakdown"
-            ></div>
-          </section>
-
-        </div>
+        <section class="card">
+          <div
+            id="creditCardBankBreakdown"
+            class="breakdown"
+          ></div>
+        </section>
 
       </div>
 
@@ -2381,8 +2402,11 @@
         spentKpi:
           $('spentKpi'),
 
-        spentHint:
-          $('spentHint'),
+        generalBudgetSpent:
+          $('generalBudgetSpent'),
+
+        generalBudgetLimit:
+          $('generalBudgetLimit'),
 
         remainingKpi:
           $('remainingKpi'),
@@ -2420,6 +2444,9 @@
         healthBudgetSpent:
           $('healthBudgetSpent'),
 
+        healthBudgetPercent:
+          $('healthBudgetPercent'),
+
         healthBudgetLimit:
           $('healthBudgetLimit'),
 
@@ -2428,6 +2455,12 @@
 
         healthBudgetStatus:
           $('healthBudgetStatus'),
+
+        healthRemainingKpi:
+          $('healthRemainingKpi'),
+
+        healthSafeDaily:
+          $('healthSafeDaily'),
 
         sixMonthTrend:
           $('sixMonthTrend'),
@@ -3567,17 +3600,28 @@
               totalSpent
             );
 
-        els.spentHint
+        els.generalBudgetSpent
           .textContent =
-            `General · ${shortMoney(
+            money(
               generalSpent
-            )}`;
+            );
+
+        els.generalBudgetLimit
+          .textContent =
+            budget > 0
+              ? `of ${money(
+                  budget
+                )}`
+              : 'No limit';
 
         els.remainingKpi
           .textContent =
             budget > 0
               ? money(
-                  remaining
+                  Math.max(
+                    0,
+                    remaining
+                  )
                 )
               : '—';
 
@@ -3609,7 +3653,24 @@
               healthSpent
             );
 
+        els.healthRemainingKpi
+          .textContent =
+            healthBudget > 0
+              ? money(
+                  Math.max(
+                    0,
+                    healthRemaining
+                  )
+                )
+              : '—';
+
         if (healthBudget > 0) {
+
+          els.healthBudgetPercent
+            .textContent =
+              `${Math.round(
+                healthPercentage
+              )}%`;
 
           els.healthBudgetLimit
             .textContent =
@@ -3662,12 +3723,14 @@
                     0,
                     healthRemaining
                   )
-                )} left · ${Math.round(
-                  healthPercentage
-                )}% used`;
+                )} left`;
           }
 
         } else {
+
+          els.healthBudgetPercent
+            .textContent =
+              '—';
 
           els.healthBudgetLimit
             .textContent =
@@ -3691,6 +3754,31 @@
                 ? 'Set Health limit in More'
                 : 'No Health spending';
         }
+
+        const healthSafe =
+          healthBudget > 0 &&
+          healthRemaining > 0 &&
+          month >=
+            currentMonthLocal()
+
+            ? healthRemaining /
+              remainingDaysIncludingToday(
+                month
+              )
+
+            : 0;
+
+        els.healthSafeDaily
+          .textContent =
+            healthBudget > 0 &&
+            month >=
+              currentMonthLocal()
+
+              ? money(
+                  healthSafe
+                )
+
+              : '—';
 
         /* GENERAL BUDGET */
 
@@ -3826,7 +3914,7 @@
 
           els.budgetPercent
             .textContent =
-              'No limit';
+              '—';
 
           els.budgetProgress
             .style.width =
