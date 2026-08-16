@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-16 — Percentage allocation update
+
+- Added percentage-based category allocations tied to monthly recorded funds.
+- Kept the manual amount allocation input for fixed budgets.
+- Percentage and amount inputs synchronize while editing; the edited field determines the saved mode.
+- Percentage allocations automatically recalculate when monthly fund entries change.
+- Added `settings.categoryBudgetPercents` additively while preserving schema v1 and existing amount budgets.
+- Updated copy, clear, edit, delete, full backup, Budget + funds backup, restore, and merge behavior for both allocation modes.
+- Added percentage-mode labels to Budget and Budget-vs-Actual analytics.
+- Added waiting-for-funds handling when a percentage allocation is saved before monthly funds are recorded.
+- Bumped the offline app-shell cache so installed copies receive the updated `index.html`.
+
 ## 2026-08-16 — Funds + installable web app update
 
 - Added monthly funds/inflow tracking in Budget.

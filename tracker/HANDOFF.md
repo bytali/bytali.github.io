@@ -21,7 +21,7 @@ There is no build process, backend, account system, package manager, database, a
 The app now combines three concepts for each selected month:
 
 1. **Funds received** — money available to plan, such as salary or side income.
-2. **Allocated budget** — category amounts assigned for the month.
+2. **Allocated budget** — category allocations assigned either as a percentage of monthly funds or as a fixed manual amount.
 3. **Actual expenses** — money actually spent.
 
 The central planning equation is:
@@ -32,10 +32,19 @@ unallocated = funds received - allocated category budgets
 
 If the result is negative, the plan is **overallocated**.
 
+Category allocations support two modes:
+
+```text
+percentage allocation amount = funds received × allocation percent / 100
+fixed allocation amount = manually entered amount
+```
+
+Percentage allocations are dynamic: when fund entries for that month change, the calculated budget amount changes with them. Fixed/manual allocations do not change when funds change. The editor keeps both Percentage and Manual amount inputs visible; the field edited last determines which mode is saved.
+
 Category budget status remains:
 
 ```text
-category remaining = category budget - category spending
+category remaining = calculated/fixed category budget - category spending
 ```
 
 Total monthly actual spending is independent of the plan:
@@ -125,11 +134,19 @@ Users can still create category budgets before adding fund entries. In that case
 
 ## MONTHLY CATEGORY BUDGETS
 
-Category budgets are stored under:
+Fixed/manual category budgets are stored under:
 
 ```text
 settings.categoryBudgets
 ```
+
+Percentage-based allocations are stored separately under:
+
+```text
+settings.categoryBudgetPercents
+```
+
+Keeping percentage targets separate preserves compatibility with older amount-only schema-v1 data while allowing percentage allocations to recalculate from monthly funds. If the same category is encountered in both maps during sanitization, the percentage allocation is treated as authoritative.
 
 Example:
 
@@ -145,6 +162,20 @@ Example:
   }
 }
 ```
+
+Example percentage allocations:
+
+```json
+{
+  "2026-08": {
+    "Groceries": 15,
+    "Transport": 8,
+    "Investment": 10
+  }
+}
+```
+
+If August funds total 50,000, those examples calculate to 7,500 for Groceries, 4,000 for Transport, and 5,000 for Investment. Total percentages may exceed 100 across categories; the dashboard then reports an overallocated month. Each individual percentage is limited to 0–100.
 
 Built-in expense categories:
 
@@ -284,8 +315,13 @@ Approximate current state:
     "healthBudgets": {},
     "categoryBudgets": {
       "2026-08": {
-        "Groceries": 12000,
         "Mortgage": 25000
+      }
+    },
+    "categoryBudgetPercents": {
+      "2026-08": {
+        "Groceries": 15,
+        "Investment": 10
       }
     },
     "hideAmounts": false
@@ -347,7 +383,8 @@ Older bank-based expenses without a bank remain editable without forcing the use
 Contains:
 
 - settings
-- category budgets
+- fixed category budgets
+- percentage category allocations
 - legacy budget fields
 - privacy setting
 - expenses
@@ -367,7 +404,8 @@ budgets
 
 The name is retained for compatibility, but this scope now includes:
 
-- category budgets
+- fixed category budgets
+- percentage category allocations
 - legacy budget maps
 - currency
 - inflows/funds
@@ -380,7 +418,7 @@ Merge:
 
 - expense conflicts use newer `updatedAt`
 - fund conflicts use newer `updatedAt`
-- category budget maps merge by month/category
+- fixed and percentage category-allocation maps merge by month/category; percentage mode is authoritative when both modes collide
 - older compatible data is retained where possible
 
 Replace scope:
@@ -445,7 +483,9 @@ Preserve these rules in future work:
 12. Editing must not create duplicates.
 13. Custom payment/category/bank/fund-source values must survive editing and backup/restore.
 14. Keep the app static-host friendly.
-15. Do not add cloud sync, bank sync, telemetry, or a backend unless explicitly required.
+15. Percentage allocations must remain dynamic against the selected month’s recorded funds.
+16. Manual/fixed allocations must remain fixed when funds change.
+17. Do not add cloud sync, bank sync, telemetry, or a backend unless explicitly required.
 
 ## RESPONSIVE CHECKLIST
 
@@ -466,6 +506,7 @@ Pay special attention to:
 - six Home summary cards
 - fund entry rows
 - custom fund source field
+- percentage + manual allocation inputs
 - category budget rows
 - fixed five-button bottom navigation
 - safe-area insets
@@ -498,7 +539,15 @@ Pay special attention to:
 - Plan greater than funds shows overallocated state
 - Editing a category budget updates unallocated immediately
 - Clearing a month plan does not delete funds or expenses
-- Copy previous month copies only category plan, not funds
+- Copy previous month copies fixed and percentage allocation modes, not funds
+- Percentage allocation calculates from current month funds
+- Percentage allocation recalculates when a fund entry changes
+- Percentage allocation can be saved before funds exist and activates when funds are later recorded
+- Editing the manual amount switches the category to fixed allocation mode
+- Editing the percentage switches the category to dynamic percentage mode
+- Deleting a category allocation removes either mode
+- Mixed fixed + percentage allocations total correctly
+- Total allocations above recorded funds show overallocated state
 
 ### Expense / budget analytics
 

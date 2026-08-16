@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'pocket-plan-shell-v1';
+const CACHE_NAME = 'pocket-plan-shell-v2';
 const APP_SHELL = [
   './',
   './index.html',

@@ -5,7 +5,7 @@ Pocket Plan is a static, local-first monthly budget, funds, and expense tracker 
 ## What it tracks
 
 - Money received each month: salary, payout/bonus, side income, reimbursement, miscellaneous, or custom sources
-- Category allocations for the month
+- Category allocations for the month, either as a percentage of monthly funds or a fixed manual amount
 - Unallocated or overallocated funds
 - Expenses by category, payment method, and credit-card bank
 - Budget vs actual spending and spending pace
@@ -29,5 +29,14 @@ The package includes a web app manifest, Apple touch icon, Android icons includi
 ## Deployment
 
 Publish the contents of this folder as-is. No build step is required.
+
+## Allocation modes
+
+In **Budget → Monthly plan**, enter either:
+
+- **Allocation % of funds** for a dynamic allocation that automatically follows the month’s recorded funds, or
+- **Manual amount** for a fixed allocation that stays unchanged when funds change.
+
+Both inputs stay visible and synchronize for convenience. The field you edit determines which mode is saved. Existing amount-only budgets remain compatible.
 
 Main file: `index.html`
