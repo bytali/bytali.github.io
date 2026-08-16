@@ -21,8 +21,9 @@ There is no build process, backend, account system, package manager, database, a
 The app now combines three concepts for each selected month:
 
 1. **Funds received** — money available to plan, such as salary or side income.
-2. **Allocated budget** — category allocations assigned either as a percentage of monthly funds or as a fixed manual amount.
-3. **Actual expenses** — money actually spent.
+2. **Projected funds** — an optional expected total for the selected month, used only for planning comparisons.
+3. **Allocated budget** — category allocations assigned either as a percentage of monthly funds or as a fixed manual amount.
+4. **Actual expenses** — money actually spent.
 
 The central planning equation is:
 
@@ -39,7 +40,7 @@ percentage allocation amount = funds received × allocation percent / 100
 fixed allocation amount = manually entered amount
 ```
 
-Percentage allocations are dynamic: when fund entries for that month change, the calculated budget amount changes with them. Fixed/manual allocations do not change when funds change. The editor keeps both Percentage and Manual amount inputs visible; the field edited last determines which mode is saved.
+Percentage allocations are dynamic: when fund entries for that month change, the calculated budget amount changes with them. Fixed/manual allocations do not change when funds change. The editor keeps both Percentage and Manual amount inputs visible; the field edited last determines which mode is saved. A fixed amount shows its percentage against both current received funds and projected funds. The Budget screen also reports total allocation percentage against both bases.
 
 Category budget status remains:
 
@@ -106,6 +107,18 @@ Approximate record:
 ```
 
 Funds are additive to schema v1. Old localStorage and old backups without `inflows` sanitize to an empty array.
+
+### Projected funds
+
+Projected funds are stored as a month-level planning amount under `settings.projectedFunds`. They represent the expected **total** funds for the month, not an additional received-funds entry. They do not create inflows or expenses. Percentage-based category allocations are evaluated against current funds for the live plan and against projected funds for projected comparison totals.
+
+Example:
+
+```json
+{
+  "2026-08": 70000
+}
+```
 
 ### Budget screen fund behavior
 
@@ -177,6 +190,8 @@ Example percentage allocations:
 
 If August funds total 50,000, those examples calculate to 7,500 for Groceries, 4,000 for Transport, and 5,000 for Investment. Total percentages may exceed 100 across categories; the dashboard then reports an overallocated month. Each individual percentage is limited to 0–100.
 
+Optional category descriptions are stored under `settings.categoryBudgetDescriptions` by month and category. They are display/context metadata only and do not affect calculations. Updating a category that already has a budget for the selected month requires confirmation before overwrite.
+
 Built-in expense categories:
 
 - Food
@@ -186,6 +201,7 @@ Built-in expense categories:
 - Shopping
 - Health
 - Entertainment
+- Sports Leisure
 - Home
 - Investment
 - Mortgage
@@ -323,6 +339,14 @@ Approximate current state:
         "Groceries": 15,
         "Investment": 10
       }
+    },
+    "categoryBudgetDescriptions": {
+      "2026-08": {
+        "Bills": "electricity / water / internet"
+      }
+    },
+    "projectedFunds": {
+      "2026-08": 70000
     },
     "hideAmounts": false
   },
@@ -506,7 +530,8 @@ Pay special attention to:
 - six Home summary cards
 - fund entry rows
 - custom fund source field
-- percentage + manual allocation inputs
+- percentage + manual allocation inputs and current/projected conversions
+- mobile Budget vs actual accordions
 - category budget rows
 - fixed five-button bottom navigation
 - safe-area insets
@@ -547,6 +572,11 @@ Pay special attention to:
 - Editing the percentage switches the category to dynamic percentage mode
 - Deleting a category allocation removes either mode
 - Mixed fixed + percentage allocations total correctly
+- Projected funds save/clear by month without creating an inflow
+- Fixed amount shows percentage against current and projected funds
+- Total allocated percentage is correct for current and projected funds
+- Category descriptions save/edit/copy/clear/backup/restore correctly
+- Existing category save requires confirmation before update
 - Total allocations above recorded funds show overallocated state
 
 ### Expense / budget analytics
@@ -554,6 +584,8 @@ Pay special attention to:
 - Budgeted category under plan
 - Budgeted category over plan
 - Unbudgeted spending
+- Sports Leisure appears in expense and budget category pickers
+- Budget vs actual is compact/collapsible on mobile
 - Current-month fast pace warning
 - Spending greater than recorded funds
 - Six-month row handles months with funds but no plan/spend

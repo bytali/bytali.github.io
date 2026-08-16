@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-16 — Projected funds + budget detail update
+
+- Added projected monthly funds as a planning-only month total.
+- Added current-funds and projected-funds allocation percentages, including total percentage allocated for each base.
+- Fixed/manual category amounts now show percentage conversions against both current and projected funds.
+- Added optional monthly category descriptions and preserved them in copy, clear, backup, restore, and merge flows.
+- Added Sports Leisure as a built-in expense/budget category.
+- Changed Budget vs actual rows into compact accordions on mobile while keeping them expanded by default on larger screens.
+- Added confirmation before updating a category budget that already exists for the selected month.
+- Bumped the offline app-shell cache so installed copies can receive the updated shell.
+
 ## 2026-08-16 — Percentage allocation update
 
 - Added percentage-based category allocations tied to monthly recorded funds.
