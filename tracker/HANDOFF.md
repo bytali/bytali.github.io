@@ -2,7 +2,7 @@
 
 ## CURRENT VERSION
 
-Updated: 2026-08-16
+Updated: 2026-08-17
 
 Pocket Plan is a static, local-first monthly money tracker designed for GitHub Pages and modern mobile/desktop browsers.
 
@@ -40,7 +40,9 @@ percentage allocation amount = funds received × allocation percent / 100
 fixed allocation amount = manually entered amount
 ```
 
-Percentage allocations are dynamic: when fund entries for that month change, the calculated budget amount changes with them. Fixed/manual allocations do not change when funds change. The editor keeps both Percentage and Manual amount inputs visible; the field edited last determines which mode is saved. A fixed amount shows its percentage against both current received funds and projected funds. The Budget screen also reports total allocation percentage against both bases.
+Percentage allocations are dynamic: when fund entries for that month change, the calculated budget amount changes with them. Fixed/manual allocations do not change when funds change. The editor keeps both Percentage and Manual amount inputs visible; the field edited last determines which mode is saved. A fixed amount shows its percentage against both current received funds and projected funds. The Budget screen also reports total allocation percentage against both bases. Every Budget-screen card is wrapped in a native `details` accordion so users can independently show or hide KPI cards, Monthly funds, and Monthly plan.
+
+When projected funds are set for a month, **Save category budget is hard-blocked if the proposed projected-plan total would be equal to or greater than projected funds**. Validation treats an edit as replacement of that category's existing allocation, so the previous value is not double-counted. The existing duplicate-category confirmation is shown only after this limit validation passes.
 
 Category budget status remains:
 

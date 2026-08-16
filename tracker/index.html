@@ -240,6 +240,29 @@
     .row-actions svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; }
     .empty { padding: 28px 12px; color: var(--muted); font-size: 13px; text-align: center; }
 
+    .collapsible-card { padding: 0; overflow: hidden; }
+    .collapsible-card > details { min-width: 0; }
+    .collapsible-card > details > summary {
+      display: flex; min-height: 50px; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 14px 16px; list-style: none; cursor: pointer; user-select: none;
+    }
+    .collapsible-card > details > summary::-webkit-details-marker { display: none; }
+    .collapsible-card > details > summary::after {
+      content: 'Show'; flex: 0 0 auto; color: var(--muted); font-size: 10px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .collapsible-card > details[open] > summary::after { content: 'Hide'; }
+    .collapsible-card > details[open] > summary { border-bottom: 1px solid var(--line); }
+    .collapsible-card > details > summary strong { display: block; font-size: 14px; letter-spacing: 0; }
+    .collapsible-card > details > summary small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .collapsible-body { display: grid; gap: 12px; padding: 16px; }
+    .summary-card .collapsible-body { gap: 6px; padding-top: 14px; }
+    .summary-card .collapsible-body strong {
+      display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: clamp(23px, 7vw, 38px); line-height: 1.05; letter-spacing: -.045em;
+    }
+    .summary-card .collapsible-body small { color: var(--muted); font-size: 10px; }
+
     .budget-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .budget-edit-list { display: grid; gap: 8px; }
     .budget-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; border-radius: 15px; background: var(--panel-2); }
@@ -438,58 +461,66 @@
 
     <section class="view" id="view-budget" data-view-panel="budget">
       <div class="summary-grid">
-        <section class="card summary-card"><div class="eyebrow">Funds received</div><strong id="budgetUnbudgetedKpi">—</strong><small>Income & other inflows</small></section>
-        <section class="card summary-card"><div class="eyebrow">Projected funds</div><strong id="budgetProjectedFundsKpi">—</strong><small>Expected month total</small></section>
-        <section class="card summary-card"><div class="eyebrow">Allocated</div><strong id="budgetPlannedKpi">—</strong><small id="budgetPlannedPercentSub">Category plan total</small></section>
-        <section class="card summary-card" id="budgetRemainingCard"><div class="eyebrow">Unallocated</div><strong id="budgetRemainingKpi">—</strong><small id="budgetAllocationSub">Funds not assigned yet</small></section>
-        <section class="card summary-card"><div class="eyebrow">Spent</div><strong id="budgetSpentKpi">—</strong><small>Actual expenses this month</small></section>
+        <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Funds received</span></summary><div class="collapsible-body"><strong id="budgetUnbudgetedKpi">—</strong><small>Income & other inflows</small></div></details></section>
+        <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Projected funds</span></summary><div class="collapsible-body"><strong id="budgetProjectedFundsKpi">—</strong><small>Expected month total</small></div></details></section>
+        <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Allocated</span></summary><div class="collapsible-body"><strong id="budgetPlannedKpi">—</strong><small id="budgetPlannedPercentSub">Category plan total</small></div></details></section>
+        <section class="card summary-card collapsible-card" id="budgetRemainingCard"><details open><summary><span class="eyebrow">Unallocated</span></summary><div class="collapsible-body"><strong id="budgetRemainingKpi">—</strong><small id="budgetAllocationSub">Funds not assigned yet</small></div></details></section>
+        <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Spent</span></summary><div class="collapsible-body"><strong id="budgetSpentKpi">—</strong><small>Actual expenses this month</small></div></details></section>
       </div>
 
-      <section class="card funds-card">
-        <div class="section-title"><h2>Monthly funds</h2><span>Money available to plan</span></div>
-        <div id="allocationGuide" class="allocation-guide"></div>
-        <form id="projectedFundsForm" class="projection-box" autocomplete="off">
-          <div class="field"><label for="projectedFundsAmount">Projected funds (month total)</label><input id="projectedFundsAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div>
-          <div class="field-help">Expected total funds for this month. This is planning-only and does not create a received-funds entry.</div>
-          <div class="action-row"><button class="btn primary" type="submit">Save projected funds</button><button id="clearProjectedFundsBtn" class="btn" type="button">Clear</button></div>
-        </form>
-        <form id="fundForm" class="form-grid" autocomplete="off">
-          <input type="hidden" id="fundEditId" />
-          <div class="two">
-            <div class="field"><label for="fundSource">Source</label><select id="fundSource"><option>Salary</option><option>Payout / Bonus</option><option>Side income</option><option>Reimbursement</option><option>Miscellaneous</option><option>Other</option></select></div>
-            <div class="field" id="fundSourceOtherWrap" hidden><label for="fundSourceOther">Specify source</label><input id="fundSourceOther" maxlength="60" placeholder="e.g. Client project" /></div>
+      <section class="card funds-card collapsible-card">
+        <details open>
+          <summary><span><strong>Monthly funds</strong><small>Money available to plan</small></span></summary>
+          <div class="collapsible-body">
+            <div id="allocationGuide" class="allocation-guide"></div>
+            <form id="projectedFundsForm" class="projection-box" autocomplete="off">
+              <div class="field"><label for="projectedFundsAmount">Projected funds (month total)</label><input id="projectedFundsAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div>
+              <div class="field-help">Expected total funds for this month. This is planning-only and does not create a received-funds entry.</div>
+              <div class="action-row"><button class="btn primary" type="submit">Save projected funds</button><button id="clearProjectedFundsBtn" class="btn" type="button">Clear</button></div>
+            </form>
+            <form id="fundForm" class="form-grid" autocomplete="off">
+              <input type="hidden" id="fundEditId" />
+              <div class="two">
+                <div class="field"><label for="fundSource">Source</label><select id="fundSource"><option>Salary</option><option>Payout / Bonus</option><option>Side income</option><option>Reimbursement</option><option>Miscellaneous</option><option>Other</option></select></div>
+                <div class="field" id="fundSourceOtherWrap" hidden><label for="fundSourceOther">Specify source</label><input id="fundSourceOther" maxlength="60" placeholder="e.g. Client project" /></div>
+              </div>
+              <div class="two">
+                <div class="field"><label for="fundAmount">Amount received</label><input id="fundAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required /></div>
+                <div class="field"><label for="fundDate">Date received</label><input id="fundDate" type="date" required /></div>
+              </div>
+              <div class="field"><label for="fundNote">Note</label><input id="fundNote" maxlength="180" placeholder="Optional" /></div>
+              <div class="action-row"><button id="saveFundBtn" class="btn primary" type="submit">Add funds</button><button id="cancelFundEditBtn" class="btn" type="button" hidden>Cancel</button></div>
+            </form>
+            <div class="section-title"><h2>Funds received</h2><span id="fundCountLabel">0 entries</span></div>
+            <div id="fundList" class="fund-list"></div>
           </div>
-          <div class="two">
-            <div class="field"><label for="fundAmount">Amount received</label><input id="fundAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required /></div>
-            <div class="field"><label for="fundDate">Date received</label><input id="fundDate" type="date" required /></div>
-          </div>
-          <div class="field"><label for="fundNote">Note</label><input id="fundNote" maxlength="180" placeholder="Optional" /></div>
-          <div class="action-row"><button id="saveFundBtn" class="btn primary" type="submit">Add funds</button><button id="cancelFundEditBtn" class="btn" type="button" hidden>Cancel</button></div>
-        </form>
-        <div class="section-title"><h2>Funds received</h2><span id="fundCountLabel">0 entries</span></div>
-        <div id="fundList" class="fund-list"></div>
+        </details>
       </section>
 
-      <section class="card budget-editor">
-        <div class="section-title"><h2>Monthly plan</h2><span id="budgetMonthLabel"></span></div>
-        <div class="budget-toolbar" style="margin-top:12px"><button id="copyPreviousBudget" class="btn" type="button">Copy previous month</button><button id="clearMonthBudget" class="btn danger" type="button">Clear month plan</button></div>
-        <form id="categoryBudgetForm" class="form-grid" style="margin-top:12px">
-          <div class="two">
-            <div class="field"><label for="budgetCategory">Category</label><select id="budgetCategory"></select></div>
-            <div class="field" id="budgetCategoryCustomWrap" hidden><label for="budgetCategoryCustom">Custom category</label><input id="budgetCategoryCustom" maxlength="60" placeholder="e.g. Pets" /></div>
+      <section class="card budget-editor collapsible-card">
+        <details open>
+          <summary><span><strong>Monthly plan</strong><small id="budgetMonthLabel"></small></span></summary>
+          <div class="collapsible-body">
+            <div class="budget-toolbar"><button id="copyPreviousBudget" class="btn" type="button">Copy previous month</button><button id="clearMonthBudget" class="btn danger" type="button">Clear month plan</button></div>
+            <form id="categoryBudgetForm" class="form-grid">
+              <div class="two">
+                <div class="field"><label for="budgetCategory">Category</label><select id="budgetCategory"></select></div>
+                <div class="field" id="budgetCategoryCustomWrap" hidden><label for="budgetCategoryCustom">Custom category</label><input id="budgetCategoryCustom" maxlength="60" placeholder="e.g. Pets" /></div>
+              </div>
+              <div class="field"><label for="budgetDescription">Category description</label><input id="budgetDescription" maxlength="180" placeholder="e.g. electricity / water / internet" /></div>
+              <div class="two">
+                <div class="field"><label for="budgetPercent">Allocation % of current funds</label><input id="budgetPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="e.g. 15" /></div>
+                <div class="field"><label for="budgetAmount">Manual amount</label><input id="budgetAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div>
+              </div>
+              <div id="budgetAllocationModeHint" class="allocation-mode-hint">Enter a percentage for a dynamic allocation, or type an amount for a fixed allocation.</div>
+              <div id="budgetConversionHint" class="allocation-mode-hint">Current and projected percentage conversions will appear here.</div>
+              <div class="suggestion-box"><div><small>3-month actual average</small><strong id="budgetSuggestion">—</strong></div><button id="useBudgetSuggestion" class="btn compact" type="button">Use amount</button></div>
+              <button class="btn primary" type="submit">Save category budget</button>
+            </form>
+            <div class="section-title"><h2>Plan categories</h2><span>Tap edit to adjust</span></div>
+            <div id="budgetEditList" class="budget-edit-list"></div>
           </div>
-          <div class="field"><label for="budgetDescription">Category description</label><input id="budgetDescription" maxlength="180" placeholder="e.g. electricity / water / internet" /></div>
-          <div class="two">
-            <div class="field"><label for="budgetPercent">Allocation % of current funds</label><input id="budgetPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="e.g. 15" /></div>
-            <div class="field"><label for="budgetAmount">Manual amount</label><input id="budgetAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div>
-          </div>
-          <div id="budgetAllocationModeHint" class="allocation-mode-hint">Enter a percentage for a dynamic allocation, or type an amount for a fixed allocation.</div>
-          <div id="budgetConversionHint" class="allocation-mode-hint">Current and projected percentage conversions will appear here.</div>
-          <div class="suggestion-box"><div><small>3-month actual average</small><strong id="budgetSuggestion">—</strong></div><button id="useBudgetSuggestion" class="btn compact" type="button">Use amount</button></div>
-          <button class="btn primary" type="submit">Save category budget</button>
-        </form>
-        <div class="section-title" style="margin-top:18px"><h2>Plan categories</h2><span>Tap edit to adjust</span></div>
-        <div id="budgetEditList" class="budget-edit-list" style="margin-top:10px"></div>
+        </details>
       </section>
     </section>
 
@@ -842,6 +873,13 @@
     }
     function monthlyBudgets(month) { return monthlyBudgetsForFunds(month, totalFunds(month)); }
     function totalPlannedForFunds(month, fundsBase) { return Object.values(monthlyBudgetsForFunds(month, fundsBase)).reduce((a, b) => a + Number(b || 0), 0); }
+    function totalPlannedWithCandidateForFunds(month, fundsBase, category, basis, amount, percent) {
+      const budgets = monthlyBudgetsForFunds(month, fundsBase);
+      delete budgets[category];
+      const existingTotal = Object.values(budgets).reduce((a, b) => a + Number(b || 0), 0);
+      const candidate = basis === 'percent' ? (fundsBase > 0 ? fundsBase * Number(percent || 0) / 100 : 0) : Number(amount || 0);
+      return existingTotal + candidate;
+    }
     function budgetActuals(month, items = expensesForMonth(month)) {
       const budgets = monthlyBudgets(month);
       const explicit = new Set(Object.keys(budgets).filter(c => c !== LEGACY_GENERAL));
@@ -1442,10 +1480,29 @@
       const percent = Number(els.budgetPercent.value || 0);
       const description = els.budgetDescription.value.trim().slice(0, 180);
       if (!category || (els.budgetCategory.value === '__custom__' && category === LEGACY_GENERAL)) { showToast('Choose a valid category'); return; }
+      if (budgetAllocationBasis === 'percent') {
+        if (!Number.isFinite(percent) || percent < 0 || percent > 100) { showToast('Percentage must be from 0 to 100'); return; }
+      } else if (!Number.isFinite(amount) || amount < 0) {
+        showToast('Invalid budget amount');
+        return;
+      }
+
+      const projectedFunds = projectedFundsTotal(month);
+      const isSavingAllocation = budgetAllocationBasis === 'percent' ? percent > 0 : amount > 0;
+      if (projectedFunds > 0 && isSavingAllocation) {
+        const proposedProjectedTotal = totalPlannedWithCandidateForFunds(month, projectedFunds, category, budgetAllocationBasis, amount, percent);
+        if (proposedProjectedTotal >= projectedFunds) {
+          const remainingBeforeCandidate = Math.max(0, projectedFunds - (proposedProjectedTotal - (budgetAllocationBasis === 'percent' ? projectedFunds * percent / 100 : amount)));
+          showToast(`Cannot save: total plan must stay below projected funds (${money(projectedFunds)}).`);
+          els.budgetAllocationModeHint.innerHTML = `<strong style="color:var(--bad)">Projected funds limit.</strong> This save would allocate ${escapeHtml(money(proposedProjectedTotal))} of ${escapeHtml(money(projectedFunds))}. Keep the monthly plan below the projected total.${remainingBeforeCandidate > 0 ? ` Before this category, ${escapeHtml(money(remainingBeforeCandidate))} remains.` : ''}`;
+          (budgetAllocationBasis === 'percent' ? els.budgetPercent : els.budgetAmount).focus();
+          return;
+        }
+      }
+
       const categoryExists = Object.prototype.hasOwnProperty.call(state.settings.categoryBudgets[month] || {}, category) || Object.prototype.hasOwnProperty.call(monthlyBudgetPercents(month), category);
       if (categoryExists && !confirm(`A budget for ${budgetLabel(category)} already exists for ${monthLabel(month)}. Update it?`)) return;
       if (budgetAllocationBasis === 'percent') {
-        if (!Number.isFinite(percent) || percent < 0 || percent > 100) { showToast('Percentage must be from 0 to 100'); return; }
         state.settings.categoryBudgetPercents[month] ||= {};
         state.settings.categoryBudgets[month] ||= {};
         if (percent === 0) {
@@ -1456,7 +1513,6 @@
           delete state.settings.categoryBudgets[month][category];
         }
       } else {
-        if (!Number.isFinite(amount) || amount < 0) { showToast('Invalid budget amount'); return; }
         state.settings.categoryBudgets[month] ||= {};
         state.settings.categoryBudgetPercents[month] ||= {};
         if (amount === 0) {

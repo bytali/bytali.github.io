@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-17 — Budget card accordions + projected-funds save guard
+
+- Added native show/hide accordions to every card on the Budget screen, including KPI cards, Monthly funds, and Monthly plan.
+- Added a hard guard on Save category budget when projected funds are set: the proposed projected-plan total must remain strictly below the projected monthly funds.
+- The guard correctly replaces an existing category allocation during validation instead of double-counting it.
+- Kept the existing confirmation step for updating an already-existing category budget after validation passes.
+- Bumped the offline app-shell cache for installed PWA updates.
+
 ## 2026-08-16 — Projected funds + budget detail update
 
 - Added projected monthly funds as a planning-only month total.
