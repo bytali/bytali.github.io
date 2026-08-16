@@ -265,8 +265,13 @@
 
     .budget-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .budget-edit-list { display: grid; gap: 8px; }
-    .budget-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; border-radius: 15px; background: var(--panel-2); }
+    .budget-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; border-radius: 15px; background: var(--panel-2); transition: opacity .12s ease, transform .12s ease; }
+    .budget-edit-row.dragging { opacity: .55; transform: scale(.99); }
     .budget-edit-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .budget-edit-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px; align-items: center; min-width: 0; }
+    .drag-handle { display: grid; place-items: center; width: 34px; height: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
+    .drag-handle:active { cursor: grabbing; }
+    .drag-handle svg { width: 18px; height: 18px; fill: currentColor; stroke: none; }
     .budget-edit-actions { display: flex; gap: 5px; align-items: center; }
     .budget-edit-actions strong { margin-right: 4px; white-space: nowrap; }
     .funds-card { display: grid; gap: 12px; }
@@ -517,7 +522,7 @@
               <div class="suggestion-box"><div><small>3-month actual average</small><strong id="budgetSuggestion">—</strong></div><button id="useBudgetSuggestion" class="btn compact" type="button">Use amount</button></div>
               <button class="btn primary" type="submit">Save category budget</button>
             </form>
-            <div class="section-title"><h2>Plan categories</h2><span>Tap edit to adjust</span></div>
+            <div class="section-title"><h2>Plan categories</h2><span>Drag handle to reorder</span></div>
             <div id="budgetEditList" class="budget-edit-list"></div>
           </div>
         </details>
@@ -580,7 +585,7 @@
     const STANDARD_PAYMENTS = ['Cash', 'GCash / E-wallet', 'Debit card', 'Credit card', 'Bank transfer'];
     const BANK_PAYMENTS = ['Debit card', 'Credit card', 'Bank transfer'];
     const STANDARD_BANKS = ['BDO', 'BPI', 'Metrobank', 'UnionBank', 'Security Bank', 'RCBC', 'PNB', 'LandBank', 'EastWest', 'China Bank', 'Maya Bank', 'GoTyme Bank', 'CIMB Bank', 'SeaBank'];
-    const STANDARD_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Bills', 'Shopping', 'Health', 'Entertainment', 'Sports Leisure', 'Home', 'Investment', 'Mortgage', 'Travel'];
+    const STANDARD_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Bills', 'Shopping', 'Health', 'Entertainment', 'Leisure', 'Misc', 'Home', 'Investment', 'Mortgage', 'Travel'];
     const STANDARD_FUND_SOURCES = ['Salary', 'Payout / Bonus', 'Side income', 'Reimbursement', 'Miscellaneous'];
     const ALLOWED_CURRENCIES = ['PHP', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AUD', 'CAD'];
 
@@ -650,7 +655,7 @@
       return `exp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
     function emptyState() {
-      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, projectedFunds: {}, hideAmounts: false }, expenses: [], inflows: [] };
+      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, categoryBudgetOrder: {}, projectedFunds: {}, hideAmounts: false }, expenses: [], inflows: [] };
     }
     function cleanBudgetMap(source) {
       const out = {};
@@ -703,6 +708,21 @@
           if (name && text) monthOut[name] = text;
         });
         if (Object.keys(monthOut).length) out[month] = monthOut;
+      });
+      return out;
+    }
+    function cleanCategoryBudgetOrder(source) {
+      const out = {};
+      if (!source || typeof source !== 'object' || Array.isArray(source)) return out;
+      Object.entries(source).forEach(([month, categories]) => {
+        if (!isValidMonth(month) || !Array.isArray(categories)) return;
+        const seen = new Set();
+        const monthOut = [];
+        categories.forEach(category => {
+          const name = String(category || '').trim().slice(0, 60);
+          if (name && !seen.has(name)) { seen.add(name); monthOut.push(name); }
+        });
+        if (monthOut.length) out[month] = monthOut;
       });
       return out;
     }
@@ -763,6 +783,7 @@
       const categoryBudgets = cleanCategoryBudgets(settings.categoryBudgets);
       const categoryBudgetPercents = cleanCategoryBudgetPercents(settings.categoryBudgetPercents);
       const categoryBudgetDescriptions = cleanCategoryBudgetDescriptions(settings.categoryBudgetDescriptions);
+      const categoryBudgetOrder = cleanCategoryBudgetOrder(settings.categoryBudgetOrder);
       const projectedFunds = cleanBudgetMap(settings.projectedFunds);
       Object.entries(categoryBudgetPercents).forEach(([month, categories]) => {
         Object.keys(categories).forEach(category => {
@@ -791,6 +812,7 @@
           categoryBudgets,
           categoryBudgetPercents,
           categoryBudgetDescriptions,
+          categoryBudgetOrder,
           projectedFunds,
           hideAmounts: Boolean(settings.hideAmounts)
         },
@@ -864,6 +886,19 @@
     }
     function monthlyBudgetPercents(month) { return state.settings.categoryBudgetPercents[month] || {}; }
     function monthlyBudgetDescriptions(month) { return state.settings.categoryBudgetDescriptions[month] || {}; }
+    function monthlyBudgetOrder(month) { return state.settings.categoryBudgetOrder[month] || []; }
+    function orderedBudgetCategories(month, categories) {
+      const available = new Set(categories);
+      const saved = monthlyBudgetOrder(month).filter(category => available.has(category));
+      const missing = categories.filter(category => !saved.includes(category)).sort((a, b) => budgetLabel(a).localeCompare(budgetLabel(b)));
+      return [...saved, ...missing];
+    }
+    function saveBudgetOrderFromDom(month) {
+      const order = [...els.budgetEditList.querySelectorAll('.budget-edit-row[data-budget-category]')].map(row => row.dataset.budgetCategory).filter(Boolean);
+      if (order.length) state.settings.categoryBudgetOrder[month] = order;
+      else delete state.settings.categoryBudgetOrder[month];
+      saveState('Category order saved');
+    }
     function monthlyBudgetsForFunds(month, fundsBase) {
       const budgets = { ...(state.settings.categoryBudgets[month] || {}) };
       Object.entries(monthlyBudgetPercents(month)).forEach(([category, percent]) => {
@@ -1256,7 +1291,8 @@
       const budgets = monthlyBudgets(month);
       const percents = monthlyBudgetPercents(month);
       const { actuals } = budgetActuals(month, items);
-      const keys = [...new Set([...Object.keys(budgets), ...Object.keys(percents)])].sort((a, b) => budgetLabel(a).localeCompare(budgetLabel(b)));
+      const rawKeys = [...new Set([...Object.keys(budgets), ...Object.keys(percents)])];
+      const keys = orderedBudgetCategories(month, rawKeys);
       if (!keys.length) { els.budgetEditList.innerHTML = '<div class="empty">No category budgets yet</div>'; return; }
       const descriptions = monthlyBudgetDescriptions(month);
       els.budgetEditList.innerHTML = keys.map(category => {
@@ -1264,7 +1300,8 @@
         const percent = Number(percents[category] || 0);
         const mode = percent > 0 ? `${percent.toFixed(percent % 1 ? 1 : 0)}% of current funds` : 'Fixed amount';
         const description = descriptions[category] ? `<small>${escapeHtml(descriptions[category])}</small>` : '';
-        return `<div class="budget-edit-row"><div><strong>${escapeHtml(budgetLabel(category))}</strong>${description}<small>${escapeHtml(money(spent))} spent this month · ${escapeHtml(mode)}</small></div><div class="budget-edit-actions"><strong>${escapeHtml(money(budgets[category] || 0))}</strong><button class="btn compact" type="button" data-budget-edit="${escapeHtml(category)}">Edit</button><button class="btn compact danger" type="button" data-budget-delete="${escapeHtml(category)}">×</button></div></div>`;
+        const handle = '<button class="drag-handle" type="button" draggable="true" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="6" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></button>';
+        return `<div class="budget-edit-row" data-budget-category="${escapeHtml(category)}"><div class="budget-edit-main">${handle}<div><strong>${escapeHtml(budgetLabel(category))}</strong>${description}<small>${escapeHtml(money(spent))} spent this month · ${escapeHtml(mode)}</small></div></div><div class="budget-edit-actions"><strong>${escapeHtml(money(budgets[category] || 0))}</strong><button class="btn compact" type="button" data-budget-edit="${escapeHtml(category)}">Edit</button><button class="btn compact danger" type="button" data-budget-delete="${escapeHtml(category)}">×</button></div></div>`;
       }).join('');
     }
     function toggleBudgetCustom() {
@@ -1530,6 +1567,10 @@
       if (saved && description) state.settings.categoryBudgetDescriptions[month][category] = description;
       else delete state.settings.categoryBudgetDescriptions[month][category];
       if (!Object.keys(state.settings.categoryBudgetDescriptions[month]).length) delete state.settings.categoryBudgetDescriptions[month];
+      state.settings.categoryBudgetOrder[month] ||= [];
+      if (saved && !state.settings.categoryBudgetOrder[month].includes(category)) state.settings.categoryBudgetOrder[month].push(category);
+      if (!saved) state.settings.categoryBudgetOrder[month] = state.settings.categoryBudgetOrder[month].filter(name => name !== category);
+      if (!state.settings.categoryBudgetOrder[month].length) delete state.settings.categoryBudgetOrder[month];
       saveState(saved ? (budgetAllocationBasis === 'percent' ? 'Percentage allocation saved' : 'Fixed allocation saved') : 'Category budget removed');
       resetBudgetAllocationInputs();
       els.budgetCategoryCustom.value = '';
@@ -1543,6 +1584,59 @@
       const value = Number(els.useBudgetSuggestion.dataset.value || 0);
       if (value > 0) { els.budgetAmount.value = value.toFixed(2); syncBudgetPercentFromAmount(); }
     });
+    let draggedBudgetRow = null;
+    let pointerDraggedBudgetRow = null;
+    els.budgetEditList.addEventListener('dragstart', event => {
+      const handle = event.target.closest('.drag-handle');
+      if (!handle) { event.preventDefault(); return; }
+      draggedBudgetRow = handle.closest('.budget-edit-row');
+      if (!draggedBudgetRow) return;
+      draggedBudgetRow.classList.add('dragging');
+      if (event.dataTransfer) { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', draggedBudgetRow.dataset.budgetCategory || ''); }
+    });
+    els.budgetEditList.addEventListener('dragover', event => {
+      if (!draggedBudgetRow) return;
+      event.preventDefault();
+      const target = event.target.closest('.budget-edit-row');
+      if (!target || target === draggedBudgetRow) return;
+      const rect = target.getBoundingClientRect();
+      const before = event.clientY < rect.top + rect.height / 2;
+      els.budgetEditList.insertBefore(draggedBudgetRow, before ? target : target.nextSibling);
+    });
+    els.budgetEditList.addEventListener('dragend', () => {
+      if (!draggedBudgetRow) return;
+      draggedBudgetRow.classList.remove('dragging');
+      draggedBudgetRow = null;
+      saveBudgetOrderFromDom(els.selectedMonth.value);
+    });
+    els.budgetEditList.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse') return;
+      const handle = event.target.closest('.drag-handle');
+      if (!handle) return;
+      pointerDraggedBudgetRow = handle.closest('.budget-edit-row');
+      if (!pointerDraggedBudgetRow) return;
+      event.preventDefault();
+      pointerDraggedBudgetRow.classList.add('dragging');
+      try { handle.setPointerCapture(event.pointerId); } catch (_) {}
+    });
+    els.budgetEditList.addEventListener('pointermove', event => {
+      if (!pointerDraggedBudgetRow) return;
+      event.preventDefault();
+      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.budget-edit-row');
+      if (!target || target === pointerDraggedBudgetRow || !els.budgetEditList.contains(target)) return;
+      const rect = target.getBoundingClientRect();
+      const before = event.clientY < rect.top + rect.height / 2;
+      els.budgetEditList.insertBefore(pointerDraggedBudgetRow, before ? target : target.nextSibling);
+    });
+    function finishPointerBudgetDrag() {
+      if (!pointerDraggedBudgetRow) return;
+      pointerDraggedBudgetRow.classList.remove('dragging');
+      pointerDraggedBudgetRow = null;
+      saveBudgetOrderFromDom(els.selectedMonth.value);
+    }
+    els.budgetEditList.addEventListener('pointerup', finishPointerBudgetDrag);
+    els.budgetEditList.addEventListener('pointercancel', finishPointerBudgetDrag);
+
     els.budgetEditList.addEventListener('click', event => {
       const edit = event.target.closest('[data-budget-edit]');
       const remove = event.target.closest('[data-budget-delete]');
@@ -1577,6 +1671,8 @@
         delete state.settings.categoryBudgets[month]?.[category];
         delete state.settings.categoryBudgetPercents[month]?.[category];
         delete state.settings.categoryBudgetDescriptions[month]?.[category];
+        if (state.settings.categoryBudgetOrder[month]) state.settings.categoryBudgetOrder[month] = state.settings.categoryBudgetOrder[month].filter(name => name !== category);
+        if (state.settings.categoryBudgetOrder[month] && !state.settings.categoryBudgetOrder[month].length) delete state.settings.categoryBudgetOrder[month];
         if (state.settings.categoryBudgets[month] && !Object.keys(state.settings.categoryBudgets[month]).length) delete state.settings.categoryBudgets[month];
         if (state.settings.categoryBudgetPercents[month] && !Object.keys(state.settings.categoryBudgetPercents[month]).length) delete state.settings.categoryBudgetPercents[month];
         if (state.settings.categoryBudgetDescriptions[month] && !Object.keys(state.settings.categoryBudgetDescriptions[month]).length) delete state.settings.categoryBudgetDescriptions[month];
@@ -1590,6 +1686,7 @@
       const sourceFixed = state.settings.categoryBudgets[previous] || {};
       const sourcePercents = monthlyBudgetPercents(previous);
       const sourceDescriptions = monthlyBudgetDescriptions(previous);
+      const sourceOrder = monthlyBudgetOrder(previous);
       if (!Object.keys(sourceFixed).length && !Object.keys(sourcePercents).length) { showToast('Previous month has no plan'); return; }
       if ((Object.keys(state.settings.categoryBudgets[month] || {}).length || Object.keys(monthlyBudgetPercents(month)).length) && !confirm('Replace this month plan with the previous month?')) return;
       if (Object.keys(sourceFixed).length) state.settings.categoryBudgets[month] = { ...sourceFixed };
@@ -1598,6 +1695,8 @@
       else delete state.settings.categoryBudgetPercents[month];
       if (Object.keys(sourceDescriptions).length) state.settings.categoryBudgetDescriptions[month] = { ...sourceDescriptions };
       else delete state.settings.categoryBudgetDescriptions[month];
+      if (sourceOrder.length) state.settings.categoryBudgetOrder[month] = sourceOrder.slice();
+      else delete state.settings.categoryBudgetOrder[month];
       saveState('Previous plan copied');
       render();
     });
@@ -1608,6 +1707,7 @@
       delete state.settings.categoryBudgets[month];
       delete state.settings.categoryBudgetPercents[month];
       delete state.settings.categoryBudgetDescriptions[month];
+      delete state.settings.categoryBudgetOrder[month];
       resetBudgetAllocationInputs();
       saveState('Month plan cleared');
       render();
@@ -1648,7 +1748,7 @@
     }
     function fullPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, exportedAt, settings: state.settings, expenses: state.expenses, inflows: state.inflows }; }
     function expensesPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'expenses', exportedAt, currency: state.settings.currency, expenses: state.expenses }; }
-    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets, categoryBudgetPercents: state.settings.categoryBudgetPercents, categoryBudgetDescriptions: state.settings.categoryBudgetDescriptions, projectedFunds: state.settings.projectedFunds }, inflows: state.inflows }; }
+    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets, categoryBudgetPercents: state.settings.categoryBudgetPercents, categoryBudgetDescriptions: state.settings.categoryBudgetDescriptions, categoryBudgetOrder: state.settings.categoryBudgetOrder, projectedFunds: state.settings.projectedFunds }, inflows: state.inflows }; }
 
     els.exportFull.addEventListener('click', async () => {
       const payload = await withChecksum(fullPayload(new Date().toISOString()));
@@ -1732,6 +1832,11 @@
       });
       return cleanCategoryBudgetDescriptions(merged);
     }
+    function mergeCategoryOrderMaps(existing, incoming) {
+      const merged = { ...existing };
+      Object.entries(incoming || {}).forEach(([month, categories]) => { if (Array.isArray(categories)) merged[month] = categories.slice(); });
+      return cleanCategoryBudgetOrder(merged);
+    }
     function parseImport(raw) {
       if (!raw || raw.app !== APP_ID || Number(raw.schemaVersion) !== SCHEMA_VERSION) throw new Error('Invalid backup');
       if (raw.kind === 'expenses') {
@@ -1788,6 +1893,7 @@
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.state.settings.categoryBudgets);
           state.settings.categoryBudgetPercents = mergeCategoryPercentMaps(state.settings.categoryBudgetPercents, pendingImport.state.settings.categoryBudgetPercents);
           state.settings.categoryBudgetDescriptions = mergeCategoryDescriptionMaps(state.settings.categoryBudgetDescriptions, pendingImport.state.settings.categoryBudgetDescriptions);
+          state.settings.categoryBudgetOrder = mergeCategoryOrderMaps(state.settings.categoryBudgetOrder, pendingImport.state.settings.categoryBudgetOrder);
           state.settings.projectedFunds = { ...state.settings.projectedFunds, ...pendingImport.state.settings.projectedFunds };
           state.settings.budgets = { ...state.settings.budgets, ...pendingImport.state.settings.budgets };
           state.settings.healthBudgets = { ...state.settings.healthBudgets, ...pendingImport.state.settings.healthBudgets };
@@ -1800,6 +1906,7 @@
           state.settings.categoryBudgets = pendingImport.settings.categoryBudgets;
           state.settings.categoryBudgetPercents = pendingImport.settings.categoryBudgetPercents;
           state.settings.categoryBudgetDescriptions = pendingImport.settings.categoryBudgetDescriptions;
+          state.settings.categoryBudgetOrder = pendingImport.settings.categoryBudgetOrder;
           state.settings.projectedFunds = pendingImport.settings.projectedFunds;
           state.settings.budgets = pendingImport.settings.budgets;
           state.settings.healthBudgets = pendingImport.settings.healthBudgets;
@@ -1808,6 +1915,7 @@
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.settings.categoryBudgets);
           state.settings.categoryBudgetPercents = mergeCategoryPercentMaps(state.settings.categoryBudgetPercents, pendingImport.settings.categoryBudgetPercents);
           state.settings.categoryBudgetDescriptions = mergeCategoryDescriptionMaps(state.settings.categoryBudgetDescriptions, pendingImport.settings.categoryBudgetDescriptions);
+          state.settings.categoryBudgetOrder = mergeCategoryOrderMaps(state.settings.categoryBudgetOrder, pendingImport.settings.categoryBudgetOrder);
           state.settings.projectedFunds = { ...state.settings.projectedFunds, ...pendingImport.settings.projectedFunds };
           state.settings.budgets = { ...state.settings.budgets, ...pendingImport.settings.budgets };
           state.settings.healthBudgets = { ...state.settings.healthBudgets, ...pendingImport.settings.healthBudgets };

@@ -56,3 +56,11 @@
 - Added Privacy mode to hide displayed monetary values.
 - Added separate full, expense-only, and budget-only JSON backup flows.
 - Hardened import dates, duplicate IDs, merge conflict handling, CSV formula injection, and legacy bankless-card editing.
+
+## 2026-08-17 — Category ordering and expense category update
+
+- Added drag-and-drop reordering for Budget > Plan categories, including touch/pointer support.
+- Persisted category order per month and included it in backup/restore.
+- Added Expense categories `Leisure` and `Misc`.
+- Removed `Sports Leisure` from the built-in category list while preserving existing legacy records and budgets.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v5`.

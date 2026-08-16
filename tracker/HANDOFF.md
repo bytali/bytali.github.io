@@ -194,6 +194,8 @@ If August funds total 50,000, those examples calculate to 7,500 for Groceries, 4
 
 Optional category descriptions are stored under `settings.categoryBudgetDescriptions` by month and category. They are display/context metadata only and do not affect calculations. Updating a category that already has a budget for the selected month requires confirmation before overwrite.
 
+Plan-category display order is stored per month under `settings.categoryBudgetOrder`. Users can reorder Plan categories with a drag handle on desktop or touch devices. Copying the previous month's plan also copies its category order. Legacy categories remain valid even when removed from the built-in category list.
+
 Built-in expense categories:
 
 - Food
@@ -203,7 +205,8 @@ Built-in expense categories:
 - Shopping
 - Health
 - Entertainment
-- Sports Leisure
+- Leisure
+- Misc
 - Home
 - Investment
 - Mortgage

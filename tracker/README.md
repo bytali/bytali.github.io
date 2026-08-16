@@ -41,6 +41,8 @@ In **Budget → Monthly plan**, enter either:
 
 Both inputs stay visible and synchronize for convenience. The field you edit determines which mode is saved. Fixed amounts show their percentage against both current received funds and projected funds; the Budget screen also shows total allocated percentages for both bases. Existing amount-only budgets remain compatible.
 
-Saving a category that already has a budget for the selected month requires confirmation before it is updated.
+Saving a category that already has a budget for the selected month requires confirmation before it is updated. Plan categories can be reordered with the drag handle, and that order is saved per month.
+
+Built-in expense categories include separate **Leisure** and **Misc** choices. Older `Sports Leisure` records remain valid as legacy/custom data but it is no longer a built-in choice.
 
 Main file: `index.html`
