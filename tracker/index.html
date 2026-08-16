@@ -6,9 +6,15 @@
   <meta name="theme-color" content="#0b0d12" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pocket Plan" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="referrer" content="no-referrer" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'" />
-  <title>Expense & Budget</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <title>Pocket Plan</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -235,6 +241,18 @@
     .budget-edit-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
     .budget-edit-actions { display: flex; gap: 5px; align-items: center; }
     .budget-edit-actions strong { margin-right: 4px; white-space: nowrap; }
+    .funds-card { display: grid; gap: 12px; }
+    .fund-list { display: grid; gap: 8px; }
+    .fund-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; border-radius: 15px; background: var(--panel-2); }
+    .fund-row strong { display: block; }
+    .fund-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .fund-row-note { margin-top: 3px; color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+    .allocation-guide { display: grid; gap: 7px; padding: 12px; border-radius: 16px; background: var(--panel-2); }
+    .allocation-guide-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .allocation-guide strong { font-size: 13px; }
+    .allocation-guide small { color: var(--muted); font-size: 10px; }
+    .allocation-guide .bad { color: var(--bad); }
+    .allocation-guide .good { color: var(--good); }
     .suggestion-box { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--panel-2); }
     .suggestion-box div { min-width: 0; }
     .suggestion-box strong { display: block; }
@@ -272,6 +290,8 @@
 
     @media (max-width: 420px) {
       .two, .bank-fields.has-custom, .budget-toolbar { grid-template-columns: 1fr; }
+      .fund-row, .budget-edit-row { grid-template-columns: minmax(0, 1fr); align-items: start; }
+      .fund-row .budget-edit-actions, .budget-edit-row .budget-edit-actions { justify-content: space-between; flex-wrap: wrap; }
       .card { padding: 14px; }
       .trend-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 7px; }
       .summary-card strong { font-size: clamp(21px, 7vw, 31px); }
@@ -283,10 +303,11 @@
 
     @media (min-width: 700px) {
       .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      #view-home > .summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .daily-chart { height: 190px; }
       .day-col { height: 168px; }
-      #view-add .form-card, #view-budget > .budget-editor { width: min(100%, 920px); margin-inline: auto; }
+      #view-add .form-card, #view-budget > .budget-editor, #view-budget > .funds-card { width: min(100%, 920px); margin-inline: auto; }
       #view-more { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
       #view-more > .data-card { grid-column: 1 / -1; }
       .bottom-nav { bottom: 16px; width: min(calc(100% - 48px), 620px); }
@@ -294,7 +315,7 @@
 
     @media (min-width: 1000px) {
       #view-home { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
-      #view-home > .summary-grid { grid-column: 1 / -1; }
+      #view-home > .summary-grid { grid-column: 1 / -1; grid-template-columns: repeat(6, minmax(0, 1fr)); }
       #view-home > .budget-analytics-wrap { grid-column: 1 / 8; }
       #view-home > .insights-wrap { grid-column: 8 / -1; }
       #view-home > .daily-wrap { grid-column: 1 / 8; }
@@ -323,9 +344,11 @@
     <section class="view active" id="view-home" data-view-panel="home">
       <div class="summary-grid">
         <section class="card summary-card"><div class="eyebrow">Spent</div><strong id="spentKpi">—</strong><small id="spentKpiSub">This month</small></section>
+        <section class="card summary-card"><div class="eyebrow">Funds</div><strong id="fundsKpi">—</strong><small id="fundsKpiSub">Income & inflows</small></section>
+        <section class="card summary-card" id="allocationCard"><div class="eyebrow">Unallocated</div><strong id="allocationKpi">—</strong><small id="allocationSub">Add funds in Budget</small></section>
         <section class="card summary-card" id="planLeftCard"><div class="eyebrow">Plan left</div><strong id="planLeftKpi">—</strong><small id="planLeftSub">No plan yet</small></section>
         <section class="card summary-card"><div class="eyebrow">Projected</div><strong id="projectedKpi">—</strong><small>Based on elapsed days</small></section>
-        <section class="card summary-card" id="unbudgetedCard"><div class="eyebrow">Unbudgeted</div><strong id="unbudgetedKpi">—</strong><small id="coverageKpi">Plan coverage —</small></section>
+        <section class="card summary-card" id="unbudgetedCard"><div class="eyebrow">Unbudgeted spend</div><strong id="unbudgetedKpi">—</strong><small id="coverageKpi">Plan coverage —</small></section>
       </div>
 
       <div class="budget-analytics-wrap">
@@ -356,7 +379,7 @@
       </div>
 
       <div class="trend-wrap">
-        <div class="section-title"><h2>6 months</h2><span>Spent vs plan</span></div>
+        <div class="section-title"><h2>6 months</h2><span>Funds · plan · spent</span></div>
         <section class="card"><div id="sixMonthTrend" class="trend"></div></section>
       </div>
     </section>
@@ -395,11 +418,31 @@
 
     <section class="view" id="view-budget" data-view-panel="budget">
       <div class="summary-grid">
-        <section class="card summary-card"><div class="eyebrow">Planned</div><strong id="budgetPlannedKpi">—</strong><small>Category budgets</small></section>
-        <section class="card summary-card"><div class="eyebrow">Budgeted spent</div><strong id="budgetSpentKpi">—</strong><small>Matched to plan</small></section>
-        <section class="card summary-card" id="budgetRemainingCard"><div class="eyebrow">Remaining</div><strong id="budgetRemainingKpi">—</strong><small>Across planned categories</small></section>
-        <section class="card summary-card"><div class="eyebrow">Unbudgeted</div><strong id="budgetUnbudgetedKpi">—</strong><small>Needs a category plan</small></section>
+        <section class="card summary-card"><div class="eyebrow">Funds received</div><strong id="budgetUnbudgetedKpi">—</strong><small>Income & other inflows</small></section>
+        <section class="card summary-card"><div class="eyebrow">Allocated</div><strong id="budgetPlannedKpi">—</strong><small>Category plan total</small></section>
+        <section class="card summary-card" id="budgetRemainingCard"><div class="eyebrow">Unallocated</div><strong id="budgetRemainingKpi">—</strong><small id="budgetAllocationSub">Funds not assigned yet</small></section>
+        <section class="card summary-card"><div class="eyebrow">Spent</div><strong id="budgetSpentKpi">—</strong><small>Actual expenses this month</small></section>
       </div>
+
+      <section class="card funds-card">
+        <div class="section-title"><h2>Monthly funds</h2><span>Money available to plan</span></div>
+        <div id="allocationGuide" class="allocation-guide"></div>
+        <form id="fundForm" class="form-grid" autocomplete="off">
+          <input type="hidden" id="fundEditId" />
+          <div class="two">
+            <div class="field"><label for="fundSource">Source</label><select id="fundSource"><option>Salary</option><option>Payout / Bonus</option><option>Side income</option><option>Reimbursement</option><option>Miscellaneous</option><option>Other</option></select></div>
+            <div class="field" id="fundSourceOtherWrap" hidden><label for="fundSourceOther">Specify source</label><input id="fundSourceOther" maxlength="60" placeholder="e.g. Client project" /></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="fundAmount">Amount received</label><input id="fundAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00" required /></div>
+            <div class="field"><label for="fundDate">Date received</label><input id="fundDate" type="date" required /></div>
+          </div>
+          <div class="field"><label for="fundNote">Note</label><input id="fundNote" maxlength="180" placeholder="Optional" /></div>
+          <div class="action-row"><button id="saveFundBtn" class="btn primary" type="submit">Add funds</button><button id="cancelFundEditBtn" class="btn" type="button" hidden>Cancel</button></div>
+        </form>
+        <div class="section-title"><h2>Funds received</h2><span id="fundCountLabel">0 entries</span></div>
+        <div id="fundList" class="fund-list"></div>
+      </section>
 
       <section class="card budget-editor">
         <div class="section-title"><h2>Monthly plan</h2><span id="budgetMonthLabel"></span></div>
@@ -440,7 +483,7 @@
           <button id="exportFull" class="btn primary" type="button">Full backup</button>
           <button id="importData" class="btn" type="button">Restore JSON</button>
           <button id="exportExpensesJson" class="btn" type="button">Expenses JSON</button>
-          <button id="exportBudgetsJson" class="btn" type="button">Budgets JSON</button>
+          <button id="exportBudgetsJson" class="btn" type="button">Budget + funds JSON</button>
           <button id="exportCsv" class="btn" type="button">Expenses CSV</button>
           <button id="clearData" class="btn danger" type="button">Clear all data</button>
         </div>
@@ -477,15 +520,16 @@
     const BANK_PAYMENTS = ['Debit card', 'Credit card', 'Bank transfer'];
     const STANDARD_BANKS = ['BDO', 'BPI', 'Metrobank', 'UnionBank', 'Security Bank', 'RCBC', 'PNB', 'LandBank', 'EastWest', 'China Bank', 'Maya Bank', 'GoTyme Bank', 'CIMB Bank', 'SeaBank'];
     const STANDARD_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Bills', 'Shopping', 'Health', 'Entertainment', 'Home', 'Investment', 'Mortgage', 'Travel'];
+    const STANDARD_FUND_SOURCES = ['Salary', 'Payout / Bonus', 'Side income', 'Reimbursement', 'Miscellaneous'];
     const ALLOWED_CURRENCIES = ['PHP', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AUD', 'CAD'];
 
     const $ = id => document.getElementById(id);
     const els = {
       selectedMonth: $('selectedMonth'), prevMonth: $('prevMonth'), nextMonth: $('nextMonth'), todayBtn: $('todayBtn'), privacyBtn: $('privacyBtn'),
-      spentKpi: $('spentKpi'), spentKpiSub: $('spentKpiSub'), planLeftCard: $('planLeftCard'), planLeftKpi: $('planLeftKpi'), planLeftSub: $('planLeftSub'), projectedKpi: $('projectedKpi'), unbudgetedCard: $('unbudgetedCard'), unbudgetedKpi: $('unbudgetedKpi'), coverageKpi: $('coverageKpi'), budgetAnalyticsMonth: $('budgetAnalyticsMonth'), budgetAnalytics: $('budgetAnalytics'), insights: $('insights'), homeMonthLabel: $('homeMonthLabel'), dailyChart: $('dailyChart'), categoryBreakdown: $('categoryBreakdown'), paymentBreakdown: $('paymentBreakdown'), creditCardBankBreakdown: $('creditCardBankBreakdown'), sixMonthTrend: $('sixMonthTrend'),
+      spentKpi: $('spentKpi'), spentKpiSub: $('spentKpiSub'), fundsKpi: $('fundsKpi'), fundsKpiSub: $('fundsKpiSub'), allocationCard: $('allocationCard'), allocationKpi: $('allocationKpi'), allocationSub: $('allocationSub'), planLeftCard: $('planLeftCard'), planLeftKpi: $('planLeftKpi'), planLeftSub: $('planLeftSub'), projectedKpi: $('projectedKpi'), unbudgetedCard: $('unbudgetedCard'), unbudgetedKpi: $('unbudgetedKpi'), coverageKpi: $('coverageKpi'), budgetAnalyticsMonth: $('budgetAnalyticsMonth'), budgetAnalytics: $('budgetAnalytics'), insights: $('insights'), homeMonthLabel: $('homeMonthLabel'), dailyChart: $('dailyChart'), categoryBreakdown: $('categoryBreakdown'), paymentBreakdown: $('paymentBreakdown'), creditCardBankBreakdown: $('creditCardBankBreakdown'), sixMonthTrend: $('sixMonthTrend'),
       expenseForm: $('expenseForm'), editId: $('editId'), amount: $('amount'), payment: $('payment'), paymentOther: $('paymentOther'), paymentOtherWrap: $('paymentOtherWrap'), bankFields: $('bankFields'), bank: $('bank'), bankOther: $('bankOther'), bankOtherWrap: $('bankOtherWrap'), category: $('category'), categoryOther: $('categoryOther'), categoryOtherWrap: $('categoryOtherWrap'), otherFields: $('otherFields'), date: $('date'), note: $('note'), saveExpenseBtn: $('saveExpenseBtn'), cancelEditBtn: $('cancelEditBtn'), currencyMark: $('currencyMark'),
       expenseFilter: $('expenseFilter'), expenseList: $('expenseList'), expenseEmpty: $('expenseEmpty'),
-      budgetPlannedKpi: $('budgetPlannedKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetMonthLabel: $('budgetMonthLabel'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetAmount: $('budgetAmount'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
+      budgetPlannedKpi: $('budgetPlannedKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetAllocationSub: $('budgetAllocationSub'), budgetMonthLabel: $('budgetMonthLabel'), allocationGuide: $('allocationGuide'), fundForm: $('fundForm'), fundEditId: $('fundEditId'), fundSource: $('fundSource'), fundSourceOtherWrap: $('fundSourceOtherWrap'), fundSourceOther: $('fundSourceOther'), fundAmount: $('fundAmount'), fundDate: $('fundDate'), fundNote: $('fundNote'), saveFundBtn: $('saveFundBtn'), cancelFundEditBtn: $('cancelFundEditBtn'), fundCountLabel: $('fundCountLabel'), fundList: $('fundList'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetAmount: $('budgetAmount'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
       currency: $('currency'), privacyToggle: $('privacyToggle'), persistenceStatus: $('persistenceStatus'), requestPersistence: $('requestPersistence'), storageSize: $('storageSize'), storageMeter: $('storageMeter'),
       exportFull: $('exportFull'), importData: $('importData'), exportExpensesJson: $('exportExpensesJson'), exportBudgetsJson: $('exportBudgetsJson'), exportCsv: $('exportCsv'), clearData: $('clearData'), importFile: $('importFile'), importDialog: $('importDialog'), importSummary: $('importSummary'), importMode: $('importMode'), importModeHelp: $('importModeHelp'), cancelImport: $('cancelImport'), confirmImport: $('confirmImport'), toast: $('toast')
     };
@@ -544,7 +588,7 @@
       return `exp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
     function emptyState() {
-      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, hideAmounts: false }, expenses: [] };
+      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, hideAmounts: false }, expenses: [], inflows: [] };
     }
     function cleanBudgetMap(source) {
       const out = {};
@@ -594,6 +638,29 @@
         })
         .filter(item => Number.isFinite(item.amount) && item.amount > 0 && isValidDate(item.date));
     }
+    function cleanInflows(source) {
+      const seen = new Set();
+      return (Array.isArray(source) ? source : [])
+        .filter(item => item && typeof item === 'object')
+        .map(item => {
+          let id = String(item.id || '').trim().slice(0, 120);
+          if (!id || seen.has(id)) {
+            do { id = createId(); } while (seen.has(id));
+          }
+          seen.add(id);
+          return {
+            id,
+            amount: Number(item.amount),
+            source: String(item.source || 'Other').trim().slice(0, 60) || 'Other',
+            date: String(item.date || '').slice(0, 10),
+            note: String(item.note || '').trim().slice(0, 180),
+            createdAt: String(item.createdAt || new Date().toISOString()),
+            updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
+          };
+        })
+        .filter(item => Number.isFinite(item.amount) && item.amount > 0 && isValidDate(item.date));
+    }
+
     function sanitizeState(candidate) {
       const base = emptyState();
       if (!candidate || typeof candidate !== 'object') return base;
@@ -623,7 +690,8 @@
           categoryBudgets,
           hideAmounts: Boolean(settings.hideAmounts)
         },
-        expenses: cleanExpenses(candidate.expenses)
+        expenses: cleanExpenses(candidate.expenses),
+        inflows: cleanInflows(candidate.inflows)
       };
     }
     function loadState() {
@@ -680,7 +748,9 @@
     function budgetLabel(category) { return category === LEGACY_GENERAL ? 'Unallocated / General' : category; }
 
     function expensesForMonth(month) { return state.expenses.filter(expense => expense.date.startsWith(month)); }
+    function inflowsForMonth(month) { return state.inflows.filter(item => item.date.startsWith(month)); }
     function sum(items) { return items.reduce((total, item) => total + Number(item.amount || 0), 0); }
+    function totalFunds(month) { return sum(inflowsForMonth(month)); }
     function categoriesForMonth(month) {
       const fromExpenses = expensesForMonth(month).map(item => item.category).filter(Boolean);
       const fromBudgets = Object.keys(state.settings.categoryBudgets[month] || {}).filter(c => c !== LEGACY_GENERAL);
@@ -781,6 +851,9 @@
       const month = els.selectedMonth.value || currentMonthLocal();
       const items = expensesForMonth(month);
       const stats = budgetStats(month, items);
+      const funds = inflowsForMonth(month);
+      const fundsTotal = sum(funds);
+      const unallocated = fundsTotal - stats.planned;
       const elapsed = elapsedDays(month);
       const projected = elapsed > 0 ? (stats.totalSpent / elapsed) * daysInMonth(month) : 0;
 
@@ -789,6 +862,11 @@
       els.budgetMonthLabel.textContent = monthLabel(month, 'short');
       els.spentKpi.textContent = money(stats.totalSpent);
       els.spentKpiSub.textContent = items.length ? `${items.length} expense${items.length === 1 ? '' : 's'}` : 'No expenses yet';
+      els.fundsKpi.textContent = money(fundsTotal);
+      els.fundsKpiSub.textContent = funds.length ? `${funds.length} fund entr${funds.length === 1 ? 'y' : 'ies'}` : 'Add funds in Budget';
+      els.allocationKpi.textContent = fundsTotal > 0 ? money(unallocated) : '—';
+      els.allocationSub.textContent = fundsTotal > 0 ? (unallocated < 0 ? `${money(Math.abs(unallocated))} overallocated` : 'Available to allocate') : 'Add monthly funds in Budget';
+      els.allocationCard.className = `card summary-card ${fundsTotal > 0 ? (unallocated < 0 ? 'bad' : 'good') : ''}`;
       els.projectedKpi.textContent = elapsed > 0 ? money(projected) : '—';
       els.planLeftKpi.textContent = stats.planned > 0 ? money(Math.max(0, stats.remaining)) : '—';
       els.planLeftSub.textContent = stats.planned > 0 ? (stats.remaining < 0 ? `${money(Math.abs(stats.remaining))} over plan` : `of ${money(stats.planned)} planned`) : 'Set category budgets';
@@ -798,11 +876,14 @@
       els.unbudgetedCard.className = `card summary-card ${stats.unbudgeted > 0 ? 'warn' : (stats.planned > 0 ? 'good' : '')}`;
       els.currencyMark.textContent = currencySymbol();
 
+      els.budgetUnbudgetedKpi.textContent = money(fundsTotal);
       els.budgetPlannedKpi.textContent = money(stats.planned);
-      els.budgetSpentKpi.textContent = money(stats.matchedSpent);
-      els.budgetRemainingKpi.textContent = stats.planned > 0 ? money(Math.max(0, stats.remaining)) : '—';
-      els.budgetRemainingCard.className = `card summary-card ${stats.planned > 0 ? (stats.remaining < 0 ? 'bad' : 'good') : ''}`;
-      els.budgetUnbudgetedKpi.textContent = money(stats.unbudgeted);
+      els.budgetSpentKpi.textContent = money(stats.totalSpent);
+      els.budgetRemainingKpi.textContent = fundsTotal > 0 ? money(unallocated) : '—';
+      els.budgetAllocationSub.textContent = fundsTotal > 0 ? (unallocated < 0 ? `${money(Math.abs(unallocated))} overallocated` : 'Funds not assigned yet') : 'Add funds to compare with your plan';
+      els.budgetRemainingCard.className = `card summary-card ${fundsTotal > 0 ? (unallocated < 0 ? 'bad' : 'good') : ''}`;
+      renderAllocationGuide(month, fundsTotal, stats.planned, stats.totalSpent);
+      renderFunds(month, funds);
 
       renderBudgetAnalytics(month, items);
       renderInsights(month, items);
@@ -859,10 +940,17 @@
     function renderInsights(month, items) {
       const budgets = monthlyBudgets(month);
       const { actuals, unbudgeted } = budgetActuals(month, items);
+      const fundsTotal = totalFunds(month);
+      const plannedTotal = totalPlanned(month);
+      const totalSpent = sum(items);
       const totalDays = daysInMonth(month);
       const elapsed = elapsedDays(month);
       const expected = elapsed > 0 ? elapsed / totalDays * 100 : 0;
       const insights = [];
+      if (fundsTotal > 0 && plannedTotal > fundsTotal) insights.push({ level: 'bad', weight: 4, text: `Your plan is ${money(plannedTotal - fundsTotal)} above recorded funds.` });
+      else if (fundsTotal > 0 && fundsTotal - plannedTotal > 0) insights.push({ level: 'good', weight: 1.5, text: `${money(fundsTotal - plannedTotal)} is still unallocated.` });
+      if (fundsTotal > 0 && totalSpent > fundsTotal) insights.push({ level: 'bad', weight: 3.5, text: `Spending is ${money(totalSpent - fundsTotal)} above recorded funds this month.` });
+      if (!fundsTotal && plannedTotal > 0) insights.push({ level: 'warn', weight: 2.2, text: 'Your category plan has no recorded monthly funds yet.' });
       Object.entries(budgets).forEach(([category, planned]) => {
         const spent = Number(actuals.get(category) || 0);
         const percent = planned > 0 ? spent / planned * 100 : 0;
@@ -914,11 +1002,11 @@
 
     function renderSixMonthTrend(selected) {
       const months = Array.from({ length: 6 }, (_, i) => shiftMonth(selected, i - 5));
-      const rows = months.map(month => ({ month, spent: sum(expensesForMonth(month)), planned: totalPlanned(month) }));
-      const max = Math.max(...rows.map(r => Math.max(r.spent, r.planned)), 1);
+      const rows = months.map(month => ({ month, spent: sum(expensesForMonth(month)), planned: totalPlanned(month), funds: totalFunds(month) }));
+      const max = Math.max(...rows.map(r => Math.max(r.spent, r.planned, r.funds)), 1);
       els.sixMonthTrend.innerHTML = rows.map(row => {
         const over = row.planned > 0 && row.spent > row.planned;
-        return `<div class="trend-row"><span>${escapeHtml(monthLabel(row.month, 'short'))}</span><div class="trend-track"><span class="${over ? 'over' : ''}" style="width:${row.spent ? Math.max(2, row.spent / max * 100) : 0}%"></span></div><div class="trend-values"><strong>${escapeHtml(shortMoney(row.spent))}</strong><small>${row.planned > 0 ? `plan ${escapeHtml(shortMoney(row.planned))}` : 'no plan'}</small></div></div>`;
+        return `<div class="trend-row"><span>${escapeHtml(monthLabel(row.month, 'short'))}</span><div class="trend-track"><span class="${over ? 'over' : ''}" style="width:${row.spent ? Math.max(2, row.spent / max * 100) : 0}%"></span></div><div class="trend-values"><strong>${escapeHtml(shortMoney(row.spent))}</strong><small>${row.funds > 0 ? `funds ${escapeHtml(shortMoney(row.funds))} · ` : ''}${row.planned > 0 ? `plan ${escapeHtml(shortMoney(row.planned))}` : 'no plan'}</small></div></div>`;
       }).join('');
     }
 
@@ -940,6 +1028,83 @@
         const note = item.note ? `<div class="expense-note">${escapeHtml(item.note)}</div>` : '';
         return `<article class="expense-item"><div class="date-chip"><strong>${day}</strong><span>${escapeHtml(monthName)}</span></div><div class="expense-main"><strong>${escapeHtml(item.category)}</strong><div class="expense-meta">${escapeHtml(item.payment)}${bank}</div>${note}</div><div class="expense-right"><div class="expense-price">${escapeHtml(money(item.amount))}</div><div class="row-actions"><button type="button" data-edit="${escapeHtml(item.id)}" aria-label="Edit"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button><button type="button" data-delete="${escapeHtml(item.id)}" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/></svg></button></div></div></article>`;
       }).join('');
+    }
+
+    function defaultDateForMonth(month) {
+      return month === currentMonthLocal() ? todayLocal() : `${month}-01`;
+    }
+    function resolvedFundSource() {
+      return els.fundSource.value === 'Other' ? (els.fundSourceOther.value.trim() || 'Other') : els.fundSource.value;
+    }
+    function toggleFundSourceOther() {
+      const custom = els.fundSource.value === 'Other';
+      els.fundSourceOtherWrap.hidden = !custom;
+      els.fundSourceOther.required = custom;
+      if (!custom) els.fundSourceOther.value = '';
+    }
+    function resetFundForm(month = els.selectedMonth.value || currentMonthLocal()) {
+      els.fundForm.reset();
+      els.fundEditId.value = '';
+      els.fundSource.value = 'Salary';
+      els.fundDate.value = defaultDateForMonth(month);
+      els.saveFundBtn.textContent = 'Add funds';
+      els.cancelFundEditBtn.hidden = true;
+      toggleFundSourceOther();
+    }
+    function renderAllocationGuide(month, fundsTotal, planned, spent) {
+      const unallocated = fundsTotal - planned;
+      const allocationPercent = fundsTotal > 0 ? planned / fundsTotal * 100 : 0;
+      const width = Math.min(100, Math.max(0, allocationPercent));
+      let headline = 'Add funds to anchor this month’s plan';
+      let detail = planned > 0 ? `${money(planned)} planned` : 'No category allocations yet';
+      let cls = '';
+      if (fundsTotal > 0) {
+        headline = unallocated < 0 ? `${money(Math.abs(unallocated))} overallocated` : `${money(unallocated)} available to allocate`;
+        detail = `${Math.round(allocationPercent)}% allocated · ${money(spent)} spent`;
+        cls = unallocated < 0 ? 'bad' : 'good';
+      }
+      els.allocationGuide.innerHTML = `<div class="allocation-guide-top"><strong class="${cls}">${escapeHtml(headline)}</strong><small>${escapeHtml(monthLabel(month, 'short'))}</small></div><div class="progress"><span style="width:${width}%;background:${unallocated < 0 ? 'var(--bad)' : 'var(--good)'}"></span></div><small>${escapeHtml(detail)}</small>`;
+    }
+    function renderFunds(month, items = inflowsForMonth(month)) {
+      const visible = items.slice().sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+      els.fundCountLabel.textContent = `${visible.length} entr${visible.length === 1 ? 'y' : 'ies'}`;
+      if (!visible.length) {
+        els.fundList.innerHTML = '<div class="empty">No funds recorded for this month</div>';
+        return;
+      }
+      els.fundList.innerHTML = visible.map(item => {
+        const note = item.note ? `<div class="fund-row-note">${escapeHtml(item.note)}</div>` : '';
+        return `<div class="fund-row"><div><strong>${escapeHtml(item.source)}</strong><small>${escapeHtml(item.date)}</small>${note}</div><div class="budget-edit-actions"><strong>${escapeHtml(money(item.amount))}</strong><button class="btn compact" type="button" data-fund-edit="${escapeHtml(item.id)}">Edit</button><button class="btn compact danger" type="button" data-fund-delete="${escapeHtml(item.id)}">×</button></div></div>`;
+      }).join('');
+    }
+    function editFund(id) {
+      const item = state.inflows.find(entry => entry.id === id);
+      if (!item) return;
+      els.fundEditId.value = item.id;
+      els.fundAmount.value = item.amount;
+      els.fundDate.value = item.date;
+      els.fundNote.value = item.note || '';
+      if (STANDARD_FUND_SOURCES.includes(item.source)) {
+        els.fundSource.value = item.source;
+        els.fundSourceOther.value = '';
+      } else {
+        els.fundSource.value = 'Other';
+        els.fundSourceOther.value = item.source === 'Other' ? '' : item.source;
+      }
+      els.saveFundBtn.textContent = 'Save funds';
+      els.cancelFundEditBtn.hidden = false;
+      toggleFundSourceOther();
+      els.fundAmount.focus();
+    }
+    function deleteFund(id) {
+      const item = state.inflows.find(entry => entry.id === id);
+      if (!item) return;
+      if (!confirm(`Delete ${state.settings.hideAmounts ? 'this fund entry' : rawMoney(item.amount)}?`)) return;
+      const index = state.inflows.findIndex(entry => entry.id === id);
+      if (index >= 0) state.inflows.splice(index, 1);
+      if (els.fundEditId.value === id) resetFundForm();
+      saveState('Funds deleted');
+      render();
     }
 
     function renderBudgetEditor(month, items) {
@@ -1054,6 +1219,36 @@
       if (remove) deleteExpense(remove.dataset.delete);
     });
 
+    els.fundSource.addEventListener('change', toggleFundSourceOther);
+    els.fundForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const amount = Number(els.fundAmount.value);
+      if (!Number.isFinite(amount) || amount <= 0) { showToast('Enter a fund amount'); return; }
+      if (!isValidDate(els.fundDate.value)) { showToast('Choose a valid received date'); return; }
+      if (els.fundSource.value === 'Other' && !els.fundSourceOther.value.trim()) { showToast('Specify fund source'); els.fundSourceOther.focus(); return; }
+      const now = new Date().toISOString();
+      const data = { amount, source: resolvedFundSource(), date: els.fundDate.value, note: els.fundNote.value.trim(), updatedAt: now };
+      if (els.fundEditId.value) {
+        const index = state.inflows.findIndex(entry => entry.id === els.fundEditId.value);
+        if (index < 0) { showToast('Fund entry not found'); return; }
+        state.inflows[index] = { ...state.inflows[index], ...data };
+        saveState('Funds updated');
+      } else {
+        state.inflows.push({ id: createId(), ...data, createdAt: now });
+        saveState('Funds added');
+      }
+      els.selectedMonth.value = els.fundDate.value.slice(0, 7);
+      resetFundForm(els.selectedMonth.value);
+      render();
+    });
+    els.cancelFundEditBtn.addEventListener('click', () => resetFundForm());
+    els.fundList.addEventListener('click', event => {
+      const edit = event.target.closest('[data-fund-edit]');
+      const remove = event.target.closest('[data-fund-delete]');
+      if (edit) editFund(edit.dataset.fundEdit);
+      if (remove) deleteFund(remove.dataset.fundDelete);
+    });
+
     els.categoryBudgetForm.addEventListener('submit', event => {
       event.preventDefault();
       const month = els.selectedMonth.value;
@@ -1119,10 +1314,10 @@
       render();
     });
 
-    els.selectedMonth.addEventListener('change', render);
-    els.prevMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, -1); render(); });
-    els.nextMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, 1); render(); });
-    els.todayBtn.addEventListener('click', () => { els.selectedMonth.value = currentMonthLocal(); render(); setView('home'); });
+    els.selectedMonth.addEventListener('change', () => { resetFundForm(els.selectedMonth.value); render(); });
+    els.prevMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, -1); resetFundForm(els.selectedMonth.value); render(); });
+    els.nextMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, 1); resetFundForm(els.selectedMonth.value); render(); });
+    els.todayBtn.addEventListener('click', () => { els.selectedMonth.value = currentMonthLocal(); resetFundForm(els.selectedMonth.value); render(); setView('home'); });
     els.expenseFilter.addEventListener('change', () => renderExpenses(expensesForMonth(els.selectedMonth.value)));
 
     function setPrivacy(value) {
@@ -1152,9 +1347,9 @@
       const checksum = await sha256(JSON.stringify(payload));
       return { ...payload, checksum: checksum ? { algorithm: 'SHA-256', value: checksum } : null };
     }
-    function fullPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, exportedAt, settings: state.settings, expenses: state.expenses }; }
+    function fullPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, exportedAt, settings: state.settings, expenses: state.expenses, inflows: state.inflows }; }
     function expensesPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'expenses', exportedAt, currency: state.settings.currency, expenses: state.expenses }; }
-    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets } }; }
+    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets }, inflows: state.inflows }; }
 
     els.exportFull.addEventListener('click', async () => {
       const payload = await withChecksum(fullPayload(new Date().toISOString()));
@@ -1168,8 +1363,8 @@
     });
     els.exportBudgetsJson.addEventListener('click', async () => {
       const payload = await withChecksum(budgetsPayload(new Date().toISOString()));
-      downloadText(`budgets-${todayLocal()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
-      showToast('Budgets JSON saved');
+      downloadText(`budget-funds-${todayLocal()}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+      showToast('Budget + funds JSON saved');
     });
 
     function csvEscape(value) {
@@ -1188,8 +1383,8 @@
 
     function checksumPayloadFor(raw) {
       if (raw.kind === 'expenses') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, currency: raw.currency, expenses: raw.expenses };
-      if (raw.kind === 'budgets') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, settings: raw.settings };
-      return { app: raw.app, schemaVersion: raw.schemaVersion, exportedAt: raw.exportedAt, settings: raw.settings, expenses: raw.expenses };
+      if (raw.kind === 'budgets') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, settings: raw.settings, inflows: raw.inflows };
+      return { app: raw.app, schemaVersion: raw.schemaVersion, exportedAt: raw.exportedAt, settings: raw.settings, expenses: raw.expenses, inflows: raw.inflows };
     }
     async function verifyRawBackup(raw) {
       if (raw.checksum?.algorithm !== 'SHA-256' || !raw.checksum?.value) return false;
@@ -1209,6 +1404,14 @@
       });
       return cleanExpenses([...map.values()]);
     }
+    function mergeInflows(existing, incoming) {
+      const map = new Map(existing.map(e => [e.id, e]));
+      incoming.forEach(entry => {
+        const current = map.get(entry.id);
+        if (!current || timestampScore(entry.updatedAt) >= timestampScore(current.updatedAt)) map.set(entry.id, entry);
+      });
+      return cleanInflows([...map.values()]);
+    }
     function mergeCategoryBudgetMaps(existing, incoming) {
       const merged = { ...existing };
       Object.entries(incoming || {}).forEach(([month, categories]) => {
@@ -1225,7 +1428,7 @@
       if (raw.kind === 'budgets') {
         if (!raw.settings || typeof raw.settings !== 'object') throw new Error('Invalid budgets backup');
         const temp = sanitizeState({ settings: raw.settings, expenses: [] });
-        return { kind: 'budgets', settings: temp.settings };
+        return { kind: 'budgets', settings: temp.settings, inflows: cleanInflows(raw.inflows) };
       }
       if (!Array.isArray(raw.expenses)) throw new Error('Invalid full backup');
       return { kind: 'full', state: sanitizeState(raw) };
@@ -1242,12 +1445,12 @@
         const parsed = parseImport(raw);
         pendingImport = { ...parsed, verified };
         let summary = '';
-        if (parsed.kind === 'full') summary = `Full backup · ${parsed.state.expenses.length} expenses · ${Object.keys(parsed.state.settings.categoryBudgets).length} budget months`;
+        if (parsed.kind === 'full') summary = `Full backup · ${parsed.state.expenses.length} expenses · ${parsed.state.inflows.length} fund entries · ${Object.keys(parsed.state.settings.categoryBudgets).length} budget months`;
         if (parsed.kind === 'expenses') summary = `Expenses only · ${parsed.expenses.length} records${parsed.sourceCurrency ? ` · source ${parsed.sourceCurrency}` : ''}`;
-        if (parsed.kind === 'budgets') summary = `Budgets only · ${Object.keys(parsed.settings.categoryBudgets).length} months`;
+        if (parsed.kind === 'budgets') summary = `Budget + funds · ${Object.keys(parsed.settings.categoryBudgets).length} months · ${parsed.inflows.length} fund entries`;
         els.importSummary.textContent = `${summary}${verified ? ' · checksum verified' : ''}`;
         els.importMode.value = 'merge';
-        els.importModeHelp.textContent = parsed.kind === 'full' ? 'Replace scope replaces expenses and settings. Merge keeps newer expense edits and merges budgets.' : parsed.kind === 'expenses' ? `Replace scope replaces expenses only. Budgets, preferences, and current currency stay.${parsed.sourceCurrency && parsed.sourceCurrency !== state.settings.currency ? ' Source amounts are not currency-converted.' : ''}` : 'Replace scope replaces budget data only. Expenses and privacy preference stay.';
+        els.importModeHelp.textContent = parsed.kind === 'full' ? 'Replace scope replaces expenses, funds, and settings. Merge keeps newer expense/fund edits and merges budgets.' : parsed.kind === 'expenses' ? `Replace scope replaces expenses only. Budgets, funds, preferences, and current currency stay.${parsed.sourceCurrency && parsed.sourceCurrency !== state.settings.currency ? ' Source amounts are not currency-converted.' : ''}` : 'Replace scope replaces budget and fund data only. Expenses and privacy preference stay.';
         els.importDialog.showModal();
       } catch (error) {
         console.error(error);
@@ -1262,6 +1465,7 @@
         if (replace) state = pendingImport.state;
         else {
           state.expenses = mergeExpenses(state.expenses, pendingImport.state.expenses);
+          state.inflows = mergeInflows(state.inflows, pendingImport.state.inflows);
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.state.settings.categoryBudgets);
           state.settings.budgets = { ...state.settings.budgets, ...pendingImport.state.settings.budgets };
           state.settings.healthBudgets = { ...state.settings.healthBudgets, ...pendingImport.state.settings.healthBudgets };
@@ -1274,10 +1478,12 @@
           state.settings.categoryBudgets = pendingImport.settings.categoryBudgets;
           state.settings.budgets = pendingImport.settings.budgets;
           state.settings.healthBudgets = pendingImport.settings.healthBudgets;
+          state.inflows = cleanInflows(pendingImport.inflows);
         } else {
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.settings.categoryBudgets);
           state.settings.budgets = { ...state.settings.budgets, ...pendingImport.settings.budgets };
           state.settings.healthBudgets = { ...state.settings.healthBudgets, ...pendingImport.settings.healthBudgets };
+          state.inflows = mergeInflows(state.inflows, pendingImport.inflows);
         }
         state.settings.currency = pendingImport.settings.currency || state.settings.currency;
       }
@@ -1288,7 +1494,7 @@
     });
 
     els.clearData.addEventListener('click', () => {
-      if (!confirm('Clear all expenses, budgets, and settings from this browser?')) return;
+      if (!confirm('Clear all expenses, funds, budgets, and settings from this browser?')) return;
       if (!confirm('This cannot be undone unless you have a backup. Continue?')) return;
       state = emptyState();
       saveState('Data cleared');
@@ -1329,9 +1535,16 @@
     els.date.value = todayLocal();
     setCategoryOptions();
     resetExpenseForm();
+    resetFundForm(currentMonthLocal());
     saveState();
     render();
     refreshPersistenceStatus();
+
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(error => console.error('Service worker registration failed', error));
+      });
+    }
   })();
   </script>
 </body>

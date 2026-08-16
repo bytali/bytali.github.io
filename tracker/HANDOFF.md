@@ -1,92 +1,152 @@
-# EXPENSE + BUDGET TRACKER WEB APP — PROJECT HANDOFF
+# POCKET PLAN — BUDGET + FUNDS + EXPENSE TRACKER HANDOFF
 
 ## CURRENT VERSION
 
 Updated: 2026-08-16
 
-This is a static, local-first monthly budget and expense tracker designed for GitHub Pages and local browser use.
+Pocket Plan is a static, local-first monthly money tracker designed for GitHub Pages and modern mobile/desktop browsers.
 
-Main application file:
+Primary files:
 
 - `index.html`
+- `manifest.webmanifest`
+- `sw.js`
+- `apple-touch-icon.png`
+- `icons/`
 
-No build process, backend, framework, package manager, database, analytics SDK, or external JavaScript/CSS library is required.
+There is no build process, backend, account system, package manager, database, analytics SDK, remote API, or third-party JavaScript/CSS dependency.
 
-## PRIMARY PRODUCT GOAL
+## PRODUCT MODEL
 
-The app should quickly answer:
+The app now combines three concepts for each selected month:
 
-- How much was spent this month?
-- What was planned for each category this month?
-- How much is left in each category budget?
-- Which categories are already over budget or spending too quickly?
-- How much spending is currently unbudgeted?
-- What is projected total spending for the selected month?
-- Which categories and payment methods use the most money?
-- Which banks are being used for credit-card spending?
-- How does spending compare with the last six months?
+1. **Funds received** — money available to plan, such as salary or side income.
+2. **Allocated budget** — category amounts assigned for the month.
+3. **Actual expenses** — money actually spent.
 
-The product remains intentionally simple, private, local-first, responsive, static-host friendly, and easy to back up.
+The central planning equation is:
 
-## PRODUCT / BUDGETING MODEL
+```text
+unallocated = funds received - allocated category budgets
+```
 
-The previous General + Health budget model has been upgraded to monthly category budgets.
+If the result is negative, the plan is **overallocated**.
 
-A category budget works like a simple digital envelope:
+Category budget status remains:
 
 ```text
 category remaining = category budget - category spending
 ```
 
-Examples of useful monthly category budgets:
+Total monthly actual spending is independent of the plan:
 
-- Groceries
-- Transport
-- Bills
-- Health
-- Mortgage
-- Travel
-- Investment
-- Entertainment
-- Shopping
-- Home
-- custom categories
+```text
+total spent = sum of all selected-month expenses
+```
 
-The selected month controls both expenses and category budgets.
+This deliberately separates **planning money** from **spending records**. An expense does not automatically reduce the amount allocated to another category, and adding funds does not create an expense.
 
-This design was chosen because category-level planning makes planned-vs-actual differences actionable while staying lightweight. The Budget screen also shows the previous three months' average actual spending for the selected category as an optional starting suggestion.
+## WHY THIS MODEL
 
-### Research basis
+The design follows a lightweight envelope / assign-your-money pattern rather than a single monthly expense ceiling.
 
-The redesign was informed by documented budgeting practices from:
+Relevant documented practices used for the redesign:
 
-- CFPB guidance to build a realistic monthly budget from actual spending and review several months of spending history.
-- Actual Budget's envelope/category budgeting documentation.
-- YNAB's category-target approach for recurring monthly and longer-term expenses.
-- Monarch Money's documentation on category rollovers. Rollovers are intentionally NOT enabled in this version; they remain a possible future enhancement rather than hidden automatic behavior.
+- CFPB: a budget should bring income and spending together and should be grounded in actual spending/cash flow.
+- Actual Budget: envelope budgeting assigns available income to categories and treats unassigned money separately.
+- YNAB: incoming money enters a Ready-to-Assign pool before being assigned to categories; category targets help compare expected needs with available income.
 
-Reference pages:
+Reference material:
 
+- https://www.consumerfinance.gov/consumer-tools/educator-tools/your-money-your-goals/toolkit/
 - https://www.consumerfinance.gov/owning-a-home/prepare/assess-your-spending/
 - https://actualbudget.org/docs/getting-started/envelope-budgeting/
+- https://actualbudget.org/docs/budgeting/
+- https://support.ynab.com/en_us/assigning-your-money-a-guide-SypgkrNJi
 - https://support.ynab.com/en_us/getting-started-with-targets-ryAEP08xC
-- https://help.monarchmoney.com/hc/en-us/articles/4411119762196-Rollover-budget-feature
 
-## NAVIGATION
+Pocket Plan does **not** attempt bank syncing, account reconciliation, automatic investment pricing, or automatic rollover. Those would materially increase complexity and privacy/security surface.
 
-Five primary views:
+## MONTHLY FUNDS / INFLOWS
 
-1. Home
-2. Add
-3. History
-4. Budget
-5. More
+Funds are stored as individual entries so multiple paydays or income sources can be represented accurately.
 
-The bottom navigation remains fixed/floating and safe-area aware.
+Built-in source choices:
 
-## CATEGORIES
+- Salary
+- Payout / Bonus
+- Side income
+- Reimbursement
+- Miscellaneous
+- Other
 
-Current built-in expense categories:
+`Side income` is the preferred general term for extra work, freelance work, or a sideline.
+
+Approximate record:
+
+```json
+{
+  "id": "unique-id",
+  "amount": 45000,
+  "source": "Salary",
+  "date": "2026-08-15",
+  "note": "August payroll",
+  "createdAt": "2026-08-15T01:00:00.000Z",
+  "updatedAt": "2026-08-15T01:00:00.000Z"
+}
+```
+
+Funds are additive to schema v1. Old localStorage and old backups without `inflows` sanitize to an empty array.
+
+### Budget screen fund behavior
+
+Users can:
+
+- add funds
+- edit funds
+- delete funds
+- use a custom source
+- enter the date funds were received
+- add an optional note
+
+The selected month displays only fund entries whose `date` belongs to that month.
+
+The Budget screen shows:
+
+- Funds received
+- Allocated
+- Unallocated / overallocated
+- Spent
+- allocation progress
+- individual fund entries
+- individual category budgets
+
+Users can still create category budgets before adding fund entries. In that case the plan is treated as a plan-only month until funds are recorded.
+
+## MONTHLY CATEGORY BUDGETS
+
+Category budgets are stored under:
+
+```text
+settings.categoryBudgets
+```
+
+Example:
+
+```json
+{
+  "2026-08": {
+    "Groceries": 12000,
+    "Transport": 5000,
+    "Health": 6000,
+    "Mortgage": 25000,
+    "Investment": 8000,
+    "Travel": 4000
+  }
+}
+```
+
+Built-in expense categories:
 
 - Food
 - Groceries
@@ -101,171 +161,103 @@ Current built-in expense categories:
 - Travel
 - Other
 
-Changes from the previous version:
+`Education` is no longer a built-in choice, but older/custom Education expenses and budgets remain valid and are not rewritten or deleted.
 
-- `Groceries` added.
-- `Education` removed from the built-in list.
-- `Investment`, `Mortgage`, and `Travel` added to support common monthly planning categories.
+### Unallocated is not an expense category
 
-Older/custom category values remain valid. For example, an existing `Education` expense is NOT deleted or rewritten. It is treated as a custom category and survives History, analytics, filtering, editing, export, and restore.
-
-## PAYMENT METHODS
-
-Built-in payment methods:
-
-- Cash
-- GCash / E-wallet
-- Debit card
-- Credit card
-- Bank transfer
-- Other
-
-Custom payment values continue to survive editing/import/export.
-
-## BANK SELECTION
-
-A Bank field appears when the selected payment method is:
-
-- Debit card
-- Credit card
-- Bank transfer
-
-Built-in bank choices:
-
-- BDO
-- BPI
-- Metrobank
-- UnionBank
-- Security Bank
-- RCBC
-- PNB
-- LandBank
-- EastWest
-- China Bank
-- Maya Bank
-- GoTyme Bank
-- CIMB Bank
-- SeaBank
-- Other bank
-
-When `Other bank` is selected, a custom bank name is required.
-
-The selected bank is saved as the optional `bank` property on the expense.
-
-### Legacy bankless records
-
-Older Debit card / Credit card / Bank transfer expenses without a `bank` remain valid.
-
-When editing one of those existing legacy records, the user may save it again without being forced to add a bank. New bank-based expenses still require a bank.
-
-This avoids turning an additive schema change into an editing blocker.
-
-## NOTE FIELD
-
-The expense Note field is now a multiline `<textarea>`.
-
-Current maximum sanitized/storage length:
+Do not create an automatic `Unallocated` expense category. Unallocated funds are a planning balance:
 
 ```text
-500 characters
+funds received - allocated category budgets
 ```
 
-Line breaks are preserved in History display.
+This keeps leftover money visible instead of silently absorbing it into a catch-all category.
 
-## MONTHLY CATEGORY BUDGETS
+### Investment category
 
-Category budgets are stored under:
+Investment is treated as a normal planned outflow category. If the user moves money to an investment account and wants that transfer reflected in monthly cash planning, they can record it as an expense in Investment.
 
-```text
-settings.categoryBudgets
-```
+## HOME ANALYTICS
 
-Approximate shape:
+The Home dashboard prioritizes actionable monthly questions.
 
-```json
-{
-  "2026-08": {
-    "Groceries": 12000,
-    "Transport": 5000,
-    "Health": 6000,
-    "Mortgage": 25000,
-    "Travel": 4000
-  }
-}
-```
+Top-level metrics:
 
-Custom categories can also have budgets.
-
-### Budget screen
-
-The Budget view includes:
-
-- Planned total
-- Budgeted spending
-- Remaining across planned categories
+- Spent
+- Funds
+- Unallocated
+- Plan left
+- Projected spending
 - Unbudgeted spending
-- Category budget editor
-- Copy previous month's plan
-- Clear selected month's plan without deleting expenses
-- Three-month actual-spending average suggestion
-- Current category spending beside each budget
 
-### Copy previous month
+Other analytics:
 
-`Copy previous month` copies the prior month's complete category budget map into the selected month.
+- Budget vs actual by category
+- Attention / action items
+- Daily spending
+- Category share
+- Payment-method share
+- Credit-card bank usage
+- Six-month funds / plan / spending context
 
-If the selected month already has a plan, replacement requires confirmation.
+### Attention logic includes
 
-### Three-month suggestion
+- plan exceeds recorded funds
+- spending exceeds recorded funds
+- money remains unallocated
+- no funds have been recorded for an existing plan
+- category is over budget
+- current-month category spending is materially ahead of month progress
+- spending exists in a category with no matching category budget
 
-For a selected category:
+## THREE-MONTH SUGGESTION
 
-```text
-suggestion = average actual spending for the previous 3 months
-```
+The Budget editor calculates the average actual spend for the same category across the previous three months.
 
-This is informational and only populates the input when the user chooses `Use`.
+This is only a suggestion. It never overwrites a category budget automatically.
 
-It does not automatically alter the budget.
+## INSTALL / HOME-SCREEN SUPPORT
 
-## LEGACY GENERAL / HEALTH BUDGET MIGRATION
+The app now includes install metadata and icons.
 
-Do not rename or discard these old objects:
+### iPhone / iPad
 
-```text
-settings.budgets
-settings.healthBudgets
-```
+`apple-touch-icon.png` is linked from `index.html` for Add to Home Screen behavior.
 
-They remain preserved for backward compatibility.
+The web manifest is also linked. Apple supports manifest-provided Home Screen metadata in modern Safari, while the dedicated touch icon provides explicit Apple-specific coverage.
 
-When loading an older schema-v1 state or backup that does NOT contain `settings.categoryBudgets`:
+### Android / Chromium
 
-- Old General budgets are migrated into a special fallback category key:
+`manifest.webmanifest` defines:
 
-```text
-__general__
-```
+- name / short name
+- start URL and scope
+- standalone display
+- theme/background colors
+- 192px icon
+- 512px icon
+- 512px maskable icon
 
-Displayed to the user as:
+### Offline shell
 
-```text
-Unallocated / General
-```
+`sw.js` caches only same-origin static app assets:
 
-- Old Health budgets are migrated into the normal exact category:
+- page shell
+- manifest
+- icons
 
-```text
-Health
-```
+Navigation tries the network first and falls back to the cached `index.html` if offline. Other same-origin static assets use cache-first behavior.
 
-The legacy General fallback only absorbs spending from non-Health categories that do not already have their own explicit category budget.
+The service worker does not send financial data anywhere.
 
-This preserves the previous rule that Health did not consume General.
+Service workers require a secure context such as HTTPS (GitHub Pages is suitable) or localhost. They are intentionally not registered from `file://`.
 
-Once `settings.categoryBudgets` exists, old General/Health fields are no longer automatically remigrated after the user edits/deletes category budgets.
+Relevant platform references:
 
-The old fields remain stored/exported only for backward compatibility.
+- https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html
+- https://developer.apple.com/videos/play/wwdc2022/10048/
+- https://web.dev/learn/pwa/web-app-manifest
+- https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/icons
 
 ## STORAGE MODEL
 
@@ -281,320 +273,127 @@ Schema version remains:
 1
 ```
 
-The upgrade is additive.
-
-Approximate state:
+Approximate current state:
 
 ```json
 {
   "schemaVersion": 1,
   "settings": {
     "currency": "PHP",
-    "budgets": {
-      "2026-08": 30000
-    },
-    "healthBudgets": {
-      "2026-08": 5000
-    },
+    "budgets": {},
+    "healthBudgets": {},
     "categoryBudgets": {
       "2026-08": {
-        "Groceries": 10000,
-        "Transport": 5000,
-        "Health": 5000
+        "Groceries": 12000,
+        "Mortgage": 25000
       }
     },
     "hideAmounts": false
   },
-  "expenses": [
+  "expenses": [],
+  "inflows": [
     {
-      "id": "unique-id",
-      "amount": 2500,
-      "payment": "Credit card",
-      "bank": "BPI",
-      "category": "Groceries",
-      "date": "2026-08-10",
-      "note": "Weekly groceries",
-      "createdAt": "2026-08-10T10:00:00.000Z",
-      "updatedAt": "2026-08-10T10:00:00.000Z"
+      "id": "...",
+      "amount": 45000,
+      "source": "Salary",
+      "date": "2026-08-15",
+      "note": "August payroll",
+      "createdAt": "...",
+      "updatedAt": "..."
     }
   ]
 }
 ```
 
-## PRIVACY MODE
+Legacy `settings.budgets` and `settings.healthBudgets` remain preserved for compatibility with earlier schema-v1 backups.
 
-A privacy toggle is available:
+When a state has no `categoryBudgets`, old General and Health budgets are migrated additively into category-budget behavior.
 
-- Top-right eye button
-- More > Privacy mode
+## EXPENSES
 
-Setting:
+Expense records retain:
 
-```text
-settings.hideAmounts
-```
+- id
+- amount
+- payment
+- optional bank
+- category
+- date
+- multiline note
+- createdAt
+- updatedAt
 
-When enabled, rendered monetary values are replaced with masked dots.
+Expense Note maximum sanitized length is 500 characters.
 
-Privacy mode is designed for shoulder-surfing/screen-sharing privacy only.
+## PAYMENT METHODS
 
-It is NOT encryption and does not remove financial data from localStorage.
+Built-in methods:
 
-Anyone with access to the browser profile/devtools or an exported backup may still read the underlying data.
+- Cash
+- GCash / E-wallet
+- Debit card
+- Credit card
+- Bank transfer
+- Other
 
-## PRIVACY / NETWORK DESIGN
+Bank is required for newly created Debit card, Credit card, and Bank transfer expenses.
 
-The app remains entirely client-side.
-
-It intentionally has:
-
-- No backend
-- No cloud database
-- No analytics/tracking SDK
-- No third-party scripts
-- No third-party fonts
-- No remote API calls
-- No account/login requirement
-
-A Content Security Policy in `index.html` blocks script-initiated network connections (`connect-src 'none'`).
-
-Data remains in browser localStorage unless the user explicitly downloads a backup/export.
-
-Important limitation: serving the static HTML from GitHub Pages still means the browser requests the application files from GitHub like any normal website. Financial records themselves are not uploaded by this app.
-
-## HOME / ANALYTICS
-
-The analytics dashboard was reorganized to prioritize decisions over raw chart count.
-
-### Top summary
-
-Home shows:
-
-- Spent
-- Plan left
-- Projected spending
-- Unbudgeted spending
-- Plan coverage
-
-### Budget vs actual
-
-Each budget category shows:
-
-- Category name
-- Actual spending
-- Planned budget
-- Percent used
-- Progress bar
-- Remaining or over amount
-- Pace warning when appropriate
-
-### Pace logic
-
-For the current month:
-
-```text
-expected budget usage % = elapsed days / days in month
-```
-
-A category receives an `Ahead of pace` warning when actual usage exceeds expected usage by more than 10 percentage points.
-
-Over-budget categories are higher severity than pace warnings.
-
-### Attention panel
-
-The dashboard surfaces up to five useful issues, prioritizing:
-
-1. Over-budget categories
-2. Unbudgeted spending
-3. Categories materially ahead of pace
-4. Missing monthly plan
-5. Empty/no-spending state
-
-### Other analytics
-
-Home also includes:
-
-- Daily spending chart
-- Spending by category, including percent share
-- Spending by payment method, including percent share
-- Credit-card bank usage
-- Six-month spending trend with monthly plan context
-
-### Credit-card bank usage
-
-The bank analytics card still filters to exact:
-
-```text
-payment == "Credit card"
-```
-
-Older card records without a bank show:
-
-```text
-Unspecified bank
-```
-
-Debit-card and bank-transfer banks remain stored/displayed in History but are not included in the dedicated credit-card-bank chart.
-
-## DAILY / PROJECTED METRICS
-
-Projected spending uses all expenses in the selected month:
-
-```text
-daily average = total spent / elapsed days
-projected = daily average * days in month
-```
-
-For future months with zero elapsed days, projection is not shown.
-
-## UNBUDGETED SPENDING
-
-An expense is considered budgeted when:
-
-- its exact category has a category budget, OR
-- an older migrated `Unallocated / General` fallback exists and the expense is non-Health.
-
-Otherwise it counts as unbudgeted spending.
-
-This makes missing plan categories visible instead of silently treating all spending as covered.
-
-## HISTORY
-
-Expense cards display:
-
-- Date
-- Category
-- Payment method
-- Bank when present
-- Multiline note when present
-- Amount or privacy mask
-- Edit
-- Delete
-
-History remains card/list based for mobile usability.
-
-Editing updates the existing record in place and does not create a duplicate.
-
-## DATA SANITIZATION / SAFETY HARDENING
-
-Imported/local state is sanitized before use.
-
-### Dates
-
-Expense dates are validated as real calendar dates, not regex-only strings.
-
-For example:
-
-```text
-2026-02-31
-```
-
-is rejected.
-
-Budget months must also have real month numbers (`01` through `12`).
-
-### Duplicate IDs
-
-If imported state contains duplicate expense IDs, later duplicates receive new IDs during sanitization.
-
-This prevents deleting one record from deleting every record that shared a malformed imported ID.
-
-### Merge conflicts
-
-Expense Merge uses `updatedAt`:
-
-```text
-newer updatedAt wins for the same expense ID
-```
-
-This prevents an older backup from silently overwriting a newer local edit.
-
-Category-budget Merge combines month/category maps instead of replacing the entire current month when only one imported category differs.
-
-### HTML escaping
-
-User-entered payment/category/bank/note values are escaped before being inserted into generated HTML.
-
-### CSV formula hardening
-
-CSV text cells beginning with formula-like characters are prefixed so spreadsheet applications are less likely to interpret them as formulas:
-
-```text
-=
-+
--
-@
-```
+Older bank-based expenses without a bank remain editable without forcing the user to invent a bank value.
 
 ## BACKUP / RESTORE
 
-JSON remains the primary backup format.
-
-Backup identifier remains:
-
-```text
-github-pages-expense-tracker
-```
-
 ### Full backup
 
-`Full backup` includes:
+Contains:
 
-- currency
-- old General budgets
-- old Health budgets
+- settings
 - category budgets
-- privacy preference
+- legacy budget fields
+- privacy setting
 - expenses
-- optional bank property
-- timestamps
-- SHA-256 checksum when Web Crypto is available
+- inflows/funds
 
-### Separate exports
+### Expenses JSON
 
-The app also supports:
+Contains expenses only plus source currency metadata.
 
-- Expenses JSON
-- Budgets JSON
-- Expenses CSV
+### Budget + funds JSON
 
-This allows expense history and budget plans to be backed up separately.
+Uses backup kind:
 
-### Restore scopes
+```text
+budgets
+```
 
-The Restore JSON picker recognizes:
+The name is retained for compatibility, but this scope now includes:
 
-- Full backup
-- Expenses-only JSON
-- Budgets-only JSON
+- category budgets
+- legacy budget maps
+- currency
+- inflows/funds
 
-Restore modes:
+Old `budgets` backups without `inflows` remain importable.
 
-- Merge
-- Replace scope
+### Restore modes
 
-`Replace scope` only replaces the scope represented by the file:
+Merge:
 
-- Full backup -> expenses + settings
-- Expenses JSON -> expenses only
-- Budgets JSON -> budget data only
+- expense conflicts use newer `updatedAt`
+- fund conflicts use newer `updatedAt`
+- category budget maps merge by month/category
+- older compatible data is retained where possible
 
-Expenses-only restore does not silently change the app's current currency and does not perform currency conversion. The source currency is shown as metadata when present.
+Replace scope:
 
-### Old backups
+- Full replaces the full sanitized state.
+- Expenses replaces expenses only.
+- Budget + funds replaces budget data and funds only; expenses and privacy preference remain.
 
-Old schema-v1 full backups without:
+Optional SHA-256 checksums are verified when available.
 
-- `bank`
-- `healthBudgets`
-- `categoryBudgets`
-- `hideAmounts`
+## CSV
 
-remain importable.
-
-## CSV EXPORT
-
-CSV fields:
+Expense CSV includes:
 
 - id
 - date
@@ -607,227 +406,132 @@ CSV fields:
 - createdAt
 - updatedAt
 
-## RESPONSIVE DESIGN
+Text cells beginning with spreadsheet-formula prefixes are hardened on CSV export.
 
-The UI remains mobile-first and expands for larger screens.
+Funds are currently backed up through JSON rather than CSV.
 
-### Mobile
+## PRIVACY / SECURITY MODEL
 
-Recommended checks:
+Privacy goals:
+
+1. No backend.
+2. No account login.
+3. No analytics SDK.
+4. No remote financial-data API.
+5. No third-party runtime library.
+6. Data stays in browser localStorage unless the user explicitly exports a file.
+7. Static app-shell service worker only caches same-origin application assets.
+8. Generated HTML escapes user-entered text.
+9. Imported state is sanitized before saving.
+10. Privacy mode masks rendered monetary amounts.
+
+Privacy mode is a shoulder-surfing convenience. It is **not encryption** and should never be described as encryption.
+
+## DATA SAFETY RULES
+
+Preserve these rules in future work:
+
+1. Never silently destroy user data.
+2. Keep `expense-tracker.v1` unless migration logic is provided.
+3. Keep old schema-v1 full backups importable.
+4. Keep old schema-v1 budget backups importable.
+5. Missing `inflows` must remain valid.
+6. Missing expense `bank` must remain valid.
+7. Sanitize imports before saving.
+8. Validate actual calendar dates/months, not only text shape.
+9. Repair duplicate imported IDs rather than allowing destructive collisions.
+10. Merge expenses and funds using `updatedAt` conflict resolution.
+11. Escape user-entered text before generated HTML insertion.
+12. Editing must not create duplicates.
+13. Custom payment/category/bank/fund-source values must survive editing and backup/restore.
+14. Keep the app static-host friendly.
+15. Do not add cloud sync, bank sync, telemetry, or a backend unless explicitly required.
+
+## RESPONSIVE CHECKLIST
+
+Test manually at:
 
 - 320px
 - 360px
 - 375px
 - 390px
 - 430px
-
-Expected behavior:
-
-- Five-button floating bottom navigation fits without page-level horizontal scrolling.
-- Safe-area insets are supported.
-- Two-column form sections collapse on narrow screens.
-- Budget editor controls collapse where necessary.
-- Analytics cards stack.
-- History remains list/card based.
-- Note textarea remains usable without horizontal overflow.
-
-### Tablet / desktop
-
-At larger widths:
-
-- Summary KPIs use four columns.
-- Analytics use multi-column layouts.
-- Daily chart expands vertically.
-- Home uses a 12-column desktop grid.
-- Add and Budget editors use wider centered layouts.
-- More settings use columns.
-
-Recommended checks:
-
 - tablet widths
 - 1024px
 - 1280px
 - 1440px+
 
-## DATA SAFETY RULES
+Pay special attention to:
 
-Preserve these principles:
+- six Home summary cards
+- fund entry rows
+- custom fund source field
+- category budget rows
+- fixed five-button bottom navigation
+- safe-area insets
+- long currency values
+- privacy mode
 
-1. Do not silently destroy user data.
-2. Do not rename `expense-tracker.v1` without migration logic.
-3. Keep schema-v1 backups importable.
-4. Sanitize imported data before saving it.
-5. Escape user-entered text before inserting it into generated HTML.
-6. Editing an expense must not create a duplicate.
-7. Custom payment/category/bank values must survive editing.
-8. Old bankless card/bank-transfer records must remain editable.
-9. Keep the application static-host friendly.
-10. Do not add a backend unless shared live data is explicitly required.
-11. Avoid unnecessary frameworks and dependencies.
-12. Do not make privacy-mode masking sound like encryption.
-13. Do not automatically enable budget rollovers without an explicit product decision and migration design.
-14. Do not discard old General/Health budget fields while old backups still depend on them.
+## FUNCTIONAL TEST CHECKLIST
 
-## IMPORTANT IMPLEMENTATION NOTES
+### Funds
 
-### Exact category matching
+- Add Salary
+- Add Payout / Bonus
+- Add Side income
+- Add Miscellaneous
+- Add custom Other source
+- Edit a fund entry
+- Delete a fund entry
+- Multiple fund entries in one month sum correctly
+- Fund entry appears only in its date month
+- Duplicate imported fund IDs are repaired
+- Newer fund `updatedAt` wins in Merge
 
-Category budgets match expense categories exactly.
+### Allocation
 
-For example:
+- No funds + no plan
+- Plan with no funds
+- Funds with no plan
+- Funds greater than allocated plan
+- Funds exactly equal allocated plan
+- Plan greater than funds shows overallocated state
+- Editing a category budget updates unallocated immediately
+- Clearing a month plan does not delete funds or expenses
+- Copy previous month copies only category plan, not funds
 
-```text
-Groceries
-```
+### Expense / budget analytics
 
-and:
+- Budgeted category under plan
+- Budgeted category over plan
+- Unbudgeted spending
+- Current-month fast pace warning
+- Spending greater than recorded funds
+- Six-month row handles months with funds but no plan/spend
 
-```text
-groceries
-```
+### Backup
 
-would be different category strings if the lowercase value arrived from a custom/imported record.
+- Full export/restore including funds
+- Expense-only export/restore leaves funds untouched
+- Budget + funds export/restore leaves expenses untouched
+- Old full backup without `inflows`
+- Old budgets backup without `inflows`
+- Merge keeps newer expense edits
+- Merge keeps newer fund edits
 
-Built-in UI choices use consistent capitalization.
+### Install / offline
 
-### Health compatibility
+On GitHub Pages/HTTPS:
 
-For migrated legacy General budgets, Health remains excluded from the General fallback.
-
-This preserves the prior app's separate-Health behavior.
-
-### Legacy General fallback
-
-`__general__` is an internal compatibility key, not a normal expense category.
-
-Do not expose it as a standard Add Expense category.
-
-### No income model yet
-
-This version tracks:
-
-- monthly planned category budgets
-- monthly actual expenses
-
-It does not yet track income/paychecks or enforce a true zero-based `income = assigned budget` constraint.
-
-That omission is intentional to keep the app simple and avoid adding financial concepts the user did not explicitly request.
-
-A future income feature should be designed as a separate schema addition, not inferred from expenses.
-
-## TEST CHECKLIST
-
-### Syntax / structure
-
-- JavaScript parses without syntax errors.
-- No duplicate DOM IDs.
-- Interactive form controls have labels or aria-labels.
-- No external JavaScript/CSS dependencies.
-
-### Responsive
-
-- 320px
-- 360px
-- 375px
-- 390px
-- 430px
-- tablet
-- 1024px
-- 1280px
-- 1440px+
-- all five views
-- long custom category names
-- long bank names
-- multiline notes
-- privacy mode on/off
-
-### Categories
-
-- Groceries available
-- Education absent from new-expense built-in list
-- Old Education record still displays/edits as custom
-- Investment available
-- Mortgage available
-- Travel available
-- Other/custom category survives edit/import/export
-
-### Expense
-
-- Add
-- Edit
-- Delete
-- Note textarea
-- Custom payment
-- Custom category
-- Date validation
-- Filter
-- Multi-tab sync
-
-### Bank
-
-- New Debit card requires bank
-- New Credit card requires bank
-- New Bank transfer requires bank
-- Other bank requires custom name
-- Editing restores bank
-- Legacy bankless Credit card can be edited without adding a bank
-- Credit-card analytics groups banks correctly
-- Missing bank shows Unspecified bank
-
-### Budget
-
-- No monthly plan
-- Add category budget
-- Edit category budget
-- Remove category budget
-- Clear month plan does not remove expenses
-- Copy previous plan
-- 3-month suggestion
-- Under budget
-- Over budget
-- Ahead-of-pace warning
-- Unbudgeted expense
-- Custom category budget
-- Future month
-- Past month
-
-### Legacy migration
-
-- Old General only
-- Old Health only
-- Old General + Health
-- Health does not consume legacy General fallback
-- Old state receives categoryBudgets without changing storage key/schema version
-
-### Import / export
-
-- Full export + restore
-- Expenses JSON export + merge
-- Expenses JSON replace scope
-- Budgets JSON export + merge
-- Budgets JSON replace scope
-- Old schema-v1 backup without bank
-- Old schema-v1 backup without healthBudgets
-- Old schema-v1 backup without categoryBudgets
-- Duplicate imported expense IDs
-- Invalid imported calendar date
-- Invalid imported budget month
-- Same expense ID with older imported updatedAt
-- Same expense ID with newer imported updatedAt
-- Category-budget merge preserves categories from both sides
-- CSV formula-like note/category values
-
-### Privacy
-
-- Eye button hides/shows rendered amounts
-- More toggle stays in sync with eye button
-- Setting persists in localStorage
-- History amount is masked
-- Daily hover/title does not reveal hidden amount
-- Confirm-delete text does not reveal amount while privacy mode is on
+- iPhone Add to Home Screen displays supplied icon
+- Android install/Add to Home screen displays supplied icon
+- Android maskable icon is not clipped badly
+- Installed app launches in standalone display where supported
+- After one successful online load, app shell opens offline
+- No remote third-party requests appear in DevTools Network
 
 ## SOURCE OF TRUTH
 
-The current `index.html` in this package is the runtime source of truth.
+`index.html` is the application behavior source of truth.
 
-This `HANDOFF.md` documents the intended behavior of the packaged version containing that file.
+`HANDOFF.md` documents intended behavior and compatibility requirements.
