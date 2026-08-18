@@ -1,15 +1,12 @@
 # Changelog
 
-## 2026-08-18 — Dedicated checklist + split payments
+## 2026-08-19 — Checklist cards + mobile action cleanup
 
-- Moved Monthly checklist out of Home/Budget into its own bottom-navigation page.
-- Added a Checklist icon/tab to the fixed bottom navigation.
-- Added optional child items under each checklist target for split/repeated payments such as multiple mortgage payments in one month.
-- Child items support their own label, amount, due day, note, completion state, edit, and delete actions.
-- Parent checklist completion now follows child completion when child items exist; parent toggling can mark all children done/open at once.
-- Preserved older saved checklist data and backup compatibility by treating child items as an additive schema-v1 field.
-- Copy Previous Month now deep-copies child items with new IDs and resets completion state.
-- Bumped the offline app-shell cache to `pocket-plan-shell-v7`.
+- Split the checklist editor (`#checklistForm`) and checklist items (`#checklistList`) into separate cards.
+- Simplified nested checklist children on small screens with tighter indentation and inline action controls.
+- Added SVG action icons across checklist controls and mobile edit/delete controls for funds and budget rows, while retaining text labels on larger screens where useful.
+- Preserved accessible button labels and titles for icon-only mobile controls.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v8`.
 
 ## 2026-08-17 — Budget card accordions + projected-funds save guard
 
