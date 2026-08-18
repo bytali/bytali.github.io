@@ -299,6 +299,32 @@
     .projection-box { display: grid; gap: 9px; padding: 12px; border-radius: 16px; background: var(--panel-2); }
     .projection-box .field-help { margin-top: -1px; }
 
+    .budget-desc { white-space: pre-line; }
+    .checklist-card { display: grid; gap: 12px; }
+    .checklist-toolbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .checklist-progress { display: grid; gap: 7px; padding: 12px; border-radius: 16px; background: var(--panel-2); }
+    .checklist-progress-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .checklist-progress strong { font-size: 13px; }
+    .checklist-progress small { color: var(--muted); font-size: 10px; }
+    .checklist-progress .good { color: var(--good); }
+    .checklist-progress .warn { color: var(--warn); }
+    .checklist-progress .bad { color: var(--bad); }
+    .checklist { display: grid; gap: 8px; }
+    .checklist-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; border-radius: 15px; background: var(--panel-2); }
+    .checklist-row.done { opacity: .72; }
+    .checklist-row.done .checklist-label { text-decoration: line-through; }
+    .checklist-row.overdue { box-shadow: inset 3px 0 0 var(--bad); }
+    .checklist-main { min-width: 0; }
+    .checklist-label { display: block; overflow-wrap: anywhere; }
+    .checklist-meta { margin-top: 3px; color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+    .checklist-meta .bad { color: var(--bad); font-weight: 800; }
+    .checklist-meta .good { color: var(--good); font-weight: 800; }
+    .checklist-check { display: grid; width: 36px; height: 36px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--muted); }
+    .checklist-check[aria-pressed="true"] { border-color: var(--good); background: color-mix(in srgb, var(--good) 18%, var(--panel)); color: var(--good); }
+    .checklist-check svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .checklist-actions { display: flex; gap: 5px; align-items: center; }
+    .checklist-actions strong { margin-right: 4px; white-space: nowrap; }
+
     .settings-list { display: grid; gap: 12px; }
     .setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
     .setting-row strong { font-size: 13px; }
@@ -330,9 +356,11 @@
     .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 18px 18px; }
 
     @media (max-width: 420px) {
-      .two, .bank-fields.has-custom, .budget-toolbar { grid-template-columns: 1fr; }
+      .two, .bank-fields.has-custom, .budget-toolbar, .checklist-toolbar { grid-template-columns: 1fr; }
       .fund-row, .budget-edit-row { grid-template-columns: minmax(0, 1fr); align-items: start; }
       .fund-row .budget-edit-actions, .budget-edit-row .budget-edit-actions { justify-content: space-between; flex-wrap: wrap; }
+      .checklist-row { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+      .checklist-actions { grid-column: 1 / -1; justify-content: space-between; flex-wrap: wrap; }
       .card { padding: 14px; }
       .trend-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 7px; }
       .summary-card strong { font-size: clamp(21px, 7vw, 31px); }
@@ -366,6 +394,7 @@
       #view-home > .summary-grid { grid-column: 1 / -1; grid-template-columns: repeat(6, minmax(0, 1fr)); }
       #view-home > .budget-analytics-wrap { grid-column: 1 / 8; }
       #view-home > .insights-wrap { grid-column: 8 / -1; }
+      #view-home > .checklist-wrap { grid-column: 1 / -1; }
       #view-home > .daily-wrap { grid-column: 1 / 8; }
       #view-home > .spending-wrap { grid-column: 8 / -1; }
       #view-home > .bank-wrap { grid-column: 1 / 6; }
@@ -407,6 +436,11 @@
       <div class="insights-wrap">
         <div class="section-title"><h2>Attention</h2><span>What needs action</span></div>
         <section class="card"><div id="insights" class="insights"></div></section>
+      </div>
+
+      <div class="checklist-wrap">
+        <div class="section-title"><h2>Checklist</h2><span id="checklistHomeSummary">—</span></div>
+        <section class="card"><div id="checklistHome" class="checklist"></div></section>
       </div>
 
       <div class="daily-wrap">
@@ -471,6 +505,7 @@
         <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Allocated</span></summary><div class="collapsible-body"><strong id="budgetPlannedKpi">—</strong><small id="budgetPlannedPercentSub">Category plan total</small></div></details></section>
         <section class="card summary-card collapsible-card" id="budgetRemainingCard"><details open><summary><span class="eyebrow">Unallocated</span></summary><div class="collapsible-body"><strong id="budgetRemainingKpi">—</strong><small id="budgetAllocationSub">Funds not assigned yet</small></div></details></section>
         <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Spent</span></summary><div class="collapsible-body"><strong id="budgetSpentKpi">—</strong><small>Actual expenses this month</small></div></details></section>
+        <section class="card summary-card collapsible-card" id="budgetChecklistCard"><details open><summary><span class="eyebrow">Checklist</span></summary><div class="collapsible-body"><strong id="budgetChecklistKpi">—</strong><small id="budgetChecklistSub">Items taken care of</small></div></details></section>
       </div>
 
       <section class="card funds-card collapsible-card">
@@ -512,7 +547,7 @@
                 <div class="field"><label for="budgetCategory">Category</label><select id="budgetCategory"></select></div>
                 <div class="field" id="budgetCategoryCustomWrap" hidden><label for="budgetCategoryCustom">Custom category</label><input id="budgetCategoryCustom" maxlength="60" placeholder="e.g. Pets" /></div>
               </div>
-              <div class="field"><label for="budgetDescription">Category description</label><input id="budgetDescription" maxlength="180" placeholder="e.g. electricity / water / internet" /></div>
+              <div class="field"><label for="budgetDescription">Category description</label><textarea id="budgetDescription" maxlength="500" rows="3" placeholder="e.g. electricity / water / internet"></textarea><div class="field-help">Optional. Multiple lines are kept, so one item per line works well.</div></div>
               <div class="two">
                 <div class="field"><label for="budgetPercent">Allocation % of current funds</label><input id="budgetPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="e.g. 15" /></div>
                 <div class="field"><label for="budgetAmount">Manual amount</label><input id="budgetAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div>
@@ -524,6 +559,36 @@
             </form>
             <div class="section-title"><h2>Plan categories</h2><span>Drag handle to reorder</span></div>
             <div id="budgetEditList" class="budget-edit-list"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="card checklist-card collapsible-card">
+        <details open>
+          <summary><span><strong>Monthly checklist</strong><small id="checklistMonthLabel"></small></span></summary>
+          <div class="collapsible-body">
+            <div id="checklistProgress" class="checklist-progress"></div>
+            <div class="checklist-toolbar">
+              <button id="checklistFromPlan" class="btn" type="button">Add from plan</button>
+              <button id="copyPreviousChecklist" class="btn" type="button">Copy previous month</button>
+              <button id="clearChecklist" class="btn danger" type="button">Clear checklist</button>
+            </div>
+            <form id="checklistForm" class="form-grid" autocomplete="off">
+              <input type="hidden" id="checklistEditId" />
+              <div class="field"><label for="checklistLabel">Checklist item</label><input id="checklistLabel" maxlength="90" placeholder="e.g. Electricity bill" required /></div>
+              <div class="two">
+                <div class="field"><label for="checklistCategory">Plan category</label><select id="checklistCategory"></select></div>
+                <div class="field"><label for="checklistAmount">Target amount</label><input id="checklistAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Optional" /></div>
+              </div>
+              <div class="two">
+                <div class="field"><label for="checklistDueDay">Due day</label><input id="checklistDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
+                <div class="field"><label for="checklistNote">Note</label><input id="checklistNote" maxlength="180" placeholder="Optional" /></div>
+              </div>
+              <div class="field-help">The checklist only tracks whether a monthly target is already taken care of. It never changes funds, allocations, or spending totals.</div>
+              <div class="action-row"><button id="saveChecklistBtn" class="btn primary" type="submit">Add item</button><button id="cancelChecklistEditBtn" class="btn" type="button" hidden>Cancel</button></div>
+            </form>
+            <div class="section-title"><h2>Items</h2><span id="checklistCountLabel">0 items</span></div>
+            <div id="checklistList" class="checklist"></div>
           </div>
         </details>
       </section>
@@ -581,6 +646,9 @@
     const SCHEMA_VERSION = 1;
     const APP_ID = 'github-pages-expense-tracker';
     const LEGACY_GENERAL = '__general__';
+    const DESCRIPTION_MAX = 500;
+    const CHECKLIST_LABEL_MAX = 90;
+    const CHECKLIST_NOTE_MAX = 180;
 
     const STANDARD_PAYMENTS = ['Cash', 'GCash / E-wallet', 'Debit card', 'Credit card', 'Bank transfer'];
     const BANK_PAYMENTS = ['Debit card', 'Credit card', 'Bank transfer'];
@@ -596,6 +664,7 @@
       expenseForm: $('expenseForm'), editId: $('editId'), amount: $('amount'), payment: $('payment'), paymentOther: $('paymentOther'), paymentOtherWrap: $('paymentOtherWrap'), bankFields: $('bankFields'), bank: $('bank'), bankOther: $('bankOther'), bankOtherWrap: $('bankOtherWrap'), category: $('category'), categoryOther: $('categoryOther'), categoryOtherWrap: $('categoryOtherWrap'), otherFields: $('otherFields'), date: $('date'), note: $('note'), saveExpenseBtn: $('saveExpenseBtn'), cancelEditBtn: $('cancelEditBtn'), currencyMark: $('currencyMark'),
       expenseFilter: $('expenseFilter'), expenseList: $('expenseList'), expenseEmpty: $('expenseEmpty'),
       budgetPlannedKpi: $('budgetPlannedKpi'), budgetPlannedPercentSub: $('budgetPlannedPercentSub'), budgetProjectedFundsKpi: $('budgetProjectedFundsKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetAllocationSub: $('budgetAllocationSub'), budgetMonthLabel: $('budgetMonthLabel'), allocationGuide: $('allocationGuide'), projectedFundsForm: $('projectedFundsForm'), projectedFundsAmount: $('projectedFundsAmount'), clearProjectedFundsBtn: $('clearProjectedFundsBtn'), fundForm: $('fundForm'), fundEditId: $('fundEditId'), fundSource: $('fundSource'), fundSourceOtherWrap: $('fundSourceOtherWrap'), fundSourceOther: $('fundSourceOther'), fundAmount: $('fundAmount'), fundDate: $('fundDate'), fundNote: $('fundNote'), saveFundBtn: $('saveFundBtn'), cancelFundEditBtn: $('cancelFundEditBtn'), fundCountLabel: $('fundCountLabel'), fundList: $('fundList'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetDescription: $('budgetDescription'), budgetPercent: $('budgetPercent'), budgetAmount: $('budgetAmount'), budgetAllocationModeHint: $('budgetAllocationModeHint'), budgetConversionHint: $('budgetConversionHint'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
+      budgetChecklistCard: $('budgetChecklistCard'), budgetChecklistKpi: $('budgetChecklistKpi'), budgetChecklistSub: $('budgetChecklistSub'), checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistForm: $('checklistForm'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistHome: $('checklistHome'), checklistHomeSummary: $('checklistHomeSummary'),
       currency: $('currency'), privacyToggle: $('privacyToggle'), persistenceStatus: $('persistenceStatus'), requestPersistence: $('requestPersistence'), storageSize: $('storageSize'), storageMeter: $('storageMeter'),
       exportFull: $('exportFull'), importData: $('importData'), exportExpensesJson: $('exportExpensesJson'), exportBudgetsJson: $('exportBudgetsJson'), exportCsv: $('exportCsv'), clearData: $('clearData'), importFile: $('importFile'), importDialog: $('importDialog'), importSummary: $('importSummary'), importMode: $('importMode'), importModeHelp: $('importModeHelp'), cancelImport: $('cancelImport'), confirmImport: $('confirmImport'), toast: $('toast')
     };
@@ -655,7 +724,13 @@
       return `exp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
     function emptyState() {
-      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, categoryBudgetOrder: {}, projectedFunds: {}, hideAmounts: false }, expenses: [], inflows: [] };
+      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, categoryBudgetOrder: {}, projectedFunds: {}, hideAmounts: false }, expenses: [], inflows: [], checklist: [] };
+    }
+    function normalizeText(value, max) {
+      return String(value ?? '').replace(/\r\n?/g, '\n').trim().slice(0, max);
+    }
+    function flattenText(value) {
+      return String(value ?? '').replace(/\s*\n+\s*/g, ' · ').trim();
     }
     function cleanBudgetMap(source) {
       const out = {};
@@ -704,7 +779,7 @@
         const monthOut = {};
         Object.entries(categories).forEach(([category, description]) => {
           const name = String(category || '').trim().slice(0, 60);
-          const text = String(description || '').trim().slice(0, 180);
+          const text = normalizeText(description, DESCRIPTION_MAX);
           if (name && text) monthOut[name] = text;
         });
         if (Object.keys(monthOut).length) out[month] = monthOut;
@@ -773,6 +848,38 @@
         .filter(item => Number.isFinite(item.amount) && item.amount > 0 && isValidDate(item.date));
     }
 
+    function cleanChecklist(source) {
+      const seen = new Set();
+      return (Array.isArray(source) ? source : [])
+        .filter(item => item && typeof item === 'object')
+        .map(item => {
+          let id = String(item.id || '').trim().slice(0, 120);
+          if (!id || seen.has(id)) {
+            do { id = createId(); } while (seen.has(id));
+          }
+          seen.add(id);
+          const month = String(item.month || '').slice(0, 7);
+          const amount = Number(item.amount);
+          const dueDay = Number(item.dueDay);
+          const maxDay = isValidMonth(month) ? daysInMonth(month) : 31;
+          const done = Boolean(item.done);
+          return {
+            id,
+            month,
+            label: normalizeText(item.label, CHECKLIST_LABEL_MAX),
+            category: String(item.category || '').trim().slice(0, 60),
+            amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
+            dueDay: Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= maxDay ? dueDay : 0,
+            done,
+            doneAt: done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '',
+            note: normalizeText(item.note, CHECKLIST_NOTE_MAX),
+            createdAt: String(item.createdAt || new Date().toISOString()),
+            updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
+          };
+        })
+        .filter(item => isValidMonth(item.month) && Boolean(item.label));
+    }
+
     function sanitizeState(candidate) {
       const base = emptyState();
       if (!candidate || typeof candidate !== 'object') return base;
@@ -817,7 +924,8 @@
           hideAmounts: Boolean(settings.hideAmounts)
         },
         expenses: cleanExpenses(candidate.expenses),
-        inflows: cleanInflows(candidate.inflows)
+        inflows: cleanInflows(candidate.inflows),
+        checklist: cleanChecklist(candidate.checklist)
       };
     }
     function loadState() {
@@ -883,6 +991,37 @@
       const fromBudgets = Object.keys(state.settings.categoryBudgets[month] || {}).filter(c => c !== LEGACY_GENERAL);
       const fromPercents = Object.keys(state.settings.categoryBudgetPercents[month] || {}).filter(c => c !== LEGACY_GENERAL);
       return [...new Set([...STANDARD_CATEGORIES, 'Other', ...fromExpenses, ...fromBudgets, ...fromPercents])].sort((a, b) => a.localeCompare(b));
+    }
+    function checklistForMonth(month) { return state.checklist.filter(item => item.month === month); }
+    function sortedChecklist(items) {
+      return items.slice().sort((a, b) => Number(a.done) - Number(b.done) || (a.dueDay || 99) - (b.dueDay || 99) || a.createdAt.localeCompare(b.createdAt));
+    }
+    function isChecklistOverdue(month, item) {
+      if (item.done || !item.dueDay) return false;
+      const current = currentMonthLocal();
+      if (month < current) return true;
+      if (month > current) return false;
+      return item.dueDay < new Date().getDate();
+    }
+    function checklistStats(month, items = checklistForMonth(month)) {
+      const doneItems = items.filter(item => item.done);
+      const targetTotal = items.reduce((total, item) => total + Number(item.amount || 0), 0);
+      const doneTotal = doneItems.reduce((total, item) => total + Number(item.amount || 0), 0);
+      return {
+        total: items.length,
+        done: doneItems.length,
+        open: items.length - doneItems.length,
+        overdue: items.filter(item => isChecklistOverdue(month, item)).length,
+        targetTotal,
+        doneTotal,
+        openTotal: targetTotal - doneTotal,
+        percent: items.length ? doneItems.length / items.length * 100 : 0
+      };
+    }
+    function categorySpendMap(items) {
+      const map = new Map();
+      items.forEach(item => map.set(item.category, (map.get(item.category) || 0) + Number(item.amount)));
+      return map;
     }
     function monthlyBudgetPercents(month) { return state.settings.categoryBudgetPercents[month] || {}; }
     function monthlyBudgetDescriptions(month) { return state.settings.categoryBudgetDescriptions[month] || {}; }
@@ -1045,7 +1184,15 @@
       els.budgetSpentKpi.textContent = money(stats.totalSpent);
       els.budgetRemainingKpi.textContent = fundsTotal > 0 ? money(unallocated) : '—';
       els.budgetAllocationSub.textContent = fundsTotal > 0 ? (unallocated < 0 ? `${money(Math.abs(unallocated))} overallocated` : 'Funds not assigned yet') : 'Add funds to compare with your plan';
-      els.budgetRemainingCard.className = `card summary-card ${fundsTotal > 0 ? (unallocated < 0 ? 'bad' : 'good') : ''}`;
+      els.budgetRemainingCard.className = `card summary-card collapsible-card ${fundsTotal > 0 ? (unallocated < 0 ? 'bad' : 'good') : ''}`;
+      const checklist = checklistStats(month);
+      els.budgetChecklistKpi.textContent = checklist.total ? `${checklist.done}/${checklist.total}` : '—';
+      els.budgetChecklistSub.textContent = checklist.total
+        ? (checklist.open
+          ? `${checklist.open} open${checklist.openTotal > 0 ? ` · ${money(checklist.openTotal)} left` : ''}${checklist.overdue ? ` · ${checklist.overdue} overdue` : ''}`
+          : 'Everything is taken care of')
+        : 'Add items in Monthly checklist';
+      els.budgetChecklistCard.className = `card summary-card collapsible-card ${checklist.total ? (checklist.overdue ? 'bad' : checklist.open ? 'warn' : 'good') : ''}`;
       renderAllocationGuide(month, fundsTotal, stats.planned, stats.totalSpent, projectedFunds, projectedPlanned);
       els.projectedFundsAmount.value = projectedFunds > 0 ? String(projectedFunds) : '';
       renderFunds(month, funds);
@@ -1061,6 +1208,9 @@
       renderExpenses(items);
       setBudgetCategoryOptions(month);
       renderBudgetEditor(month, items);
+      setChecklistCategoryOptions(month);
+      renderChecklist(month, items);
+      renderChecklistHome(month, items);
       updateBudgetSuggestion();
       els.currency.value = state.settings.currency;
       updatePrivacyControls();
@@ -1102,7 +1252,7 @@
 
       els.budgetAnalytics.innerHTML = rows.map(row => `
         <details class="plan-row plan-row-accordion" ${compactMobile ? '' : 'open'}>
-          <summary><div class="plan-row-top"><div class="plan-row-title"><strong>${escapeHtml(budgetLabel(row.category))}</strong><small>${row.description ? `${escapeHtml(row.description)} · ` : ''}${escapeHtml(money(row.spent))} spent of ${escapeHtml(money(row.planned))}${row.allocationPercent > 0 ? ` · ${escapeHtml(`${row.allocationPercent.toFixed(row.allocationPercent % 1 ? 1 : 0)}% of current funds`)}` : ''}</small></div><div class="plan-row-amount">${escapeHtml(`${Math.round(row.percent)}%`)}</div></div></summary>
+          <summary><div class="plan-row-top"><div class="plan-row-title"><strong>${escapeHtml(budgetLabel(row.category))}</strong><small>${row.description ? `${escapeHtml(flattenText(row.description))} · ` : ''}${escapeHtml(money(row.spent))} spent of ${escapeHtml(money(row.planned))}${row.allocationPercent > 0 ? ` · ${escapeHtml(`${row.allocationPercent.toFixed(row.allocationPercent % 1 ? 1 : 0)}% of current funds`)}` : ''}</small></div><div class="plan-row-amount">${escapeHtml(`${Math.round(row.percent)}%`)}</div></div></summary>
           <div class="plan-row-body"><div class="progress"><span style="width:${Math.min(100, Math.max(0, row.percent))}%;background:${row.cls === 'bad' ? 'var(--bad)' : row.cls === 'warn' ? 'var(--warn)' : 'var(--good)'}"></span></div><div class="plan-row-status"><span>${escapeHtml(row.status)}</span><span class="${row.cls}">${escapeHtml(row.flag)}</span></div></div>
         </details>`).join('');
     }
@@ -1134,6 +1284,10 @@
         const [category, amount] = unbudgetedRows[0];
         insights.push({ level: 'warn', weight: 2.5, text: `${category} has ${money(amount)} of unbudgeted spending.` });
       }
+      const checklist = checklistStats(month);
+      if (checklist.overdue) insights.push({ level: 'bad', weight: 3.1, text: `${checklist.overdue} checklist item${checklist.overdue === 1 ? ' is' : 's are'} past the due day.` });
+      else if (checklist.open) insights.push({ level: 'warn', weight: 1.9, text: `${checklist.open} checklist item${checklist.open === 1 ? ' is' : 's are'} not taken care of yet${checklist.openTotal > 0 ? ` (${money(checklist.openTotal)})` : ''}.` });
+      else if (checklist.total) insights.push({ level: 'good', weight: 1.3, text: `All ${checklist.total} checklist item${checklist.total === 1 ? '' : 's'} for this month are taken care of.` });
       if (!Object.keys(budgets).length) insights.push({ level: 'warn', weight: 2, text: 'No monthly plan is set. Add category budgets to compare planned vs actual spending.' });
       if (!items.length) insights.push({ level: 'good', weight: 1, text: 'No spending recorded for this month yet.' });
       if (!insights.length) insights.push({ level: 'good', weight: 1, text: 'No budget issues need attention right now.' });
@@ -1287,6 +1441,128 @@
       render();
     }
 
+    function checklistRowHtml(month, item, spentByCategory, options = {}) {
+      const overdue = isChecklistOverdue(month, item);
+      const spent = item.category ? Number(spentByCategory.get(item.category) || 0) : 0;
+      const meta = [];
+      if (item.category) meta.push(escapeHtml(budgetLabel(item.category)));
+      if (item.amount > 0) meta.push(escapeHtml(money(item.amount)));
+      if (item.dueDay) meta.push(escapeHtml(`due ${item.dueDay} ${monthLabel(month, 'short')}`));
+      if (item.category && spent > 0) meta.push(escapeHtml(`${money(spent)} spent`));
+      if (item.done) meta.push('<span class="good">Taken care of</span>');
+      else if (overdue) meta.push('<span class="bad">Overdue</span>');
+      else if (item.amount > 0 && item.category && spent >= item.amount) meta.push('<span class="good">Spending already recorded</span>');
+      const note = item.note ? `<div class="checklist-meta">${escapeHtml(item.note)}</div>` : '';
+      const check = item.done ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>' : '';
+      const toggle = `<button class="checklist-check" type="button" aria-pressed="${item.done ? 'true' : 'false'}" aria-label="${item.done ? 'Mark as still open' : 'Mark as taken care of'}" data-checklist-toggle="${escapeHtml(item.id)}">${check}</button>`;
+      const actions = options.compact
+        ? ''
+        : `<button class="btn compact" type="button" data-checklist-edit="${escapeHtml(item.id)}">Edit</button><button class="btn compact danger" type="button" data-checklist-delete="${escapeHtml(item.id)}">×</button>`;
+      const amount = item.amount > 0 ? `<strong>${escapeHtml(money(item.amount))}</strong>` : '';
+      const right = actions || (options.compact && amount) ? `<div class="checklist-actions">${options.compact ? amount : ''}${actions}</div>` : '';
+      return `<div class="checklist-row ${item.done ? 'done' : ''} ${overdue ? 'overdue' : ''}"><div>${toggle}</div><div class="checklist-main"><span class="checklist-label">${escapeHtml(item.label)}</span>${meta.length ? `<div class="checklist-meta">${meta.join(' · ')}</div>` : ''}${note}</div>${right}</div>`;
+    }
+    function renderChecklistProgress(month, stats) {
+      let headline = 'No checklist items yet';
+      let detail = 'List the bills and targets this month has to take care of.';
+      let cls = '';
+      if (stats.total) {
+        headline = stats.open ? `${stats.open} of ${stats.total} still open` : `All ${stats.total} taken care of`;
+        detail = stats.targetTotal > 0 ? `${money(stats.doneTotal)} of ${money(stats.targetTotal)} settled` : `${stats.done} of ${stats.total} marked done`;
+        cls = stats.overdue ? 'bad' : stats.open ? 'warn' : 'good';
+      }
+      const width = Math.min(100, Math.max(0, stats.percent));
+      const overdueNote = stats.overdue ? `<small class="bad">${escapeHtml(`${stats.overdue} item${stats.overdue === 1 ? '' : 's'} past the due day`)}</small>` : '';
+      els.checklistProgress.innerHTML = `<div class="checklist-progress-top"><strong class="${cls}">${escapeHtml(headline)}</strong><small>${escapeHtml(monthLabel(month, 'short'))}</small></div><div class="progress"><span style="width:${width}%;background:${stats.overdue ? 'var(--bad)' : 'var(--good)'}"></span></div><small>${escapeHtml(detail)}</small>${overdueNote}`;
+    }
+    function renderChecklist(month, expenseItems = expensesForMonth(month)) {
+      const items = checklistForMonth(month);
+      const stats = checklistStats(month, items);
+      const spentByCategory = categorySpendMap(expenseItems);
+      els.checklistMonthLabel.textContent = monthLabel(month, 'short');
+      els.checklistCountLabel.textContent = `${stats.total} item${stats.total === 1 ? '' : 's'}`;
+      renderChecklistProgress(month, stats);
+      els.checklistList.innerHTML = items.length
+        ? sortedChecklist(items).map(item => checklistRowHtml(month, item, spentByCategory)).join('')
+        : '<div class="empty">No checklist items for this month</div>';
+    }
+    function renderChecklistHome(month, expenseItems = expensesForMonth(month)) {
+      const items = checklistForMonth(month);
+      const stats = checklistStats(month, items);
+      els.checklistHomeSummary.textContent = stats.total ? `${stats.done}/${stats.total} taken care of` : 'Nothing listed';
+      if (!items.length) {
+        els.checklistHome.innerHTML = '<div class="empty">No checklist items yet. Add them in Budget → Monthly checklist.</div>';
+        return;
+      }
+      const spentByCategory = categorySpendMap(expenseItems);
+      const sorted = sortedChecklist(items);
+      const visible = sorted.slice(0, 6);
+      const hidden = sorted.length - visible.length;
+      els.checklistHome.innerHTML = visible.map(item => checklistRowHtml(month, item, spentByCategory, { compact: true })).join('')
+        + (hidden > 0 ? `<div class="empty">${escapeHtml(`${hidden} more item${hidden === 1 ? '' : 's'} in Budget`)}</div>` : '');
+    }
+    function planCategoriesForMonth(month) {
+      const keys = [...new Set([...Object.keys(monthlyBudgets(month)), ...Object.keys(monthlyBudgetPercents(month))])];
+      return orderedBudgetCategories(month, keys);
+    }
+    function setChecklistCategoryOptions(month) {
+      const selected = els.checklistCategory.value;
+      const categories = [...new Set([...planCategoriesForMonth(month), ...categoriesForMonth(month)])];
+      els.checklistCategory.innerHTML = '<option value="">No category</option>'
+        + categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(budgetLabel(c))}</option>`).join('');
+      if (selected && !categories.includes(selected)) els.checklistCategory.innerHTML += `<option value="${escapeHtml(selected)}">${escapeHtml(budgetLabel(selected))}</option>`;
+      els.checklistCategory.value = selected;
+    }
+    function resetChecklistForm(month = els.selectedMonth.value || currentMonthLocal()) {
+      els.checklistForm.reset();
+      els.checklistEditId.value = '';
+      setChecklistCategoryOptions(month);
+      els.checklistCategory.value = '';
+      els.checklistDueDay.max = String(daysInMonth(month));
+      els.saveChecklistBtn.textContent = 'Add item';
+      els.cancelChecklistEditBtn.hidden = true;
+    }
+    function editChecklistItem(id) {
+      const item = state.checklist.find(entry => entry.id === id);
+      if (!item) return;
+      const month = item.month;
+      els.selectedMonth.value = month;
+      els.checklistEditId.value = item.id;
+      els.checklistLabel.value = item.label;
+      setChecklistCategoryOptions(month);
+      if (item.category && ![...els.checklistCategory.options].some(option => option.value === item.category)) {
+        els.checklistCategory.innerHTML += `<option value="${escapeHtml(item.category)}">${escapeHtml(budgetLabel(item.category))}</option>`;
+      }
+      els.checklistCategory.value = item.category || '';
+      els.checklistAmount.value = item.amount > 0 ? String(item.amount) : '';
+      els.checklistDueDay.max = String(daysInMonth(month));
+      els.checklistDueDay.value = item.dueDay ? String(item.dueDay) : '';
+      els.checklistNote.value = item.note || '';
+      els.saveChecklistBtn.textContent = 'Save item';
+      els.cancelChecklistEditBtn.hidden = false;
+      els.checklistLabel.focus();
+    }
+    function deleteChecklistItem(id) {
+      const item = state.checklist.find(entry => entry.id === id);
+      if (!item) return;
+      if (!confirm(`Remove “${item.label}” from the ${monthLabel(item.month)} checklist?`)) return;
+      const index = state.checklist.findIndex(entry => entry.id === id);
+      if (index >= 0) state.checklist.splice(index, 1);
+      if (els.checklistEditId.value === id) resetChecklistForm();
+      saveState('Checklist item removed');
+      render();
+    }
+    function toggleChecklistItem(id) {
+      const item = state.checklist.find(entry => entry.id === id);
+      if (!item) return;
+      const now = new Date().toISOString();
+      item.done = !item.done;
+      item.doneAt = item.done ? now : '';
+      item.updatedAt = now;
+      saveState(item.done ? 'Marked as taken care of' : 'Marked as open');
+      render();
+    }
+
     function renderBudgetEditor(month, items) {
       const budgets = monthlyBudgets(month);
       const percents = monthlyBudgetPercents(month);
@@ -1299,7 +1575,7 @@
         const spent = actuals.get(category) || 0;
         const percent = Number(percents[category] || 0);
         const mode = percent > 0 ? `${percent.toFixed(percent % 1 ? 1 : 0)}% of current funds` : 'Fixed amount';
-        const description = descriptions[category] ? `<small>${escapeHtml(descriptions[category])}</small>` : '';
+        const description = descriptions[category] ? `<small class="budget-desc">${escapeHtml(descriptions[category])}</small>` : '';
         const handle = '<button class="drag-handle" type="button" draggable="true" aria-label="Drag to reorder" title="Drag to reorder"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="6" r="1.6"/><circle cx="16" cy="6" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></button>';
         return `<div class="budget-edit-row" data-budget-category="${escapeHtml(category)}"><div class="budget-edit-main">${handle}<div><strong>${escapeHtml(budgetLabel(category))}</strong>${description}<small>${escapeHtml(money(spent))} spent this month · ${escapeHtml(mode)}</small></div></div><div class="budget-edit-actions"><strong>${escapeHtml(money(budgets[category] || 0))}</strong><button class="btn compact" type="button" data-budget-edit="${escapeHtml(category)}">Edit</button><button class="btn compact danger" type="button" data-budget-delete="${escapeHtml(category)}">×</button></div></div>`;
       }).join('');
@@ -1515,7 +1791,7 @@
       const category = resolvedBudgetCategory();
       const amount = Number(els.budgetAmount.value || 0);
       const percent = Number(els.budgetPercent.value || 0);
-      const description = els.budgetDescription.value.trim().slice(0, 180);
+      const description = normalizeText(els.budgetDescription.value, DESCRIPTION_MAX);
       if (!category || (els.budgetCategory.value === '__custom__' && category === LEGACY_GENERAL)) { showToast('Choose a valid category'); return; }
       if (budgetAllocationBasis === 'percent') {
         if (!Number.isFinite(percent) || percent < 0 || percent > 100) { showToast('Percentage must be from 0 to 100'); return; }
@@ -1713,10 +1989,113 @@
       render();
     });
 
-    els.selectedMonth.addEventListener('change', () => { resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); render(); });
-    els.prevMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, -1); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); render(); });
-    els.nextMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, 1); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); render(); });
-    els.todayBtn.addEventListener('click', () => { els.selectedMonth.value = currentMonthLocal(); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); render(); setView('home'); });
+    els.checklistForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const month = els.selectedMonth.value;
+      const label = normalizeText(els.checklistLabel.value, CHECKLIST_LABEL_MAX);
+      if (!label) { showToast('Enter a checklist item'); els.checklistLabel.focus(); return; }
+      const rawAmount = els.checklistAmount.value.trim();
+      const amount = rawAmount === '' ? 0 : Number(rawAmount);
+      if (!Number.isFinite(amount) || amount < 0) { showToast('Enter a valid target amount'); els.checklistAmount.focus(); return; }
+      const rawDueDay = els.checklistDueDay.value.trim();
+      const dueDay = rawDueDay === '' ? 0 : Number(rawDueDay);
+      const maxDay = daysInMonth(month);
+      if (!Number.isInteger(dueDay) || dueDay < 0 || dueDay > maxDay) { showToast(`Due day must be between 1 and ${maxDay}`); els.checklistDueDay.focus(); return; }
+      const now = new Date().toISOString();
+      const data = {
+        month,
+        label,
+        category: String(els.checklistCategory.value || '').trim().slice(0, 60),
+        amount,
+        dueDay,
+        note: normalizeText(els.checklistNote.value, CHECKLIST_NOTE_MAX),
+        updatedAt: now
+      };
+      if (els.checklistEditId.value) {
+        const index = state.checklist.findIndex(entry => entry.id === els.checklistEditId.value);
+        if (index < 0) { showToast('Checklist item not found'); return; }
+        state.checklist[index] = { ...state.checklist[index], ...data };
+        saveState('Checklist item updated');
+      } else {
+        const duplicate = checklistForMonth(month).some(entry => entry.label.toLowerCase() === label.toLowerCase());
+        if (duplicate && !confirm(`“${label}” is already on the ${monthLabel(month)} checklist. Add it again?`)) return;
+        state.checklist.push({ id: createId(), ...data, done: false, doneAt: '', createdAt: now });
+        saveState('Checklist item added');
+      }
+      resetChecklistForm(month);
+      render();
+    });
+    els.cancelChecklistEditBtn.addEventListener('click', () => resetChecklistForm());
+    function handleChecklistClick(event) {
+      const toggle = event.target.closest('[data-checklist-toggle]');
+      const edit = event.target.closest('[data-checklist-edit]');
+      const remove = event.target.closest('[data-checklist-delete]');
+      if (toggle) toggleChecklistItem(toggle.dataset.checklistToggle);
+      if (edit) { setView('budget'); editChecklistItem(edit.dataset.checklistEdit); }
+      if (remove) deleteChecklistItem(remove.dataset.checklistDelete);
+    }
+    els.checklistList.addEventListener('click', handleChecklistClick);
+    els.checklistHome.addEventListener('click', handleChecklistClick);
+    els.checklistFromPlan.addEventListener('click', () => {
+      const month = els.selectedMonth.value;
+      const budgets = monthlyBudgets(month);
+      const descriptions = monthlyBudgetDescriptions(month);
+      const categories = planCategoriesForMonth(month);
+      if (!categories.length) { showToast('No plan categories for this month yet'); return; }
+      const listed = new Set(checklistForMonth(month).map(item => item.category).filter(Boolean));
+      const now = new Date().toISOString();
+      let added = 0;
+      categories.forEach(category => {
+        if (listed.has(category)) return;
+        state.checklist.push({
+          id: createId(),
+          month,
+          label: normalizeText(budgetLabel(category), CHECKLIST_LABEL_MAX),
+          category,
+          amount: Number(budgets[category] || 0),
+          dueDay: 0,
+          done: false,
+          doneAt: '',
+          note: flattenText(descriptions[category] || '').slice(0, CHECKLIST_NOTE_MAX),
+          createdAt: now,
+          updatedAt: now
+        });
+        added += 1;
+      });
+      if (!added) { showToast('Every plan category is already listed'); return; }
+      saveState(`${added} checklist item${added === 1 ? '' : 's'} added from the plan`);
+      render();
+    });
+    els.copyPreviousChecklist.addEventListener('click', () => {
+      const month = els.selectedMonth.value;
+      const previous = shiftMonth(month, -1);
+      const source = checklistForMonth(previous);
+      if (!source.length) { showToast('Previous month has no checklist'); return; }
+      if (checklistForMonth(month).length && !confirm(`Replace the ${monthLabel(month)} checklist with ${monthLabel(previous)}?`)) return;
+      const now = new Date().toISOString();
+      const maxDay = daysInMonth(month);
+      state.checklist = state.checklist.filter(item => item.month !== month);
+      source.forEach(item => {
+        state.checklist.push({ ...item, id: createId(), month, dueDay: item.dueDay ? Math.min(item.dueDay, maxDay) : 0, done: false, doneAt: '', createdAt: now, updatedAt: now });
+      });
+      resetChecklistForm(month);
+      saveState('Previous checklist copied');
+      render();
+    });
+    els.clearChecklist.addEventListener('click', () => {
+      const month = els.selectedMonth.value;
+      if (!checklistForMonth(month).length) { showToast('No checklist to clear'); return; }
+      if (!confirm(`Clear the ${monthLabel(month)} checklist? Budgets, funds, and expenses stay.`)) return;
+      state.checklist = state.checklist.filter(item => item.month !== month);
+      resetChecklistForm(month);
+      saveState('Checklist cleared');
+      render();
+    });
+
+    els.selectedMonth.addEventListener('change', () => { resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); resetChecklistForm(els.selectedMonth.value); render(); });
+    els.prevMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, -1); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); resetChecklistForm(els.selectedMonth.value); render(); });
+    els.nextMonth.addEventListener('click', () => { els.selectedMonth.value = shiftMonth(els.selectedMonth.value, 1); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); resetChecklistForm(els.selectedMonth.value); render(); });
+    els.todayBtn.addEventListener('click', () => { els.selectedMonth.value = currentMonthLocal(); resetFundForm(els.selectedMonth.value); resetBudgetAllocationInputs(); resetChecklistForm(els.selectedMonth.value); render(); setView('home'); });
     els.expenseFilter.addEventListener('change', () => renderExpenses(expensesForMonth(els.selectedMonth.value)));
 
     function setPrivacy(value) {
@@ -1746,9 +2125,9 @@
       const checksum = await sha256(JSON.stringify(payload));
       return { ...payload, checksum: checksum ? { algorithm: 'SHA-256', value: checksum } : null };
     }
-    function fullPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, exportedAt, settings: state.settings, expenses: state.expenses, inflows: state.inflows }; }
+    function fullPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, exportedAt, settings: state.settings, expenses: state.expenses, inflows: state.inflows, checklist: state.checklist }; }
     function expensesPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'expenses', exportedAt, currency: state.settings.currency, expenses: state.expenses }; }
-    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets, categoryBudgetPercents: state.settings.categoryBudgetPercents, categoryBudgetDescriptions: state.settings.categoryBudgetDescriptions, categoryBudgetOrder: state.settings.categoryBudgetOrder, projectedFunds: state.settings.projectedFunds }, inflows: state.inflows }; }
+    function budgetsPayload(exportedAt) { return { app: APP_ID, schemaVersion: SCHEMA_VERSION, kind: 'budgets', exportedAt, settings: { currency: state.settings.currency, budgets: state.settings.budgets, healthBudgets: state.settings.healthBudgets, categoryBudgets: state.settings.categoryBudgets, categoryBudgetPercents: state.settings.categoryBudgetPercents, categoryBudgetDescriptions: state.settings.categoryBudgetDescriptions, categoryBudgetOrder: state.settings.categoryBudgetOrder, projectedFunds: state.settings.projectedFunds }, inflows: state.inflows, checklist: state.checklist }; }
 
     els.exportFull.addEventListener('click', async () => {
       const payload = await withChecksum(fullPayload(new Date().toISOString()));
@@ -1782,8 +2161,8 @@
 
     function checksumPayloadFor(raw) {
       if (raw.kind === 'expenses') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, currency: raw.currency, expenses: raw.expenses };
-      if (raw.kind === 'budgets') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, settings: raw.settings, inflows: raw.inflows };
-      return { app: raw.app, schemaVersion: raw.schemaVersion, exportedAt: raw.exportedAt, settings: raw.settings, expenses: raw.expenses, inflows: raw.inflows };
+      if (raw.kind === 'budgets') return { app: raw.app, schemaVersion: raw.schemaVersion, kind: raw.kind, exportedAt: raw.exportedAt, settings: raw.settings, inflows: raw.inflows, checklist: raw.checklist };
+      return { app: raw.app, schemaVersion: raw.schemaVersion, exportedAt: raw.exportedAt, settings: raw.settings, expenses: raw.expenses, inflows: raw.inflows, checklist: raw.checklist };
     }
     async function verifyRawBackup(raw) {
       if (raw.checksum?.algorithm !== 'SHA-256' || !raw.checksum?.value) return false;
@@ -1810,6 +2189,14 @@
         if (!current || timestampScore(entry.updatedAt) >= timestampScore(current.updatedAt)) map.set(entry.id, entry);
       });
       return cleanInflows([...map.values()]);
+    }
+    function mergeChecklist(existing, incoming) {
+      const map = new Map(existing.map(e => [e.id, e]));
+      incoming.forEach(entry => {
+        const current = map.get(entry.id);
+        if (!current || timestampScore(entry.updatedAt) >= timestampScore(current.updatedAt)) map.set(entry.id, entry);
+      });
+      return cleanChecklist([...map.values()]);
     }
     function mergeCategoryBudgetMaps(existing, incoming) {
       const merged = { ...existing };
@@ -1846,7 +2233,7 @@
       if (raw.kind === 'budgets') {
         if (!raw.settings || typeof raw.settings !== 'object') throw new Error('Invalid budgets backup');
         const temp = sanitizeState({ settings: raw.settings, expenses: [] });
-        return { kind: 'budgets', settings: temp.settings, inflows: cleanInflows(raw.inflows) };
+        return { kind: 'budgets', settings: temp.settings, inflows: cleanInflows(raw.inflows), checklist: cleanChecklist(raw.checklist) };
       }
       if (!Array.isArray(raw.expenses)) throw new Error('Invalid full backup');
       return { kind: 'full', state: sanitizeState(raw) };
@@ -1865,16 +2252,16 @@
         let summary = '';
         if (parsed.kind === 'full') {
           const budgetMonths = new Set([...Object.keys(parsed.state.settings.categoryBudgets), ...Object.keys(parsed.state.settings.categoryBudgetPercents)]).size;
-          summary = `Full backup · ${parsed.state.expenses.length} expenses · ${parsed.state.inflows.length} fund entries · ${budgetMonths} budget months`;
+          summary = `Full backup · ${parsed.state.expenses.length} expenses · ${parsed.state.inflows.length} fund entries · ${budgetMonths} budget months · ${parsed.state.checklist.length} checklist items`;
         }
         if (parsed.kind === 'expenses') summary = `Expenses only · ${parsed.expenses.length} records${parsed.sourceCurrency ? ` · source ${parsed.sourceCurrency}` : ''}`;
         if (parsed.kind === 'budgets') {
           const budgetMonths = new Set([...Object.keys(parsed.settings.categoryBudgets), ...Object.keys(parsed.settings.categoryBudgetPercents)]).size;
-          summary = `Budget + funds · ${budgetMonths} months · ${parsed.inflows.length} fund entries`;
+          summary = `Budget + funds · ${budgetMonths} months · ${parsed.inflows.length} fund entries · ${parsed.checklist.length} checklist items`;
         }
         els.importSummary.textContent = `${summary}${verified ? ' · checksum verified' : ''}`;
         els.importMode.value = 'merge';
-        els.importModeHelp.textContent = parsed.kind === 'full' ? 'Replace scope replaces expenses, funds, and settings. Merge keeps newer expense/fund edits and merges budgets.' : parsed.kind === 'expenses' ? `Replace scope replaces expenses only. Budgets, funds, preferences, and current currency stay.${parsed.sourceCurrency && parsed.sourceCurrency !== state.settings.currency ? ' Source amounts are not currency-converted.' : ''}` : 'Replace scope replaces budget and fund data only. Expenses and privacy preference stay.';
+        els.importModeHelp.textContent = parsed.kind === 'full' ? 'Replace scope replaces expenses, funds, checklist, and settings. Merge keeps newer expense/fund/checklist edits and merges budgets.' : parsed.kind === 'expenses' ? `Replace scope replaces expenses only. Budgets, funds, preferences, and current currency stay.${parsed.sourceCurrency && parsed.sourceCurrency !== state.settings.currency ? ' Source amounts are not currency-converted.' : ''}` : 'Replace scope replaces budget, checklist, and fund data only. Expenses and privacy preference stay.';
         els.importDialog.showModal();
       } catch (error) {
         console.error(error);
@@ -1890,6 +2277,7 @@
         else {
           state.expenses = mergeExpenses(state.expenses, pendingImport.state.expenses);
           state.inflows = mergeInflows(state.inflows, pendingImport.state.inflows);
+          state.checklist = mergeChecklist(state.checklist, pendingImport.state.checklist);
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.state.settings.categoryBudgets);
           state.settings.categoryBudgetPercents = mergeCategoryPercentMaps(state.settings.categoryBudgetPercents, pendingImport.state.settings.categoryBudgetPercents);
           state.settings.categoryBudgetDescriptions = mergeCategoryDescriptionMaps(state.settings.categoryBudgetDescriptions, pendingImport.state.settings.categoryBudgetDescriptions);
@@ -1911,6 +2299,7 @@
           state.settings.budgets = pendingImport.settings.budgets;
           state.settings.healthBudgets = pendingImport.settings.healthBudgets;
           state.inflows = cleanInflows(pendingImport.inflows);
+          state.checklist = cleanChecklist(pendingImport.checklist);
         } else {
           state.settings.categoryBudgets = mergeCategoryBudgetMaps(state.settings.categoryBudgets, pendingImport.settings.categoryBudgets);
           state.settings.categoryBudgetPercents = mergeCategoryPercentMaps(state.settings.categoryBudgetPercents, pendingImport.settings.categoryBudgetPercents);
@@ -1920,6 +2309,7 @@
           state.settings.budgets = { ...state.settings.budgets, ...pendingImport.settings.budgets };
           state.settings.healthBudgets = { ...state.settings.healthBudgets, ...pendingImport.settings.healthBudgets };
           state.inflows = mergeInflows(state.inflows, pendingImport.inflows);
+          state.checklist = mergeChecklist(state.checklist, pendingImport.checklist);
         }
         state.settings.currency = pendingImport.settings.currency || state.settings.currency;
       }
@@ -1930,7 +2320,7 @@
     });
 
     els.clearData.addEventListener('click', () => {
-      if (!confirm('Clear all expenses, funds, budgets, and settings from this browser?')) return;
+      if (!confirm('Clear all expenses, funds, budgets, checklists, and settings from this browser?')) return;
       if (!confirm('This cannot be undone unless you have a backup. Continue?')) return;
       state = emptyState();
       saveState('Data cleared');
@@ -1973,6 +2363,7 @@
     resetExpenseForm();
     resetFundForm(currentMonthLocal());
     resetBudgetAllocationInputs();
+    resetChecklistForm(currentMonthLocal());
     saveState();
     render();
     refreshPersistenceStatus();

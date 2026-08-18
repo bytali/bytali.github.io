@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pocket-plan",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-I",
+        "-c",
+        "import os,functools,http.server,socketserver;os.chdir('/private/tmp/claude-501/-Users-jabs-Documents-git-bytali-github-io-tracker/4aef2a2b-e932-4e64-9b3a-d2ff595f0a67/scratchpad/site');h=functools.partial(http.server.SimpleHTTPRequestHandler, directory='/private/tmp/claude-501/-Users-jabs-Documents-git-bytali-github-io-tracker/4aef2a2b-e932-4e64-9b3a-d2ff595f0a67/scratchpad/site');socketserver.TCPServer.allow_reuse_address=True;socketserver.TCPServer(('127.0.0.1',8792), h).serve_forever()"
+      ],
+      "port": 8792
+    }
+  ]
+}
