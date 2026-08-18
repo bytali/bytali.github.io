@@ -8,6 +8,8 @@ Pocket Plan is a static, local-first monthly money tracker designed for GitHub P
 
 The Checklist screen uses separate cards for its overview, `#checklistForm`, and `#checklistList`. Nested `.checklist-children` are intentionally compact on small screens, and action buttons favor SVG icons on mobile while keeping accessible labels/titles and desktop text where useful.
 
+Appearance supports a persistent manual light/dark toggle. Until the user explicitly chooses a mode, the app follows the device color-scheme preference. Checklist child items derive their displayed amount automatically from the parent target (`parent amount / number of children`); child forms do not accept separate amounts, and legacy child amounts are ignored.
+
 Primary files:
 
 - `index.html`

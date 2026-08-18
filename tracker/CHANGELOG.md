@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-08-19 — Theme toggle + automatic checklist child split
+
+- Added a persistent light/dark theme toggle in the top bar, while still using the device theme until the user explicitly chooses a mode.
+- Checklist child items no longer ask for or store individual amounts.
+- Each child now displays an equal share of its parent target amount (`parent amount ÷ child count`).
+- Adding or removing a child automatically rebalances the displayed split and checklist settled-progress math.
+- Legacy saved child amounts remain import-compatible but are ignored by the new equal-split behavior.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v9`.
+
 ## 2026-08-19 — Checklist cards + mobile action cleanup
 
 - Split the checklist editor (`#checklistForm`) and checklist items (`#checklistList`) into separate cards.

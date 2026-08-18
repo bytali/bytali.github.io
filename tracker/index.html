@@ -16,8 +16,8 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <title>Pocket Plan</title>
   <style>
-    :root {
-      color-scheme: light dark;
+    :root, :root[data-theme="light"] {
+      color-scheme: light;
       --bg: #f3f4f7;
       --panel: #ffffff;
       --panel-2: #f1f2f5;
@@ -35,8 +35,25 @@
       --nav-height: 74px;
     }
 
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #090b10;
+      --panel: #12151c;
+      --panel-2: #1a1e27;
+      --panel-3: #222733;
+      --text: #f5f6f8;
+      --muted: #979ca7;
+      --line: #282d38;
+      --accent: #f5f6f8;
+      --accent-text: #101217;
+      --good: #62d5ab;
+      --warn: #f4bd70;
+      --bad: #ff8d84;
+      --shadow: none;
+    }
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme]) {
+        color-scheme: dark;
         --bg: #090b10;
         --panel: #12151c;
         --panel-2: #1a1e27;
@@ -85,7 +102,7 @@
       top: 0;
       z-index: 20;
       display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) 44px;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
       gap: 8px;
       align-items: center;
       padding: 10px 0 8px;
@@ -93,6 +110,7 @@
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
     }
+    .topbar-actions { display: flex; gap: 6px; align-items: center; }
     .month-control {
       display: grid;
       grid-template-columns: 36px minmax(0, 1fr) 36px;
@@ -439,7 +457,10 @@
         <input id="selectedMonth" type="month" aria-label="Month" />
         <button class="icon-btn small" id="nextMonth" type="button" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
       </div>
-      <button class="icon-btn" id="privacyBtn" type="button" aria-label="Hide amounts" title="Hide amounts" aria-pressed="false"></button>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode"></button>
+        <button class="icon-btn" id="privacyBtn" type="button" aria-label="Hide amounts" title="Hide amounts" aria-pressed="false"></button>
+      </div>
     </header>
 
     <section class="view active" id="view-home" data-view-panel="home">
@@ -660,12 +681,9 @@
         <h2 id="checklistChildDialogTitle">Add payment</h2>
         <div class="form-grid">
           <div class="field"><label for="checklistChildLabel">Payment / child item</label><input id="checklistChildLabel" maxlength="90" placeholder="e.g. Mortgage payment 1" required /></div>
-          <div class="two">
-            <div class="field"><label for="checklistChildAmount">Amount</label><input id="checklistChildAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Optional" /></div>
-            <div class="field"><label for="checklistChildDueDay">Due day</label><input id="checklistChildDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
-          </div>
+          <div class="field"><label for="checklistChildDueDay">Due day</label><input id="checklistChildDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
           <div class="field"><label for="checklistChildNote">Note</label><input id="checklistChildNote" maxlength="180" placeholder="Optional" /></div>
-          <div class="field-help">Add as many child items as needed. Each one can be checked off separately.</div>
+          <div class="field-help">Each child automatically gets an equal share of the parent target amount. Adding or removing children rebalances the split.</div>
         </div>
       </div>
       <div class="dialog-actions"><button id="cancelChecklistChild" class="btn" type="button">Cancel</button><button class="btn primary" type="submit">Save</button></div>
@@ -700,12 +718,12 @@
 
     const $ = id => document.getElementById(id);
     const els = {
-      selectedMonth: $('selectedMonth'), prevMonth: $('prevMonth'), nextMonth: $('nextMonth'), todayBtn: $('todayBtn'), privacyBtn: $('privacyBtn'),
+      selectedMonth: $('selectedMonth'), prevMonth: $('prevMonth'), nextMonth: $('nextMonth'), todayBtn: $('todayBtn'), themeBtn: $('themeBtn'), privacyBtn: $('privacyBtn'),
       spentKpi: $('spentKpi'), spentKpiSub: $('spentKpiSub'), fundsKpi: $('fundsKpi'), fundsKpiSub: $('fundsKpiSub'), allocationCard: $('allocationCard'), allocationKpi: $('allocationKpi'), allocationSub: $('allocationSub'), planLeftCard: $('planLeftCard'), planLeftKpi: $('planLeftKpi'), planLeftSub: $('planLeftSub'), projectedKpi: $('projectedKpi'), unbudgetedCard: $('unbudgetedCard'), unbudgetedKpi: $('unbudgetedKpi'), coverageKpi: $('coverageKpi'), budgetAnalyticsMonth: $('budgetAnalyticsMonth'), budgetAnalytics: $('budgetAnalytics'), insights: $('insights'), homeMonthLabel: $('homeMonthLabel'), dailyChart: $('dailyChart'), categoryBreakdown: $('categoryBreakdown'), paymentBreakdown: $('paymentBreakdown'), creditCardBankBreakdown: $('creditCardBankBreakdown'), sixMonthTrend: $('sixMonthTrend'),
       expenseForm: $('expenseForm'), editId: $('editId'), amount: $('amount'), payment: $('payment'), paymentOther: $('paymentOther'), paymentOtherWrap: $('paymentOtherWrap'), bankFields: $('bankFields'), bank: $('bank'), bankOther: $('bankOther'), bankOtherWrap: $('bankOtherWrap'), category: $('category'), categoryOther: $('categoryOther'), categoryOtherWrap: $('categoryOtherWrap'), otherFields: $('otherFields'), date: $('date'), note: $('note'), saveExpenseBtn: $('saveExpenseBtn'), cancelEditBtn: $('cancelEditBtn'), currencyMark: $('currencyMark'),
       expenseFilter: $('expenseFilter'), expenseList: $('expenseList'), expenseEmpty: $('expenseEmpty'),
       budgetPlannedKpi: $('budgetPlannedKpi'), budgetPlannedPercentSub: $('budgetPlannedPercentSub'), budgetProjectedFundsKpi: $('budgetProjectedFundsKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetAllocationSub: $('budgetAllocationSub'), budgetMonthLabel: $('budgetMonthLabel'), allocationGuide: $('allocationGuide'), projectedFundsForm: $('projectedFundsForm'), projectedFundsAmount: $('projectedFundsAmount'), clearProjectedFundsBtn: $('clearProjectedFundsBtn'), fundForm: $('fundForm'), fundEditId: $('fundEditId'), fundSource: $('fundSource'), fundSourceOtherWrap: $('fundSourceOtherWrap'), fundSourceOther: $('fundSourceOther'), fundAmount: $('fundAmount'), fundDate: $('fundDate'), fundNote: $('fundNote'), saveFundBtn: $('saveFundBtn'), cancelFundEditBtn: $('cancelFundEditBtn'), fundCountLabel: $('fundCountLabel'), fundList: $('fundList'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetDescription: $('budgetDescription'), budgetPercent: $('budgetPercent'), budgetAmount: $('budgetAmount'), budgetAllocationModeHint: $('budgetAllocationModeHint'), budgetConversionHint: $('budgetConversionHint'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
-      checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistForm: $('checklistForm'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistChildDialog: $('checklistChildDialog'), checklistChildForm: $('checklistChildForm'), checklistChildDialogTitle: $('checklistChildDialogTitle'), checklistChildParentId: $('checklistChildParentId'), checklistChildEditId: $('checklistChildEditId'), checklistChildLabel: $('checklistChildLabel'), checklistChildAmount: $('checklistChildAmount'), checklistChildDueDay: $('checklistChildDueDay'), checklistChildNote: $('checklistChildNote'), cancelChecklistChild: $('cancelChecklistChild'),
+      checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistForm: $('checklistForm'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistChildDialog: $('checklistChildDialog'), checklistChildForm: $('checklistChildForm'), checklistChildDialogTitle: $('checklistChildDialogTitle'), checklistChildParentId: $('checklistChildParentId'), checklistChildEditId: $('checklistChildEditId'), checklistChildLabel: $('checklistChildLabel'), checklistChildDueDay: $('checklistChildDueDay'), checklistChildNote: $('checklistChildNote'), cancelChecklistChild: $('cancelChecklistChild'),
       currency: $('currency'), privacyToggle: $('privacyToggle'), persistenceStatus: $('persistenceStatus'), requestPersistence: $('requestPersistence'), storageSize: $('storageSize'), storageMeter: $('storageMeter'),
       exportFull: $('exportFull'), importData: $('importData'), exportExpensesJson: $('exportExpensesJson'), exportBudgetsJson: $('exportBudgetsJson'), exportCsv: $('exportCsv'), clearData: $('clearData'), importFile: $('importFile'), importDialog: $('importDialog'), importSummary: $('importSummary'), importMode: $('importMode'), importModeHelp: $('importModeHelp'), cancelImport: $('cancelImport'), confirmImport: $('confirmImport'), toast: $('toast')
     };
@@ -765,7 +783,7 @@
       return `exp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
     function emptyState() {
-      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, categoryBudgetOrder: {}, projectedFunds: {}, hideAmounts: false }, expenses: [], inflows: [], checklist: [] };
+      return { schemaVersion: SCHEMA_VERSION, settings: { currency: 'PHP', budgets: {}, healthBudgets: {}, categoryBudgets: {}, categoryBudgetPercents: {}, categoryBudgetDescriptions: {}, categoryBudgetOrder: {}, projectedFunds: {}, hideAmounts: false, theme: '' }, expenses: [], inflows: [], checklist: [] };
     }
     function normalizeText(value, max) {
       return String(value ?? '').replace(/\r\n?/g, '\n').trim().slice(0, max);
@@ -900,13 +918,11 @@
             do { id = createId(); } while (seen.has(id));
           }
           seen.add(id);
-          const amount = Number(item.amount);
           const dueDay = Number(item.dueDay);
           const done = Boolean(item.done);
           return {
             id,
             label: normalizeText(item.label, CHECKLIST_LABEL_MAX),
-            amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
             dueDay: Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= maxDay ? dueDay : 0,
             done,
             doneAt: done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '',
@@ -994,7 +1010,8 @@
           categoryBudgetDescriptions,
           categoryBudgetOrder,
           projectedFunds,
-          hideAmounts: Boolean(settings.hideAmounts)
+          hideAmounts: Boolean(settings.hideAmounts),
+          theme: settings.theme === 'dark' || settings.theme === 'light' ? settings.theme : ''
         },
         expenses: cleanExpenses(candidate.expenses),
         inflows: cleanInflows(candidate.inflows),
@@ -1067,18 +1084,19 @@
     }
     function checklistForMonth(month) { return state.checklist.filter(item => item.month === month); }
     function checklistChildren(item) { return Array.isArray(item.children) ? item.children : []; }
-    function checklistItemTarget(item) {
-      const childTotal = checklistChildren(item).reduce((total, child) => total + Number(child.amount || 0), 0);
-      return Number(item.amount || 0) > 0 ? Number(item.amount) : childTotal;
+    function checklistItemTarget(item) { return Math.max(0, Number(item.amount || 0)); }
+    function checklistChildAmount(item) {
+      const children = checklistChildren(item);
+      const target = checklistItemTarget(item);
+      return children.length && target > 0 ? target / children.length : 0;
     }
     function checklistItemDoneAmount(item) {
       const children = checklistChildren(item);
       const target = checklistItemTarget(item);
       if (!children.length) return item.done ? target : 0;
-      if (item.done) return target;
-      const childTotal = children.reduce((total, child) => total + Number(child.amount || 0), 0);
-      if (childTotal > 0) return Math.min(target || childTotal, children.filter(child => child.done).reduce((total, child) => total + Number(child.amount || 0), 0));
-      return 0;
+      if (!target) return 0;
+      const doneChildren = children.filter(child => child.done).length;
+      return doneChildren >= children.length ? target : target * doneChildren / children.length;
     }
     function syncChecklistParent(item) {
       const children = checklistChildren(item);
@@ -1247,6 +1265,26 @@
       els.privacyBtn.setAttribute('aria-pressed', String(hidden));
       els.privacyToggle.checked = hidden;
     }
+    function effectiveTheme() {
+      if (state.settings.theme === 'dark' || state.settings.theme === 'light') return state.settings.theme;
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    function themeIcon(theme) {
+      return theme === 'dark'
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8 8 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/></svg>';
+    }
+    function applyTheme(theme = effectiveTheme()) {
+      const explicit = state.settings.theme === 'dark' || state.settings.theme === 'light';
+      if (explicit) document.documentElement.dataset.theme = theme;
+      else document.documentElement.removeAttribute('data-theme');
+      const dark = theme === 'dark';
+      els.themeBtn.innerHTML = themeIcon(theme);
+      els.themeBtn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+      els.themeBtn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+      const themeMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeMeta) themeMeta.content = dark ? '#090b10' : '#f3f4f7';
+    }
 
     function render() {
       const month = els.selectedMonth.value || currentMonthLocal();
@@ -1308,6 +1346,7 @@
       renderChecklist(month, items);
       updateBudgetSuggestion();
       els.currency.value = state.settings.currency;
+      applyTheme();
       updatePrivacyControls();
       updateStorageInfo();
     }
@@ -1539,7 +1578,8 @@
     function checklistChildRowHtml(month, parent, child) {
       const overdue = isChecklistChildOverdue(month, child);
       const meta = [];
-      if (child.amount > 0) meta.push(escapeHtml(money(child.amount)));
+      const childAmount = checklistChildAmount(parent);
+      if (childAmount > 0) meta.push(escapeHtml(money(childAmount)));
       if (child.dueDay) meta.push(escapeHtml(`due ${child.dueDay} ${monthLabel(month, 'short')}`));
       if (child.done) meta.push('<span class="good">Paid / done</span>');
       else if (overdue) meta.push('<span class="bad">Overdue</span>');
@@ -1680,7 +1720,6 @@
       els.checklistChildEditId.value = child?.id || '';
       els.checklistChildDialogTitle.textContent = child ? 'Edit child item' : `Add child item · ${parent.label}`;
       els.checklistChildLabel.value = child?.label || '';
-      els.checklistChildAmount.value = child?.amount > 0 ? String(child.amount) : '';
       els.checklistChildDueDay.max = String(daysInMonth(parent.month));
       els.checklistChildDueDay.value = child?.dueDay ? String(child.dueDay) : '';
       els.checklistChildNote.value = child?.note || '';
@@ -2205,15 +2244,12 @@
       if (!parent) { closeChecklistChildDialog(); return; }
       const label = normalizeText(els.checklistChildLabel.value, CHECKLIST_LABEL_MAX);
       if (!label) { showToast('Enter a child item'); els.checklistChildLabel.focus(); return; }
-      const rawAmount = els.checklistChildAmount.value.trim();
-      const amount = rawAmount === '' ? 0 : Number(rawAmount);
-      if (!Number.isFinite(amount) || amount < 0) { showToast('Enter a valid amount'); els.checklistChildAmount.focus(); return; }
       const rawDueDay = els.checklistChildDueDay.value.trim();
       const dueDay = rawDueDay === '' ? 0 : Number(rawDueDay);
       const maxDay = daysInMonth(parent.month);
       if (!Number.isInteger(dueDay) || dueDay < 0 || dueDay > maxDay) { showToast(`Due day must be between 1 and ${maxDay}`); els.checklistChildDueDay.focus(); return; }
       const now = new Date().toISOString();
-      const data = { label, amount, dueDay, note: normalizeText(els.checklistChildNote.value, CHECKLIST_NOTE_MAX), updatedAt: now };
+      const data = { label, dueDay, note: normalizeText(els.checklistChildNote.value, CHECKLIST_NOTE_MAX), updatedAt: now };
       parent.children ||= [];
       let message = 'Child item added';
       if (els.checklistChildEditId.value) {
@@ -2301,6 +2337,8 @@
       saveState(state.settings.hideAmounts ? 'Amounts hidden' : 'Amounts shown');
       render();
     }
+    els.themeBtn.addEventListener('click', () => { const next = effectiveTheme() === 'dark' ? 'light' : 'dark'; state.settings.theme = next; applyTheme(next); saveState(next === 'dark' ? 'Dark mode enabled' : 'Light mode enabled'); });
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (!state.settings.theme) applyTheme(); });
     els.privacyBtn.addEventListener('click', () => setPrivacy(!state.settings.hideAmounts));
     els.privacyToggle.addEventListener('change', () => setPrivacy(els.privacyToggle.checked));
     els.currency.addEventListener('change', () => { state.settings.currency = els.currency.value; saveState('Currency saved'); render(); });
