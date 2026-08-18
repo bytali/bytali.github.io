@@ -2,9 +2,11 @@
 
 ## CURRENT VERSION
 
-Updated: 2026-08-17
+Updated: 2026-08-18
 
 Pocket Plan is a static, local-first monthly money tracker designed for GitHub Pages and modern mobile/desktop browsers.
+
+The Monthly checklist now has its own bottom-navigation page. Checklist targets can contain any number of child items (for example, multiple mortgage payments in one month). Each child has independent amount/due-day/note/completion fields, while the parent is considered complete when all children are complete. Existing checklist records without children remain valid.
 
 Primary files:
 

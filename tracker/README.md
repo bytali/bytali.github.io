@@ -12,6 +12,7 @@ Pocket Plan is a static, local-first monthly budget, funds, and expense tracker 
 - Expenses by category, payment method, and credit-card bank
 - Budget vs actual spending and spending pace
 - Six-month funds / plan / spending context
+- A dedicated monthly checklist page, including optional child items for split/repeated payments
 
 ## Privacy
 

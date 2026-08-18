@@ -324,6 +324,16 @@
     .checklist-check svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
     .checklist-actions { display: flex; gap: 5px; align-items: center; }
     .checklist-actions strong { margin-right: 4px; white-space: nowrap; }
+    .checklist-group { overflow: hidden; border-radius: 15px; background: var(--panel-2); }
+    .checklist-group > .checklist-row { border-radius: 0; background: transparent; }
+    .checklist-children { display: grid; gap: 7px; margin: 0 11px 11px 57px; padding-top: 9px; border-top: 1px solid var(--line); }
+    .checklist-child-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 9px; border-radius: 12px; background: var(--panel); }
+    .checklist-child-row.done { opacity: .72; }
+    .checklist-child-row.done .checklist-child-label { text-decoration: line-through; }
+    .checklist-child-row.overdue { box-shadow: inset 3px 0 0 var(--bad); }
+    .checklist-child-label { display: block; font-size: 12px; font-weight: 800; overflow-wrap: anywhere; }
+    .checklist-child-actions { display: flex; gap: 5px; align-items: center; }
+    .checklist-child-empty { color: var(--muted); font-size: 10px; }
 
     .settings-list { display: grid; gap: 12px; }
     .setting-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
@@ -341,7 +351,7 @@
     .backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .privacy-note { padding: 11px 12px; border-radius: 14px; background: var(--panel-2); color: var(--muted); font-size: 11px; }
 
-    .bottom-nav { position: fixed; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); width: min(calc(100% - 20px), 600px); padding: 6px; transform: translateX(-50%); border: 1px solid var(--line); border-radius: 22px; background: color-mix(in srgb, var(--panel) 92%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    .bottom-nav { position: fixed; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 40; display: grid; grid-template-columns: repeat(6, 1fr); width: min(calc(100% - 20px), 640px); padding: 6px; transform: translateX(-50%); border: 1px solid var(--line); border-radius: 22px; background: color-mix(in srgb, var(--panel) 92%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
     .nav-btn { display: grid; min-height: 54px; gap: 3px; justify-items: center; align-content: center; padding: 3px; border: 0; border-radius: 15px; background: transparent; color: var(--muted); font-size: 9px; font-weight: 750; }
     .nav-btn.active { background: var(--panel-2); color: var(--text); }
     .nav-btn[data-view="add"] svg { width: 23px; height: 23px; }
@@ -361,12 +371,15 @@
       .fund-row .budget-edit-actions, .budget-edit-row .budget-edit-actions { justify-content: space-between; flex-wrap: wrap; }
       .checklist-row { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
       .checklist-actions { grid-column: 1 / -1; justify-content: space-between; flex-wrap: wrap; }
+      .checklist-children { margin-left: 11px; }
+      .checklist-child-row { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+      .checklist-child-actions { grid-column: 1 / -1; justify-content: flex-end; }
       .card { padding: 14px; }
       .trend-row { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 7px; }
       .summary-card strong { font-size: clamp(21px, 7vw, 31px); }
       .expense-item { grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; }
       .date-chip { width: 42px; height: 42px; }
-      .bottom-nav { width: min(calc(100% - 12px), 600px); }
+      .bottom-nav { width: min(calc(100% - 12px), 640px); }
       .nav-btn { font-size: 8px; }
       .plan-row-accordion { padding: 10px 12px; }
       .plan-row-accordion > summary { display: flex; align-items: center; gap: 8px; }
@@ -383,10 +396,10 @@
       .analytics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .daily-chart { height: 190px; }
       .day-col { height: 168px; }
-      #view-add .form-card, #view-budget > .budget-editor, #view-budget > .funds-card { width: min(100%, 920px); margin-inline: auto; }
+      #view-add .form-card, #view-budget > .budget-editor, #view-budget > .funds-card, #view-checklist > .checklist-card { width: min(100%, 920px); margin-inline: auto; }
       #view-more { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
       #view-more > .data-card { grid-column: 1 / -1; }
-      .bottom-nav { bottom: 16px; width: min(calc(100% - 48px), 620px); }
+      .bottom-nav { bottom: 16px; width: min(calc(100% - 48px), 660px); }
     }
 
     @media (min-width: 1000px) {
@@ -394,7 +407,6 @@
       #view-home > .summary-grid { grid-column: 1 / -1; grid-template-columns: repeat(6, minmax(0, 1fr)); }
       #view-home > .budget-analytics-wrap { grid-column: 1 / 8; }
       #view-home > .insights-wrap { grid-column: 8 / -1; }
-      #view-home > .checklist-wrap { grid-column: 1 / -1; }
       #view-home > .daily-wrap { grid-column: 1 / 8; }
       #view-home > .spending-wrap { grid-column: 8 / -1; }
       #view-home > .bank-wrap { grid-column: 1 / 6; }
@@ -436,11 +448,6 @@
       <div class="insights-wrap">
         <div class="section-title"><h2>Attention</h2><span>What needs action</span></div>
         <section class="card"><div id="insights" class="insights"></div></section>
-      </div>
-
-      <div class="checklist-wrap">
-        <div class="section-title"><h2>Checklist</h2><span id="checklistHomeSummary">—</span></div>
-        <section class="card"><div id="checklistHome" class="checklist"></div></section>
       </div>
 
       <div class="daily-wrap">
@@ -505,7 +512,6 @@
         <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Allocated</span></summary><div class="collapsible-body"><strong id="budgetPlannedKpi">—</strong><small id="budgetPlannedPercentSub">Category plan total</small></div></details></section>
         <section class="card summary-card collapsible-card" id="budgetRemainingCard"><details open><summary><span class="eyebrow">Unallocated</span></summary><div class="collapsible-body"><strong id="budgetRemainingKpi">—</strong><small id="budgetAllocationSub">Funds not assigned yet</small></div></details></section>
         <section class="card summary-card collapsible-card"><details open><summary><span class="eyebrow">Spent</span></summary><div class="collapsible-body"><strong id="budgetSpentKpi">—</strong><small>Actual expenses this month</small></div></details></section>
-        <section class="card summary-card collapsible-card" id="budgetChecklistCard"><details open><summary><span class="eyebrow">Checklist</span></summary><div class="collapsible-body"><strong id="budgetChecklistKpi">—</strong><small id="budgetChecklistSub">Items taken care of</small></div></details></section>
       </div>
 
       <section class="card funds-card collapsible-card">
@@ -563,6 +569,9 @@
         </details>
       </section>
 
+    </section>
+
+    <section class="view" id="view-checklist" data-view-panel="checklist">
       <section class="card checklist-card collapsible-card">
         <details open>
           <summary><span><strong>Monthly checklist</strong><small id="checklistMonthLabel"></small></span></summary>
@@ -584,7 +593,7 @@
                 <div class="field"><label for="checklistDueDay">Due day</label><input id="checklistDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
                 <div class="field"><label for="checklistNote">Note</label><input id="checklistNote" maxlength="180" placeholder="Optional" /></div>
               </div>
-              <div class="field-help">The checklist only tracks whether a monthly target is already taken care of. It never changes funds, allocations, or spending totals.</div>
+              <div class="field-help">The checklist only tracks whether a monthly target is taken care of. Use + Child on an item for split or repeated payments; child items can be checked off separately. It never changes funds, allocations, or spending totals.</div>
               <div class="action-row"><button id="saveChecklistBtn" class="btn primary" type="submit">Add item</button><button id="cancelChecklistEditBtn" class="btn" type="button" hidden>Cancel</button></div>
             </form>
             <div class="section-title"><h2>Items</h2><span id="checklistCountLabel">0 items</span></div>
@@ -628,8 +637,29 @@
     <button class="nav-btn" type="button" data-view="add" aria-label="Add expense"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Add</span></button>
     <button class="nav-btn" type="button" data-view="history" aria-label="History"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span>History</span></button>
     <button class="nav-btn" type="button" data-view="budget" aria-label="Budget"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h6"/></svg><span>Budget</span></button>
+    <button class="nav-btn" type="button" data-view="checklist" aria-label="Checklist"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 9 1.5 1.5L12 8M14 9h3M8 15l1.5 1.5L12 14M14 15h3"/></svg><span>Checklist</span></button>
     <button class="nav-btn" type="button" data-view="more" aria-label="More"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>More</span></button>
   </nav>
+
+  <dialog id="checklistChildDialog">
+    <form id="checklistChildForm">
+      <input type="hidden" id="checklistChildParentId" />
+      <input type="hidden" id="checklistChildEditId" />
+      <div class="dialog-body">
+        <h2 id="checklistChildDialogTitle">Add payment</h2>
+        <div class="form-grid">
+          <div class="field"><label for="checklistChildLabel">Payment / child item</label><input id="checklistChildLabel" maxlength="90" placeholder="e.g. Mortgage payment 1" required /></div>
+          <div class="two">
+            <div class="field"><label for="checklistChildAmount">Amount</label><input id="checklistChildAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Optional" /></div>
+            <div class="field"><label for="checklistChildDueDay">Due day</label><input id="checklistChildDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
+          </div>
+          <div class="field"><label for="checklistChildNote">Note</label><input id="checklistChildNote" maxlength="180" placeholder="Optional" /></div>
+          <div class="field-help">Add as many child items as needed. Each one can be checked off separately.</div>
+        </div>
+      </div>
+      <div class="dialog-actions"><button id="cancelChecklistChild" class="btn" type="button">Cancel</button><button class="btn primary" type="submit">Save</button></div>
+    </form>
+  </dialog>
 
   <dialog id="importDialog">
     <div class="dialog-body"><h2>Restore</h2><div id="importSummary" style="color:var(--muted);font-size:12px;margin-bottom:12px"></div><div class="field"><label for="importMode">Mode</label><select id="importMode"><option value="merge">Merge</option><option value="replace">Replace scope</option></select><div class="field-help" id="importModeHelp">Merge keeps existing data when possible.</div></div></div>
@@ -664,7 +694,7 @@
       expenseForm: $('expenseForm'), editId: $('editId'), amount: $('amount'), payment: $('payment'), paymentOther: $('paymentOther'), paymentOtherWrap: $('paymentOtherWrap'), bankFields: $('bankFields'), bank: $('bank'), bankOther: $('bankOther'), bankOtherWrap: $('bankOtherWrap'), category: $('category'), categoryOther: $('categoryOther'), categoryOtherWrap: $('categoryOtherWrap'), otherFields: $('otherFields'), date: $('date'), note: $('note'), saveExpenseBtn: $('saveExpenseBtn'), cancelEditBtn: $('cancelEditBtn'), currencyMark: $('currencyMark'),
       expenseFilter: $('expenseFilter'), expenseList: $('expenseList'), expenseEmpty: $('expenseEmpty'),
       budgetPlannedKpi: $('budgetPlannedKpi'), budgetPlannedPercentSub: $('budgetPlannedPercentSub'), budgetProjectedFundsKpi: $('budgetProjectedFundsKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetAllocationSub: $('budgetAllocationSub'), budgetMonthLabel: $('budgetMonthLabel'), allocationGuide: $('allocationGuide'), projectedFundsForm: $('projectedFundsForm'), projectedFundsAmount: $('projectedFundsAmount'), clearProjectedFundsBtn: $('clearProjectedFundsBtn'), fundForm: $('fundForm'), fundEditId: $('fundEditId'), fundSource: $('fundSource'), fundSourceOtherWrap: $('fundSourceOtherWrap'), fundSourceOther: $('fundSourceOther'), fundAmount: $('fundAmount'), fundDate: $('fundDate'), fundNote: $('fundNote'), saveFundBtn: $('saveFundBtn'), cancelFundEditBtn: $('cancelFundEditBtn'), fundCountLabel: $('fundCountLabel'), fundList: $('fundList'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetDescription: $('budgetDescription'), budgetPercent: $('budgetPercent'), budgetAmount: $('budgetAmount'), budgetAllocationModeHint: $('budgetAllocationModeHint'), budgetConversionHint: $('budgetConversionHint'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
-      budgetChecklistCard: $('budgetChecklistCard'), budgetChecklistKpi: $('budgetChecklistKpi'), budgetChecklistSub: $('budgetChecklistSub'), checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistForm: $('checklistForm'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistHome: $('checklistHome'), checklistHomeSummary: $('checklistHomeSummary'),
+      checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistForm: $('checklistForm'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistChildDialog: $('checklistChildDialog'), checklistChildForm: $('checklistChildForm'), checklistChildDialogTitle: $('checklistChildDialogTitle'), checklistChildParentId: $('checklistChildParentId'), checklistChildEditId: $('checklistChildEditId'), checklistChildLabel: $('checklistChildLabel'), checklistChildAmount: $('checklistChildAmount'), checklistChildDueDay: $('checklistChildDueDay'), checklistChildNote: $('checklistChildNote'), cancelChecklistChild: $('cancelChecklistChild'),
       currency: $('currency'), privacyToggle: $('privacyToggle'), persistenceStatus: $('persistenceStatus'), requestPersistence: $('requestPersistence'), storageSize: $('storageSize'), storageMeter: $('storageMeter'),
       exportFull: $('exportFull'), importData: $('importData'), exportExpensesJson: $('exportExpensesJson'), exportBudgetsJson: $('exportBudgetsJson'), exportCsv: $('exportCsv'), clearData: $('clearData'), importFile: $('importFile'), importDialog: $('importDialog'), importSummary: $('importSummary'), importMode: $('importMode'), importModeHelp: $('importModeHelp'), cancelImport: $('cancelImport'), confirmImport: $('confirmImport'), toast: $('toast')
     };
@@ -848,6 +878,35 @@
         .filter(item => Number.isFinite(item.amount) && item.amount > 0 && isValidDate(item.date));
     }
 
+    function cleanChecklistChildren(source, month) {
+      const seen = new Set();
+      const maxDay = isValidMonth(month) ? daysInMonth(month) : 31;
+      return (Array.isArray(source) ? source : [])
+        .filter(item => item && typeof item === 'object')
+        .map(item => {
+          let id = String(item.id || '').trim().slice(0, 120);
+          if (!id || seen.has(id)) {
+            do { id = createId(); } while (seen.has(id));
+          }
+          seen.add(id);
+          const amount = Number(item.amount);
+          const dueDay = Number(item.dueDay);
+          const done = Boolean(item.done);
+          return {
+            id,
+            label: normalizeText(item.label, CHECKLIST_LABEL_MAX),
+            amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
+            dueDay: Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= maxDay ? dueDay : 0,
+            done,
+            doneAt: done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '',
+            note: normalizeText(item.note, CHECKLIST_NOTE_MAX),
+            createdAt: String(item.createdAt || new Date().toISOString()),
+            updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
+          };
+        })
+        .filter(item => Boolean(item.label));
+    }
+
     function cleanChecklist(source) {
       const seen = new Set();
       return (Array.isArray(source) ? source : [])
@@ -862,7 +921,9 @@
           const amount = Number(item.amount);
           const dueDay = Number(item.dueDay);
           const maxDay = isValidMonth(month) ? daysInMonth(month) : 31;
-          const done = Boolean(item.done);
+          const children = cleanChecklistChildren(item.children, month);
+          const done = children.length ? children.every(child => child.done) : Boolean(item.done);
+          const latestChildDoneAt = children.filter(child => child.doneAt).map(child => child.doneAt).sort().slice(-1)[0] || '';
           return {
             id,
             month,
@@ -871,8 +932,9 @@
             amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
             dueDay: Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= maxDay ? dueDay : 0,
             done,
-            doneAt: done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '',
+            doneAt: done ? String(children.length ? latestChildDoneAt : (item.doneAt || item.updatedAt || new Date().toISOString())) : '',
             note: normalizeText(item.note, CHECKLIST_NOTE_MAX),
+            children,
             createdAt: String(item.createdAt || new Date().toISOString()),
             updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
           };
@@ -993,11 +1055,42 @@
       return [...new Set([...STANDARD_CATEGORIES, 'Other', ...fromExpenses, ...fromBudgets, ...fromPercents])].sort((a, b) => a.localeCompare(b));
     }
     function checklistForMonth(month) { return state.checklist.filter(item => item.month === month); }
+    function checklistChildren(item) { return Array.isArray(item.children) ? item.children : []; }
+    function checklistItemTarget(item) {
+      const childTotal = checklistChildren(item).reduce((total, child) => total + Number(child.amount || 0), 0);
+      return Number(item.amount || 0) > 0 ? Number(item.amount) : childTotal;
+    }
+    function checklistItemDoneAmount(item) {
+      const children = checklistChildren(item);
+      const target = checklistItemTarget(item);
+      if (!children.length) return item.done ? target : 0;
+      if (item.done) return target;
+      const childTotal = children.reduce((total, child) => total + Number(child.amount || 0), 0);
+      if (childTotal > 0) return Math.min(target || childTotal, children.filter(child => child.done).reduce((total, child) => total + Number(child.amount || 0), 0));
+      return 0;
+    }
+    function syncChecklistParent(item) {
+      const children = checklistChildren(item);
+      if (!children.length) return;
+      const done = children.every(child => child.done);
+      item.done = done;
+      item.doneAt = done ? (children.filter(child => child.doneAt).map(child => child.doneAt).sort().slice(-1)[0] || new Date().toISOString()) : '';
+    }
     function sortedChecklist(items) {
       return items.slice().sort((a, b) => Number(a.done) - Number(b.done) || (a.dueDay || 99) - (b.dueDay || 99) || a.createdAt.localeCompare(b.createdAt));
     }
+    function isChecklistChildOverdue(month, child) {
+      if (child.done || !child.dueDay) return false;
+      const current = currentMonthLocal();
+      if (month < current) return true;
+      if (month > current) return false;
+      return child.dueDay < new Date().getDate();
+    }
     function isChecklistOverdue(month, item) {
-      if (item.done || !item.dueDay) return false;
+      if (item.done) return false;
+      const children = checklistChildren(item);
+      if (children.length && children.some(child => isChecklistChildOverdue(month, child))) return true;
+      if (!item.dueDay) return false;
       const current = currentMonthLocal();
       if (month < current) return true;
       if (month > current) return false;
@@ -1005,8 +1098,8 @@
     }
     function checklistStats(month, items = checklistForMonth(month)) {
       const doneItems = items.filter(item => item.done);
-      const targetTotal = items.reduce((total, item) => total + Number(item.amount || 0), 0);
-      const doneTotal = doneItems.reduce((total, item) => total + Number(item.amount || 0), 0);
+      const targetTotal = items.reduce((total, item) => total + checklistItemTarget(item), 0);
+      const doneTotal = items.reduce((total, item) => total + checklistItemDoneAmount(item), 0);
       return {
         total: items.length,
         done: doneItems.length,
@@ -1014,7 +1107,7 @@
         overdue: items.filter(item => isChecklistOverdue(month, item)).length,
         targetTotal,
         doneTotal,
-        openTotal: targetTotal - doneTotal,
+        openTotal: Math.max(0, targetTotal - doneTotal),
         percent: items.length ? doneItems.length / items.length * 100 : 0
       };
     }
@@ -1185,14 +1278,6 @@
       els.budgetRemainingKpi.textContent = fundsTotal > 0 ? money(unallocated) : '—';
       els.budgetAllocationSub.textContent = fundsTotal > 0 ? (unallocated < 0 ? `${money(Math.abs(unallocated))} overallocated` : 'Funds not assigned yet') : 'Add funds to compare with your plan';
       els.budgetRemainingCard.className = `card summary-card collapsible-card ${fundsTotal > 0 ? (unallocated < 0 ? 'bad' : 'good') : ''}`;
-      const checklist = checklistStats(month);
-      els.budgetChecklistKpi.textContent = checklist.total ? `${checklist.done}/${checklist.total}` : '—';
-      els.budgetChecklistSub.textContent = checklist.total
-        ? (checklist.open
-          ? `${checklist.open} open${checklist.openTotal > 0 ? ` · ${money(checklist.openTotal)} left` : ''}${checklist.overdue ? ` · ${checklist.overdue} overdue` : ''}`
-          : 'Everything is taken care of')
-        : 'Add items in Monthly checklist';
-      els.budgetChecklistCard.className = `card summary-card collapsible-card ${checklist.total ? (checklist.overdue ? 'bad' : checklist.open ? 'warn' : 'good') : ''}`;
       renderAllocationGuide(month, fundsTotal, stats.planned, stats.totalSpent, projectedFunds, projectedPlanned);
       els.projectedFundsAmount.value = projectedFunds > 0 ? String(projectedFunds) : '';
       renderFunds(month, funds);
@@ -1210,7 +1295,6 @@
       renderBudgetEditor(month, items);
       setChecklistCategoryOptions(month);
       renderChecklist(month, items);
-      renderChecklistHome(month, items);
       updateBudgetSuggestion();
       els.currency.value = state.settings.currency;
       updatePrivacyControls();
@@ -1441,26 +1525,41 @@
       render();
     }
 
-    function checklistRowHtml(month, item, spentByCategory, options = {}) {
+    function checklistChildRowHtml(month, parent, child) {
+      const overdue = isChecklistChildOverdue(month, child);
+      const meta = [];
+      if (child.amount > 0) meta.push(escapeHtml(money(child.amount)));
+      if (child.dueDay) meta.push(escapeHtml(`due ${child.dueDay} ${monthLabel(month, 'short')}`));
+      if (child.done) meta.push('<span class="good">Paid / done</span>');
+      else if (overdue) meta.push('<span class="bad">Overdue</span>');
+      const note = child.note ? `<div class="checklist-meta">${escapeHtml(child.note)}</div>` : '';
+      const check = child.done ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>' : '';
+      const toggle = `<button class="checklist-check" type="button" aria-pressed="${child.done ? 'true' : 'false'}" aria-label="${child.done ? 'Mark payment as open' : 'Mark payment as paid'}" data-checklist-child-toggle="${escapeHtml(parent.id)}" data-child-id="${escapeHtml(child.id)}">${check}</button>`;
+      const actions = `<div class="checklist-child-actions"><button class="btn compact" type="button" data-checklist-child-edit="${escapeHtml(parent.id)}" data-child-id="${escapeHtml(child.id)}">Edit</button><button class="btn compact danger" type="button" data-checklist-child-delete="${escapeHtml(parent.id)}" data-child-id="${escapeHtml(child.id)}">×</button></div>`;
+      return `<div class="checklist-child-row ${child.done ? 'done' : ''} ${overdue ? 'overdue' : ''}"><div>${toggle}</div><div class="checklist-main"><span class="checklist-child-label">${escapeHtml(child.label)}</span>${meta.length ? `<div class="checklist-meta">${meta.join(' · ')}</div>` : ''}${note}</div>${actions}</div>`;
+    }
+    function checklistRowHtml(month, item, spentByCategory) {
       const overdue = isChecklistOverdue(month, item);
       const spent = item.category ? Number(spentByCategory.get(item.category) || 0) : 0;
+      const children = checklistChildren(item);
+      const doneChildren = children.filter(child => child.done).length;
       const meta = [];
       if (item.category) meta.push(escapeHtml(budgetLabel(item.category)));
       if (item.amount > 0) meta.push(escapeHtml(money(item.amount)));
       if (item.dueDay) meta.push(escapeHtml(`due ${item.dueDay} ${monthLabel(month, 'short')}`));
       if (item.category && spent > 0) meta.push(escapeHtml(`${money(spent)} spent`));
+      if (children.length) meta.push(escapeHtml(`${doneChildren}/${children.length} child item${children.length === 1 ? '' : 's'}`));
       if (item.done) meta.push('<span class="good">Taken care of</span>');
       else if (overdue) meta.push('<span class="bad">Overdue</span>');
-      else if (item.amount > 0 && item.category && spent >= item.amount) meta.push('<span class="good">Spending already recorded</span>');
+      else if (!children.length && item.amount > 0 && item.category && spent >= item.amount) meta.push('<span class="good">Spending already recorded</span>');
       const note = item.note ? `<div class="checklist-meta">${escapeHtml(item.note)}</div>` : '';
       const check = item.done ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>' : '';
-      const toggle = `<button class="checklist-check" type="button" aria-pressed="${item.done ? 'true' : 'false'}" aria-label="${item.done ? 'Mark as still open' : 'Mark as taken care of'}" data-checklist-toggle="${escapeHtml(item.id)}">${check}</button>`;
-      const actions = options.compact
-        ? ''
-        : `<button class="btn compact" type="button" data-checklist-edit="${escapeHtml(item.id)}">Edit</button><button class="btn compact danger" type="button" data-checklist-delete="${escapeHtml(item.id)}">×</button>`;
+      const toggleLabel = children.length ? (item.done ? 'Mark all child items as open' : 'Mark all child items as done') : (item.done ? 'Mark as still open' : 'Mark as taken care of');
+      const toggle = `<button class="checklist-check" type="button" aria-pressed="${item.done ? 'true' : 'false'}" aria-label="${toggleLabel}" data-checklist-toggle="${escapeHtml(item.id)}">${check}</button>`;
+      const actions = `<button class="btn compact" type="button" data-checklist-child-add="${escapeHtml(item.id)}">+ Child</button><button class="btn compact" type="button" data-checklist-edit="${escapeHtml(item.id)}">Edit</button><button class="btn compact danger" type="button" data-checklist-delete="${escapeHtml(item.id)}">×</button>`;
       const amount = item.amount > 0 ? `<strong>${escapeHtml(money(item.amount))}</strong>` : '';
-      const right = actions || (options.compact && amount) ? `<div class="checklist-actions">${options.compact ? amount : ''}${actions}</div>` : '';
-      return `<div class="checklist-row ${item.done ? 'done' : ''} ${overdue ? 'overdue' : ''}"><div>${toggle}</div><div class="checklist-main"><span class="checklist-label">${escapeHtml(item.label)}</span>${meta.length ? `<div class="checklist-meta">${meta.join(' · ')}</div>` : ''}${note}</div>${right}</div>`;
+      const childrenHtml = children.length ? `<div class="checklist-children">${children.slice().sort((a,b) => Number(a.done)-Number(b.done) || (a.dueDay||99)-(b.dueDay||99) || a.createdAt.localeCompare(b.createdAt)).map(child => checklistChildRowHtml(month, item, child)).join('')}</div>` : '';
+      return `<div class="checklist-group"><div class="checklist-row ${item.done ? 'done' : ''} ${overdue ? 'overdue' : ''}"><div>${toggle}</div><div class="checklist-main"><span class="checklist-label">${escapeHtml(item.label)}</span>${meta.length ? `<div class="checklist-meta">${meta.join(' · ')}</div>` : ''}${note}</div><div class="checklist-actions">${amount}${actions}</div></div>${childrenHtml}</div>`;
     }
     function renderChecklistProgress(month, stats) {
       let headline = 'No checklist items yet';
@@ -1472,7 +1571,7 @@
         cls = stats.overdue ? 'bad' : stats.open ? 'warn' : 'good';
       }
       const width = Math.min(100, Math.max(0, stats.percent));
-      const overdueNote = stats.overdue ? `<small class="bad">${escapeHtml(`${stats.overdue} item${stats.overdue === 1 ? '' : 's'} past the due day`)}</small>` : '';
+      const overdueNote = stats.overdue ? `<small class="bad">${escapeHtml(`${stats.overdue} item${stats.overdue === 1 ? '' : 's'} with an overdue due date`)}</small>` : '';
       els.checklistProgress.innerHTML = `<div class="checklist-progress-top"><strong class="${cls}">${escapeHtml(headline)}</strong><small>${escapeHtml(monthLabel(month, 'short'))}</small></div><div class="progress"><span style="width:${width}%;background:${stats.overdue ? 'var(--bad)' : 'var(--good)'}"></span></div><small>${escapeHtml(detail)}</small>${overdueNote}`;
     }
     function renderChecklist(month, expenseItems = expensesForMonth(month)) {
@@ -1485,21 +1584,6 @@
       els.checklistList.innerHTML = items.length
         ? sortedChecklist(items).map(item => checklistRowHtml(month, item, spentByCategory)).join('')
         : '<div class="empty">No checklist items for this month</div>';
-    }
-    function renderChecklistHome(month, expenseItems = expensesForMonth(month)) {
-      const items = checklistForMonth(month);
-      const stats = checklistStats(month, items);
-      els.checklistHomeSummary.textContent = stats.total ? `${stats.done}/${stats.total} taken care of` : 'Nothing listed';
-      if (!items.length) {
-        els.checklistHome.innerHTML = '<div class="empty">No checklist items yet. Add them in Budget → Monthly checklist.</div>';
-        return;
-      }
-      const spentByCategory = categorySpendMap(expenseItems);
-      const sorted = sortedChecklist(items);
-      const visible = sorted.slice(0, 6);
-      const hidden = sorted.length - visible.length;
-      els.checklistHome.innerHTML = visible.map(item => checklistRowHtml(month, item, spentByCategory, { compact: true })).join('')
-        + (hidden > 0 ? `<div class="empty">${escapeHtml(`${hidden} more item${hidden === 1 ? '' : 's'} in Budget`)}</div>` : '');
     }
     function planCategoriesForMonth(month) {
       const keys = [...new Set([...Object.keys(monthlyBudgets(month)), ...Object.keys(monthlyBudgetPercents(month))])];
@@ -1556,10 +1640,62 @@
       const item = state.checklist.find(entry => entry.id === id);
       if (!item) return;
       const now = new Date().toISOString();
-      item.done = !item.done;
-      item.doneAt = item.done ? now : '';
+      const nextDone = !item.done;
+      const children = checklistChildren(item);
+      if (children.length) {
+        children.forEach(child => { child.done = nextDone; child.doneAt = nextDone ? now : ''; child.updatedAt = now; });
+      }
+      item.done = nextDone;
+      item.doneAt = nextDone ? now : '';
       item.updatedAt = now;
-      saveState(item.done ? 'Marked as taken care of' : 'Marked as open');
+      saveState(nextDone ? (children.length ? 'All child items marked done' : 'Marked as taken care of') : (children.length ? 'All child items reopened' : 'Marked as open'));
+      render();
+    }
+
+    function openChecklistChildDialog(parentId, childId = '') {
+      const parent = state.checklist.find(entry => entry.id === parentId);
+      if (!parent) return;
+      const child = childId ? checklistChildren(parent).find(entry => entry.id === childId) : null;
+      els.checklistChildParentId.value = parent.id;
+      els.checklistChildEditId.value = child?.id || '';
+      els.checklistChildDialogTitle.textContent = child ? 'Edit child item' : `Add child item · ${parent.label}`;
+      els.checklistChildLabel.value = child?.label || '';
+      els.checklistChildAmount.value = child?.amount > 0 ? String(child.amount) : '';
+      els.checklistChildDueDay.max = String(daysInMonth(parent.month));
+      els.checklistChildDueDay.value = child?.dueDay ? String(child.dueDay) : '';
+      els.checklistChildNote.value = child?.note || '';
+      els.checklistChildDialog.showModal();
+      setTimeout(() => els.checklistChildLabel.focus(), 30);
+    }
+    function closeChecklistChildDialog() {
+      els.checklistChildForm.reset();
+      els.checklistChildParentId.value = '';
+      els.checklistChildEditId.value = '';
+      els.checklistChildDialog.close();
+    }
+    function toggleChecklistChild(parentId, childId) {
+      const parent = state.checklist.find(entry => entry.id === parentId);
+      const child = parent ? checklistChildren(parent).find(entry => entry.id === childId) : null;
+      if (!parent || !child) return;
+      const now = new Date().toISOString();
+      child.done = !child.done;
+      child.doneAt = child.done ? now : '';
+      child.updatedAt = now;
+      syncChecklistParent(parent);
+      parent.updatedAt = now;
+      saveState(child.done ? 'Child item marked done' : 'Child item reopened');
+      render();
+    }
+    function deleteChecklistChild(parentId, childId) {
+      const parent = state.checklist.find(entry => entry.id === parentId);
+      const child = parent ? checklistChildren(parent).find(entry => entry.id === childId) : null;
+      if (!parent || !child) return;
+      if (!confirm(`Remove “${child.label}” from ${parent.label}?`)) return;
+      parent.children = checklistChildren(parent).filter(entry => entry.id !== childId);
+      if (parent.children.length) syncChecklistParent(parent);
+      else { parent.done = false; parent.doneAt = ''; }
+      parent.updatedAt = new Date().toISOString();
+      saveState('Child item removed');
       render();
     }
 
@@ -2019,7 +2155,7 @@
       } else {
         const duplicate = checklistForMonth(month).some(entry => entry.label.toLowerCase() === label.toLowerCase());
         if (duplicate && !confirm(`“${label}” is already on the ${monthLabel(month)} checklist. Add it again?`)) return;
-        state.checklist.push({ id: createId(), ...data, done: false, doneAt: '', createdAt: now });
+        state.checklist.push({ id: createId(), ...data, done: false, doneAt: '', children: [], createdAt: now });
         saveState('Checklist item added');
       }
       resetChecklistForm(month);
@@ -2027,15 +2163,56 @@
     });
     els.cancelChecklistEditBtn.addEventListener('click', () => resetChecklistForm());
     function handleChecklistClick(event) {
+      const childToggle = event.target.closest('[data-checklist-child-toggle]');
+      const childAdd = event.target.closest('[data-checklist-child-add]');
+      const childEdit = event.target.closest('[data-checklist-child-edit]');
+      const childRemove = event.target.closest('[data-checklist-child-delete]');
       const toggle = event.target.closest('[data-checklist-toggle]');
       const edit = event.target.closest('[data-checklist-edit]');
       const remove = event.target.closest('[data-checklist-delete]');
+      if (childToggle) { toggleChecklistChild(childToggle.dataset.checklistChildToggle, childToggle.dataset.childId); return; }
+      if (childAdd) { openChecklistChildDialog(childAdd.dataset.checklistChildAdd); return; }
+      if (childEdit) { openChecklistChildDialog(childEdit.dataset.checklistChildEdit, childEdit.dataset.childId); return; }
+      if (childRemove) { deleteChecklistChild(childRemove.dataset.checklistChildDelete, childRemove.dataset.childId); return; }
       if (toggle) toggleChecklistItem(toggle.dataset.checklistToggle);
-      if (edit) { setView('budget'); editChecklistItem(edit.dataset.checklistEdit); }
+      if (edit) { setView('checklist'); editChecklistItem(edit.dataset.checklistEdit); }
       if (remove) deleteChecklistItem(remove.dataset.checklistDelete);
     }
     els.checklistList.addEventListener('click', handleChecklistClick);
-    els.checklistHome.addEventListener('click', handleChecklistClick);
+    els.checklistChildForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const parent = state.checklist.find(entry => entry.id === els.checklistChildParentId.value);
+      if (!parent) { closeChecklistChildDialog(); return; }
+      const label = normalizeText(els.checklistChildLabel.value, CHECKLIST_LABEL_MAX);
+      if (!label) { showToast('Enter a child item'); els.checklistChildLabel.focus(); return; }
+      const rawAmount = els.checklistChildAmount.value.trim();
+      const amount = rawAmount === '' ? 0 : Number(rawAmount);
+      if (!Number.isFinite(amount) || amount < 0) { showToast('Enter a valid amount'); els.checklistChildAmount.focus(); return; }
+      const rawDueDay = els.checklistChildDueDay.value.trim();
+      const dueDay = rawDueDay === '' ? 0 : Number(rawDueDay);
+      const maxDay = daysInMonth(parent.month);
+      if (!Number.isInteger(dueDay) || dueDay < 0 || dueDay > maxDay) { showToast(`Due day must be between 1 and ${maxDay}`); els.checklistChildDueDay.focus(); return; }
+      const now = new Date().toISOString();
+      const data = { label, amount, dueDay, note: normalizeText(els.checklistChildNote.value, CHECKLIST_NOTE_MAX), updatedAt: now };
+      parent.children ||= [];
+      let message = 'Child item added';
+      if (els.checklistChildEditId.value) {
+        const child = parent.children.find(entry => entry.id === els.checklistChildEditId.value);
+        if (!child) { showToast('Child item not found'); return; }
+        Object.assign(child, data);
+        message = 'Child item updated';
+      } else {
+        parent.children.push({ id: createId(), ...data, done: false, doneAt: '', createdAt: now });
+      }
+      syncChecklistParent(parent);
+      parent.updatedAt = now;
+      saveState(message);
+      closeChecklistChildDialog();
+      render();
+    });
+    els.cancelChecklistChild.addEventListener('click', closeChecklistChildDialog);
+    els.checklistChildDialog.addEventListener('cancel', event => { event.preventDefault(); closeChecklistChildDialog(); });
+
     els.checklistFromPlan.addEventListener('click', () => {
       const month = els.selectedMonth.value;
       const budgets = monthlyBudgets(month);
@@ -2056,6 +2233,7 @@
           dueDay: 0,
           done: false,
           doneAt: '',
+          children: [],
           note: flattenText(descriptions[category] || '').slice(0, CHECKLIST_NOTE_MAX),
           createdAt: now,
           updatedAt: now
@@ -2076,7 +2254,7 @@
       const maxDay = daysInMonth(month);
       state.checklist = state.checklist.filter(item => item.month !== month);
       source.forEach(item => {
-        state.checklist.push({ ...item, id: createId(), month, dueDay: item.dueDay ? Math.min(item.dueDay, maxDay) : 0, done: false, doneAt: '', createdAt: now, updatedAt: now });
+        state.checklist.push({ ...item, id: createId(), month, dueDay: item.dueDay ? Math.min(item.dueDay, maxDay) : 0, done: false, doneAt: '', children: checklistChildren(item).map(child => ({ ...child, id: createId(), dueDay: child.dueDay ? Math.min(child.dueDay, maxDay) : 0, done: false, doneAt: '', createdAt: now, updatedAt: now })), createdAt: now, updatedAt: now });
       });
       resetChecklistForm(month);
       saveState('Previous checklist copied');
