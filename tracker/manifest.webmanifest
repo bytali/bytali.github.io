@@ -1,7 +1,7 @@
 {
   "name": "Pocket Plan - Budget & Expense Tracker",
   "short_name": "Pocket Plan",
-  "description": "Private, local-first monthly budget, funds, and expense tracker.",
+  "description": "Private, local-first budget, expense, checklist, and standalone funds tracker.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

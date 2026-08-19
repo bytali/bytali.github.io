@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-19 — Standalone funds tracker + checklist card toggles
+
+- Added icon-only show/hide controls to the **Monthly checklist** and **Add checklist item** cards.
+- Added a standalone **Funds tracker** page to the floating navigation; it is independent of the selected month and existing Budget funds/inflows.
+- Added fund transactions with date, amount, bank, and deposit/withdraw type, including edit and delete actions.
+- Added all-time tracked-funds and bank-balance views plus selectable cash-flow analytics for 30 days, 90 days, year to date, 12 months, or all time.
+- Added monthly deposit/withdrawal flow, net-flow metrics, retained-after-withdrawals ratio, bank activity, and comparable-period signals.
+- Included standalone fund transactions in full backup/restore while intentionally keeping them out of the monthly **Budget + funds** backup scope.
+- Tightened the seven-item floating navigation for small screens by using icon-only labels on mobile.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v10`.
+
 ## 2026-08-19 — Theme toggle + automatic checklist child split
 
 - Added a persistent light/dark theme toggle in the top bar, while still using the device theme until the user explicitly chooses a mode.

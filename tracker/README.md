@@ -1,6 +1,6 @@
 # Pocket Plan
 
-Pocket Plan is a static, local-first monthly budget, funds, and expense tracker designed for GitHub Pages.
+Pocket Plan is a static, local-first monthly budget, expense, checklist, and standalone funds tracker designed for GitHub Pages.
 
 ## What it tracks
 
@@ -12,6 +12,8 @@ Pocket Plan is a static, local-first monthly budget, funds, and expense tracker 
 - Expenses by category, payment method, and credit-card bank
 - Budget vs actual spending and spending pace
 - Six-month funds / plan / spending context
+- A separate all-time Funds Tracker for bank deposits and withdrawals, independent of monthly Budget funds
+- Funds Tracker analytics for net flow, deposits, withdrawals, bank balances/activity, monthly flow, and comparable periods
 
 ## Privacy
 

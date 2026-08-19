@@ -10,6 +10,8 @@ The Checklist screen uses separate cards for its overview, `#checklistForm`, and
 
 Appearance supports a persistent manual light/dark toggle. Until the user explicitly chooses a mode, the app follows the device color-scheme preference. Checklist child items derive their displayed amount automatically from the parent target (`parent amount / number of children`); child forms do not accept separate amounts, and legacy child amounts are ignored.
 
+The **Monthly checklist** overview and **Add checklist item** editor are native `details` cards with icon-only chevron toggles. The app also has a standalone **Funds tracker** page in the floating navigation. Its transactions and analytics are deliberately independent of the selected month, Budget inflows, category allocations, expenses, and checklist data.
+
 Primary files:
 
 - `index.html`
@@ -22,12 +24,14 @@ There is no build process, backend, account system, package manager, database, a
 
 ## PRODUCT MODEL
 
-The app now combines three concepts for each selected month:
+For each selected month, the budgeting side combines four concepts:
 
 1. **Funds received** — money available to plan, such as salary or side income.
 2. **Projected funds** — an optional expected total for the selected month, used only for planning comparisons.
 3. **Allocated budget** — category allocations assigned either as a percentage of monthly funds or as a fixed manual amount.
 4. **Actual expenses** — money actually spent.
+
+The separate **Funds tracker** is not part of this monthly model. It is an all-time transaction ledger for tracking deposits and withdrawals across banks.
 
 The central planning equation is:
 
@@ -80,8 +84,57 @@ Reference material:
 - https://actualbudget.org/docs/budgeting/
 - https://support.ynab.com/en_us/assigning-your-money-a-guide-SypgkrNJi
 - https://support.ynab.com/en_us/getting-started-with-targets-ryAEP08xC
+- https://help.copilot.money/en/articles/9682232-cash-flow-tab-overview
+- https://support.simplifi.quicken.com/en/articles/4730541-using-reports-on-the-quicken-simplifi-mobile-app
 
 Pocket Plan does **not** attempt bank syncing, account reconciliation, automatic investment pricing, or automatic rollover. Those would materially increase complexity and privacy/security surface.
+
+## STANDALONE FUNDS TRACKER
+
+The **Funds tracker** is its own top-level page and intentionally ignores the selected monthly budget period. It uses a separate additive state collection:
+
+```text
+fundTransactions
+```
+
+Each transaction records only the user-requested fields plus internal IDs/timestamps:
+
+```json
+{
+  "id": "unique-id",
+  "date": "2026-08-19",
+  "amount": 50000,
+  "bank": "BPI",
+  "type": "deposit",
+  "createdAt": "2026-08-19T01:00:00.000Z",
+  "updatedAt": "2026-08-19T01:00:00.000Z"
+}
+```
+
+`type` is restricted to `deposit` or `withdraw`. Dates must be valid and cannot be in the future; amounts must be greater than zero; bank names are normalized/sanitized.
+
+Core all-time tracker math:
+
+```text
+tracked funds = deposits - withdrawals
+tracked funds by bank = bank deposits - bank withdrawals
+```
+
+These are **tracked ledger balances**, not bank-synced or reconciled account balances. Accuracy depends on the user entering the relevant transactions.
+
+Analytics include:
+
+- all-time tracked funds, total deposits, total withdrawals, bank count, and transaction count
+- selectable Last 30 days, Last 90 days, Year to date, Last 12 months, and All time ranges
+- period net flow, deposits, withdrawals, and net/deposit retention ratio
+- monthly deposit/withdrawal flow with net result
+- all-time tracked funds by bank
+- most-active bank by transaction activity
+- comparison with the immediately preceding comparable period when a bounded date range is selected
+
+The range selector affects analytics only; it never changes or filters the app's monthly Budget state. The month selector is hidden while this top-level page is active.
+
+The analytics design is cash-flow oriented, informed by current personal-finance reporting patterns such as cash-flow income/spending/net views, selectable date ranges, comparable periods, and income/expense reports. No third-party service or analytics SDK is used at runtime.
 
 ## MONTHLY FUNDS / INFLOWS
 
@@ -370,6 +423,17 @@ Approximate current state:
       "createdAt": "...",
       "updatedAt": "..."
     }
+  ],
+  "fundTransactions": [
+    {
+      "id": "...",
+      "date": "2026-08-19",
+      "amount": 50000,
+      "bank": "BPI",
+      "type": "deposit",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
   ]
 }
 ```
@@ -421,7 +485,9 @@ Contains:
 - legacy budget fields
 - privacy setting
 - expenses
-- inflows/funds
+- inflows/monthly Budget funds
+- monthly checklist
+- standalone `fundTransactions`
 
 ### Expenses JSON
 
@@ -441,16 +507,18 @@ The name is retained for compatibility, but this scope now includes:
 - percentage category allocations
 - legacy budget maps
 - currency
-- inflows/funds
+- inflows/monthly Budget funds
+- monthly checklist
 
-Old `budgets` backups without `inflows` remain importable.
+Standalone `fundTransactions` are intentionally **not** included in this partial scope because the Funds tracker is not monthly Budget data. Old `budgets` backups without `inflows` remain importable.
 
 ### Restore modes
 
 Merge:
 
 - expense conflicts use newer `updatedAt`
-- fund conflicts use newer `updatedAt`
+- monthly fund conflicts use newer `updatedAt`
+- standalone Funds tracker transaction conflicts use newer `updatedAt`
 - fixed and percentage category-allocation maps merge by month/category; percentage mode is authoritative when both modes collide
 - older compatible data is retained where possible
 
@@ -458,7 +526,7 @@ Replace scope:
 
 - Full replaces the full sanitized state.
 - Expenses replaces expenses only.
-- Budget + funds replaces budget data and funds only; expenses and privacy preference remain.
+- Budget + funds replaces monthly budget data, monthly funds, and monthly checklist only; expenses, standalone Funds tracker transactions, and privacy preference remain.
 
 Optional SHA-256 checksums are verified when available.
 
@@ -479,7 +547,7 @@ Expense CSV includes:
 
 Text cells beginning with spreadsheet-formula prefixes are hardened on CSV export.
 
-Funds are currently backed up through JSON rather than CSV.
+Monthly Budget funds and standalone Funds tracker transactions are currently backed up through JSON rather than CSV.
 
 ## PRIVACY / SECURITY MODEL
 
@@ -518,7 +586,9 @@ Preserve these rules in future work:
 14. Keep the app static-host friendly.
 15. Percentage allocations must remain dynamic against the selected month’s recorded funds.
 16. Manual/fixed allocations must remain fixed when funds change.
-17. Do not add cloud sync, bank sync, telemetry, or a backend unless explicitly required.
+17. Standalone `fundTransactions` must remain independent from monthly Budget inflows, expenses, allocations, and checklist state.
+18. Full backups include `fundTransactions`; partial Budget + funds backups do not.
+19. Do not add cloud sync, bank sync, telemetry, or a backend unless explicitly required.
 
 ## RESPONSIVE CHECKLIST
 
@@ -542,12 +612,28 @@ Pay special attention to:
 - percentage + manual allocation inputs and current/projected conversions
 - mobile Budget vs actual accordions
 - category budget rows
-- fixed five-button bottom navigation
+- seven-item floating navigation; labels are hidden at narrow mobile widths
+- Funds tracker analytics range selector, flow rows, bank rows, and transaction rows
 - safe-area insets
 - long currency values
 - privacy mode
 
 ## FUNCTIONAL TEST CHECKLIST
+
+### Standalone Funds tracker
+
+- Funds page hides the month selector and does not alter selected-month state
+- Add deposit with date, amount, and bank
+- Add withdrawal with date, amount, and bank
+- Edit a tracker transaction without creating a duplicate
+- Delete a tracker transaction
+- Future transaction dates are rejected
+- All-time tracked funds equals deposits minus withdrawals
+- Per-bank tracked funds equal that bank's deposits minus withdrawals
+- 30-day / 90-day / YTD / 12-month / all-time ranges update period analytics
+- Comparable-period signal uses the prior equal-length period for bounded ranges
+- Full backup replace/merge preserves tracker transactions
+- Budget + funds backup does not overwrite tracker transactions
 
 ### Funds
 
@@ -625,3 +711,10 @@ On GitHub Pages/HTTPS:
 `index.html` is the application behavior source of truth.
 
 `HANDOFF.md` documents intended behavior and compatibility requirements.
+
+### Checklist cards
+
+- Monthly checklist card expands/collapses with the icon chevron
+- Add checklist item card expands/collapses with the icon chevron
+- Editing an item reopens the Add checklist item card when needed
+- Child displayed amounts rebalance automatically when children are added/removed
