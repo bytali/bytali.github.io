@@ -120,3 +120,10 @@
 - Added Expense categories `Leisure` and `Misc`.
 - Removed `Sports Leisure` from the built-in category list while preserving existing legacy records and budgets.
 - Bumped the offline app-shell cache to `pocket-plan-shell-v5`.
+
+## 2026-08-19 — Bank option cleanup
+
+- Standardized bank suggestions/options to: BPI, Unionbank, Sterling Bank of Asia, Coins.ph, Maya, Metrobank, and Maribank.
+- Applied the same standard list to checklist child and Funds tracker bank suggestions.
+- Kept custom bank entry support where the app already allows it.
+- Bumped the offline app shell cache to v14.

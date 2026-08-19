@@ -596,7 +596,7 @@
             <div class="field"><label for="category">Category</label><select id="category" required></select></div>
           </div>
           <div class="bank-fields" id="bankFields" hidden>
-            <div class="field"><label for="bank">Bank</label><select id="bank"><option value="">Choose bank</option><option>BDO</option><option>BPI</option><option>Metrobank</option><option>UnionBank</option><option>Security Bank</option><option>RCBC</option><option>PNB</option><option>LandBank</option><option>EastWest</option><option>China Bank</option><option>Maya Bank</option><option>GoTyme Bank</option><option>CIMB Bank</option><option>SeaBank</option><option>Sterling Bank of Asia</option><option>Other bank</option></select></div>
+            <div class="field"><label for="bank">Bank</label><select id="bank"><option value="">Choose bank</option><option>BPI</option><option>Unionbank</option><option>Sterling Bank of Asia</option><option>Coins.ph</option><option>Maya</option><option>Metrobank</option><option>Maribank</option><option>Other bank</option></select></div>
             <div class="field" id="bankOtherWrap" hidden><label for="bankOther">Specify bank</label><input id="bankOther" maxlength="60" placeholder="Bank name" /></div>
           </div>
           <div class="two" id="otherFields" hidden>
@@ -762,7 +762,7 @@
                 <div class="field"><label for="trackerCategory">Category</label><select id="trackerCategory" required><option value="Investment">Investment</option><option value="Travel">Travel</option><option value="Health">Health</option><option value="Emergency Fund">Emergency Fund</option><option value="Car Maintenance">Car Maintenance</option><option value="Miscellaneous" selected>Miscellaneous</option></select></div>
                 <div class="field"><label for="trackerNote">Note</label><input id="trackerNote" maxlength="240" placeholder="Optional" /></div>
               </div>
-              <datalist id="trackerBankOptions"><option value="BDO"></option><option value="BPI"></option><option value="Metrobank"></option><option value="UnionBank"></option><option value="Security Bank"></option><option value="RCBC"></option><option value="PNB"></option><option value="LandBank"></option><option value="EastWest"></option><option value="China Bank"></option><option value="Maya Bank"></option><option value="GoTyme Bank"></option><option value="CIMB Bank"></option><option value="SeaBank"></option><option value="Sterling Bank of Asia"></option></datalist>
+              <datalist id="trackerBankOptions"><option value="BPI"></option><option value="Unionbank"></option><option value="Sterling Bank of Asia"></option><option value="Coins.ph"></option><option value="Maya"></option><option value="Metrobank"></option><option value="Maribank"></option></datalist>
               <div class="action-row"><button id="saveTrackerBtn" class="btn primary svg-btn mobile-icon-btn" type="submit" aria-label="Add transaction" title="Add transaction"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-text">Add transaction</span></button><button id="cancelTrackerEditBtn" class="btn svg-btn mobile-icon-btn" type="button" aria-label="Cancel transaction edit" title="Cancel" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg><span class="btn-text">Cancel</span></button></div>
             </form>
           </div>
@@ -902,7 +902,7 @@
 
     const STANDARD_PAYMENTS = ['Cash', 'GCash / E-wallet', 'Debit card', 'Credit card', 'Bank transfer'];
     const BANK_PAYMENTS = ['Debit card', 'Credit card', 'Bank transfer'];
-    const STANDARD_BANKS = ['BDO', 'BPI', 'Metrobank', 'UnionBank', 'Security Bank', 'RCBC', 'PNB', 'LandBank', 'EastWest', 'China Bank', 'Maya Bank', 'GoTyme Bank', 'CIMB Bank', 'SeaBank', 'Sterling Bank of Asia'];
+    const STANDARD_BANKS = ['BPI', 'Unionbank', 'Sterling Bank of Asia', 'Coins.ph', 'Maya', 'Metrobank', 'Maribank'];
     const STANDARD_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Bills', 'Shopping', 'Health', 'Entertainment', 'Leisure', 'Misc', 'Home', 'Investment', 'Mortgage', 'Travel'];
     const STANDARD_FUND_SOURCES = ['Salary', 'Payout / Bonus', 'Side income', 'Reimbursement', 'Miscellaneous'];
     const ALLOWED_CURRENCIES = ['PHP', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AUD', 'CAD'];
