@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-19 — Checklist child bank + deposit default
+
+- Added **Sterling Bank of Asia** to the app bank options, including the checklist child select-or-type suggestions.
+- Made **Deposit** the default/primary Type for new checklist child items and legacy child records that do not already store a Type.
+- Existing child items explicitly saved as Withdraw remain Withdraw when edited.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v13`.
+
+## 2026-08-19 — Checklist child → Funds tracker linking
+
+- Added Bank (select-or-type), Date checked, and Deposit/Withdraw Type fields to checklist child items.
+- Checking a child now creates one linked standalone Funds tracker transaction using the child equal-share amount, Date checked, Bank, Type, and the checklist parent name as the tracker category.
+- Date checked defaults to the current date when a child is checked; unchecking removes the linked transaction and clears Date checked.
+- Linked transactions are duplicate-safe and checklist-owned: editing/unchecking/deleting the child updates or removes its tracker record, while linked rows are not independently editable/deletable in Funds tracker.
+- Parent amount/name changes and child add/remove operations resync checked-child transaction amounts/categories after equal-share rebalancing.
+- A bank and positive parent target amount are required before checking a child, so every checked child can create a valid tracker transaction.
+- Existing checklist children remain compatible; legacy checked children without a bank show a sync warning until edited.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v12`.
+
+## 2026-08-19 — Funds analytics consolidation + transaction categories
+
+- Consolidated the detailed Funds Tracker analytics into one icon-toggle card while keeping the all-time tracker overview visible.
+- Added an optional note to standalone fund transactions.
+- Added transaction categories: Investment, Travel, Health, Emergency Fund, Car Maintenance, and Miscellaneous.
+- Added selected-period category analytics with transaction count, deposits, withdrawals, activity ordering, and net flow per category.
+- Existing tracker transactions without a category migrate safely to `Miscellaneous`; missing notes become blank.
+- Updated transaction rows to show category and note without changing the standalone tracker’s separation from monthly Budget data.
+- Bumped the offline app-shell cache to `pocket-plan-shell-v11`.
+
 ## 2026-08-19 — Standalone funds tracker + checklist card toggles
 
 - Added icon-only show/hide controls to the **Monthly checklist** and **Add checklist item** cards.

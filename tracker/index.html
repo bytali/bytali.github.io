@@ -308,10 +308,15 @@
     .funds-page-heading { padding: 4px 2px 0; }
     .funds-page-heading h1 { margin: 2px 0 4px; font-size: clamp(24px, 6vw, 34px); letter-spacing: -.035em; }
     .funds-page-heading p { max-width: 760px; margin: 0; color: var(--muted); font-size: 12px; }
-    .tracker-analytics-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 4px 2px -2px; }
+    .tracker-analytics-card { padding: 0; overflow: hidden; }
+    .tracker-analytics-body { display: grid; gap: 16px; padding: 16px; }
+    .tracker-analytics-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
     .tracker-analytics-head h2 { margin: 1px 0 0; font-size: 18px; }
     .tracker-analytics-head select { width: auto; min-width: 150px; min-height: 42px; }
-    .tracker-monthly-flow, .tracker-bank-breakdown, .tracker-transaction-list { display: grid; gap: 8px; margin-top: 12px; }
+    .tracker-analytics-content { display: grid; gap: 14px; }
+    .tracker-analytics-section { min-width: 0; padding-top: 14px; border-top: 1px solid var(--line); }
+    .tracker-analytics-section .section-title { margin-bottom: 0; }
+    .tracker-monthly-flow, .tracker-bank-breakdown, .tracker-category-breakdown, .tracker-transaction-list { display: grid; gap: 8px; margin-top: 12px; }
     .tracker-flow-row { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 9px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
     .tracker-flow-row:last-child { border-bottom: 0; padding-bottom: 0; }
     .tracker-flow-month { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
@@ -332,7 +337,10 @@
     .tracker-transaction { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border-radius: 16px; background: var(--panel-2); }
     .tracker-transaction-main { min-width: 0; }
     .tracker-transaction-main strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tracker-transaction-main small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; text-transform: capitalize; }
+    .tracker-transaction-main small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .tracker-transaction-meta { display: flex; flex-wrap: wrap; gap: 4px 7px; align-items: center; }
+    .tracker-category-pill { display: inline-flex; align-items: center; min-height: 20px; padding: 2px 7px; border-radius: 999px; background: var(--panel); color: var(--muted); font-size: 9px; font-weight: 800; }
+    .tracker-transaction-note { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
     .tracker-transaction-right { display: grid; gap: 5px; justify-items: end; }
     .tracker-transaction-amount { font-weight: 900; white-space: nowrap; }
     .tracker-transaction-amount.deposit { color: var(--good); }
@@ -488,7 +496,7 @@
       .day-col { height: 168px; }
       #view-add .form-card, #view-budget > .budget-editor, #view-budget > .funds-card { width: min(100%, 920px); margin-inline: auto; }
       #view-funds > .tracker-form-card { width: min(100%, 920px); margin-inline: auto; }
-      #view-funds > .tracker-overview-grid, #view-funds > .tracker-period-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      #view-funds > .tracker-overview-grid, .tracker-period-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       #view-more { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
       #view-more > .data-card { grid-column: 1 / -1; }
       .bottom-nav { bottom: 16px; width: min(calc(100% - 48px), 720px); }
@@ -504,11 +512,12 @@
       #view-home > .bank-wrap { grid-column: 1 / 6; }
       #view-home > .trend-wrap { grid-column: 6 / -1; }
       #view-funds { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
-      #view-funds > .funds-page-heading, #view-funds > .tracker-overview-grid, #view-funds > .tracker-form-card, #view-funds > .tracker-analytics-head, #view-funds > .tracker-period-grid { grid-column: 1 / -1; width: 100%; }
-      #view-funds > .tracker-flow-card { grid-column: 1 / 8; }
-      #view-funds > .tracker-bank-card { grid-column: 8 / -1; }
-      #view-funds > .tracker-insights-card { grid-column: 1 / 5; }
-      #view-funds > .tracker-list-card { grid-column: 5 / -1; }
+      #view-funds > .funds-page-heading, #view-funds > .tracker-overview-grid, #view-funds > .tracker-form-card, #view-funds > .tracker-analytics-card, #view-funds > .tracker-list-card { grid-column: 1 / -1; width: 100%; }
+      .tracker-analytics-content { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+      .tracker-analytics-content > .tracker-flow-section { grid-column: 1 / 8; }
+      .tracker-analytics-content > .tracker-bank-section { grid-column: 8 / -1; }
+      .tracker-analytics-content > .tracker-category-section { grid-column: 1 / 7; }
+      .tracker-analytics-content > .tracker-insights-section { grid-column: 7 / -1; }
       .daily-chart { height: 230px; }
       .day-col { height: 205px; }
     }
@@ -587,7 +596,7 @@
             <div class="field"><label for="category">Category</label><select id="category" required></select></div>
           </div>
           <div class="bank-fields" id="bankFields" hidden>
-            <div class="field"><label for="bank">Bank</label><select id="bank"><option value="">Choose bank</option><option>BDO</option><option>BPI</option><option>Metrobank</option><option>UnionBank</option><option>Security Bank</option><option>RCBC</option><option>PNB</option><option>LandBank</option><option>EastWest</option><option>China Bank</option><option>Maya Bank</option><option>GoTyme Bank</option><option>CIMB Bank</option><option>SeaBank</option><option>Other bank</option></select></div>
+            <div class="field"><label for="bank">Bank</label><select id="bank"><option value="">Choose bank</option><option>BDO</option><option>BPI</option><option>Metrobank</option><option>UnionBank</option><option>Security Bank</option><option>RCBC</option><option>PNB</option><option>LandBank</option><option>EastWest</option><option>China Bank</option><option>Maya Bank</option><option>GoTyme Bank</option><option>CIMB Bank</option><option>SeaBank</option><option>Sterling Bank of Asia</option><option>Other bank</option></select></div>
             <div class="field" id="bankOtherWrap" hidden><label for="bankOther">Specify bank</label><input id="bankOther" maxlength="60" placeholder="Bank name" /></div>
           </div>
           <div class="two" id="otherFields" hidden>
@@ -710,7 +719,7 @@
               <div class="field"><label for="checklistDueDay">Due day</label><input id="checklistDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
               <div class="field"><label for="checklistNote">Note</label><input id="checklistNote" maxlength="180" placeholder="Optional" /></div>
             </div>
-            <div class="field-help">The checklist only tracks whether a monthly target is already taken care of. It never changes funds, allocations, or spending totals.</div>
+            <div class="field-help">Checklist items stay separate from monthly budgets and expenses. Checked child items with bank details sync to the standalone Funds tracker.</div>
             <div class="action-row"><button id="saveChecklistBtn" class="btn primary svg-btn mobile-icon-btn" type="submit" aria-label="Add item" title="Add item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-text">Add item</span></button><button id="cancelChecklistEditBtn" class="btn svg-btn mobile-icon-btn" type="button" aria-label="Cancel checklist edit" title="Cancel" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg><span class="btn-text">Cancel</span></button></div>
           </div>
         </details>
@@ -749,38 +758,59 @@
                 <div class="field"><label for="trackerBank">Bank</label><input id="trackerBank" list="trackerBankOptions" maxlength="60" placeholder="e.g. BPI" required /></div>
                 <div class="field"><label for="trackerType">Type</label><select id="trackerType" required><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select></div>
               </div>
-              <datalist id="trackerBankOptions"><option value="BDO"></option><option value="BPI"></option><option value="Metrobank"></option><option value="UnionBank"></option><option value="Security Bank"></option><option value="RCBC"></option><option value="PNB"></option><option value="LandBank"></option><option value="EastWest"></option><option value="China Bank"></option><option value="Maya Bank"></option><option value="GoTyme Bank"></option><option value="CIMB Bank"></option><option value="SeaBank"></option></datalist>
+              <div class="two">
+                <div class="field"><label for="trackerCategory">Category</label><select id="trackerCategory" required><option value="Investment">Investment</option><option value="Travel">Travel</option><option value="Health">Health</option><option value="Emergency Fund">Emergency Fund</option><option value="Car Maintenance">Car Maintenance</option><option value="Miscellaneous" selected>Miscellaneous</option></select></div>
+                <div class="field"><label for="trackerNote">Note</label><input id="trackerNote" maxlength="240" placeholder="Optional" /></div>
+              </div>
+              <datalist id="trackerBankOptions"><option value="BDO"></option><option value="BPI"></option><option value="Metrobank"></option><option value="UnionBank"></option><option value="Security Bank"></option><option value="RCBC"></option><option value="PNB"></option><option value="LandBank"></option><option value="EastWest"></option><option value="China Bank"></option><option value="Maya Bank"></option><option value="GoTyme Bank"></option><option value="CIMB Bank"></option><option value="SeaBank"></option><option value="Sterling Bank of Asia"></option></datalist>
               <div class="action-row"><button id="saveTrackerBtn" class="btn primary svg-btn mobile-icon-btn" type="submit" aria-label="Add transaction" title="Add transaction"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-text">Add transaction</span></button><button id="cancelTrackerEditBtn" class="btn svg-btn mobile-icon-btn" type="button" aria-label="Cancel transaction edit" title="Cancel" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg><span class="btn-text">Cancel</span></button></div>
             </form>
           </div>
         </details>
       </section>
 
-      <div class="tracker-analytics-head">
-        <div><div class="eyebrow">Analytics</div><h2>Cash flow</h2></div>
-        <select id="trackerRange" aria-label="Funds analytics date range"><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="ytd">Year to date</option><option value="12m" selected>Last 12 months</option><option value="all">All time</option></select>
-      </div>
+      <section class="card tracker-analytics-card icon-collapse-card">
+        <details id="trackerAnalyticsDetails" open>
+          <summary aria-label="Show or hide funds analytics">
+            <span><strong>Analytics</strong><small>Cash flow, banks, categories & signals</small></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </summary>
+          <div class="tracker-analytics-body">
+            <div class="tracker-analytics-head">
+              <div><div class="eyebrow">Selected period</div><h2>Cash flow</h2></div>
+              <select id="trackerRange" aria-label="Funds analytics date range"><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option><option value="ytd">Year to date</option><option value="12m" selected>Last 12 months</option><option value="all">All time</option></select>
+            </div>
 
-      <div class="summary-grid tracker-period-grid">
-        <section class="card summary-card" id="trackerNetFlowCard"><div class="eyebrow">Net flow</div><strong id="trackerNetFlowKpi">—</strong><small id="trackerRangeLabel">Selected period</small></section>
-        <section class="card summary-card"><div class="eyebrow">Deposits</div><strong id="trackerPeriodDepositsKpi">—</strong><small>Selected period</small></section>
-        <section class="card summary-card"><div class="eyebrow">Withdrawals</div><strong id="trackerPeriodWithdrawalsKpi">—</strong><small>Selected period</small></section>
-        <section class="card summary-card"><div class="eyebrow">Net / deposits</div><strong id="trackerRetentionKpi">—</strong><small id="trackerAverageSub">Cash retained from deposits</small></section>
-      </div>
+            <div class="summary-grid tracker-period-grid">
+              <section class="card summary-card" id="trackerNetFlowCard"><div class="eyebrow">Net flow</div><strong id="trackerNetFlowKpi">—</strong><small id="trackerRangeLabel">Selected period</small></section>
+              <section class="card summary-card"><div class="eyebrow">Deposits</div><strong id="trackerPeriodDepositsKpi">—</strong><small>Selected period</small></section>
+              <section class="card summary-card"><div class="eyebrow">Withdrawals</div><strong id="trackerPeriodWithdrawalsKpi">—</strong><small>Selected period</small></section>
+              <section class="card summary-card"><div class="eyebrow">Net / deposits</div><strong id="trackerRetentionKpi">—</strong><small id="trackerAverageSub">Cash retained from deposits</small></section>
+            </div>
 
-      <section class="card tracker-flow-card">
-        <div class="section-title"><h2>Monthly flow</h2><span>Deposits · withdrawals · net</span></div>
-        <div id="trackerMonthlyFlow" class="tracker-monthly-flow"></div>
-      </section>
+            <div class="tracker-analytics-content">
+              <section class="tracker-analytics-section tracker-flow-section">
+                <div class="section-title"><h2>Monthly flow</h2><span>Deposits · withdrawals · net</span></div>
+                <div id="trackerMonthlyFlow" class="tracker-monthly-flow"></div>
+              </section>
 
-      <section class="card tracker-bank-card">
-        <div class="section-title"><h2>Tracked funds by bank</h2><span>All time</span></div>
-        <div id="trackerBankBreakdown" class="tracker-bank-breakdown"></div>
-      </section>
+              <section class="tracker-analytics-section tracker-bank-section">
+                <div class="section-title"><h2>Tracked funds by bank</h2><span>All time</span></div>
+                <div id="trackerBankBreakdown" class="tracker-bank-breakdown"></div>
+              </section>
 
-      <section class="card tracker-insights-card">
-        <div class="section-title"><h2>Flow signals</h2><span>Selected period</span></div>
-        <div id="trackerInsights" class="insights"></div>
+              <section class="tracker-analytics-section tracker-category-section">
+                <div class="section-title"><h2>Activity by category</h2><span>Selected period</span></div>
+                <div id="trackerCategoryBreakdown" class="tracker-category-breakdown"></div>
+              </section>
+
+              <section class="tracker-analytics-section tracker-insights-section">
+                <div class="section-title"><h2>Flow signals</h2><span>Selected period</span></div>
+                <div id="trackerInsights" class="insights"></div>
+              </section>
+            </div>
+          </div>
+        </details>
       </section>
 
       <section class="card tracker-list-card">
@@ -837,8 +867,13 @@
         <div class="form-grid">
           <div class="field"><label for="checklistChildLabel">Payment / child item</label><input id="checklistChildLabel" maxlength="90" placeholder="e.g. Mortgage payment 1" required /></div>
           <div class="field"><label for="checklistChildDueDay">Due day</label><input id="checklistChildDueDay" type="number" min="1" max="31" step="1" inputmode="numeric" placeholder="Optional" /></div>
+          <div class="two">
+            <div class="field"><label for="checklistChildBank">Bank</label><input id="checklistChildBank" list="trackerBankOptions" maxlength="60" placeholder="Select or type a bank" /></div>
+            <div class="field"><label for="checklistChildType">Type</label><select id="checklistChildType"><option value="deposit" selected>Deposit</option><option value="withdraw">Withdraw</option></select></div>
+          </div>
+          <div class="field"><label for="checklistChildDateChecked">Date checked</label><input id="checklistChildDateChecked" type="date" /></div>
           <div class="field"><label for="checklistChildNote">Note</label><input id="checklistChildNote" maxlength="180" placeholder="Optional" /></div>
-          <div class="field-help">Each child automatically gets an equal share of the parent target amount. Adding or removing children rebalances the split.</div>
+          <div class="field-help">Each child automatically gets an equal share of the parent target amount. When checked, its amount, date checked, bank, type, and parent name sync to the Funds tracker. Date checked defaults to today when you check it.</div>
         </div>
       </div>
       <div class="dialog-actions"><button id="cancelChecklistChild" class="btn" type="button">Cancel</button><button class="btn primary" type="submit">Save</button></div>
@@ -858,6 +893,7 @@
 
     const STORAGE_KEY = 'expense-tracker.v1';
     const SCHEMA_VERSION = 1;
+    const FUND_TRACKER_CATEGORIES = ['Investment', 'Travel', 'Health', 'Emergency Fund', 'Car Maintenance', 'Miscellaneous'];
     const APP_ID = 'github-pages-expense-tracker';
     const LEGACY_GENERAL = '__general__';
     const DESCRIPTION_MAX = 500;
@@ -866,7 +902,7 @@
 
     const STANDARD_PAYMENTS = ['Cash', 'GCash / E-wallet', 'Debit card', 'Credit card', 'Bank transfer'];
     const BANK_PAYMENTS = ['Debit card', 'Credit card', 'Bank transfer'];
-    const STANDARD_BANKS = ['BDO', 'BPI', 'Metrobank', 'UnionBank', 'Security Bank', 'RCBC', 'PNB', 'LandBank', 'EastWest', 'China Bank', 'Maya Bank', 'GoTyme Bank', 'CIMB Bank', 'SeaBank'];
+    const STANDARD_BANKS = ['BDO', 'BPI', 'Metrobank', 'UnionBank', 'Security Bank', 'RCBC', 'PNB', 'LandBank', 'EastWest', 'China Bank', 'Maya Bank', 'GoTyme Bank', 'CIMB Bank', 'SeaBank', 'Sterling Bank of Asia'];
     const STANDARD_CATEGORIES = ['Food', 'Groceries', 'Transport', 'Bills', 'Shopping', 'Health', 'Entertainment', 'Leisure', 'Misc', 'Home', 'Investment', 'Mortgage', 'Travel'];
     const STANDARD_FUND_SOURCES = ['Salary', 'Payout / Bonus', 'Side income', 'Reimbursement', 'Miscellaneous'];
     const ALLOWED_CURRENCIES = ['PHP', 'USD', 'EUR', 'GBP', 'JPY', 'SGD', 'AUD', 'CAD'];
@@ -878,8 +914,8 @@
       expenseForm: $('expenseForm'), editId: $('editId'), amount: $('amount'), payment: $('payment'), paymentOther: $('paymentOther'), paymentOtherWrap: $('paymentOtherWrap'), bankFields: $('bankFields'), bank: $('bank'), bankOther: $('bankOther'), bankOtherWrap: $('bankOtherWrap'), category: $('category'), categoryOther: $('categoryOther'), categoryOtherWrap: $('categoryOtherWrap'), otherFields: $('otherFields'), date: $('date'), note: $('note'), saveExpenseBtn: $('saveExpenseBtn'), cancelEditBtn: $('cancelEditBtn'), currencyMark: $('currencyMark'),
       expenseFilter: $('expenseFilter'), expenseList: $('expenseList'), expenseEmpty: $('expenseEmpty'),
       budgetPlannedKpi: $('budgetPlannedKpi'), budgetPlannedPercentSub: $('budgetPlannedPercentSub'), budgetProjectedFundsKpi: $('budgetProjectedFundsKpi'), budgetSpentKpi: $('budgetSpentKpi'), budgetRemainingCard: $('budgetRemainingCard'), budgetRemainingKpi: $('budgetRemainingKpi'), budgetUnbudgetedKpi: $('budgetUnbudgetedKpi'), budgetAllocationSub: $('budgetAllocationSub'), budgetMonthLabel: $('budgetMonthLabel'), allocationGuide: $('allocationGuide'), projectedFundsForm: $('projectedFundsForm'), projectedFundsAmount: $('projectedFundsAmount'), clearProjectedFundsBtn: $('clearProjectedFundsBtn'), fundForm: $('fundForm'), fundEditId: $('fundEditId'), fundSource: $('fundSource'), fundSourceOtherWrap: $('fundSourceOtherWrap'), fundSourceOther: $('fundSourceOther'), fundAmount: $('fundAmount'), fundDate: $('fundDate'), fundNote: $('fundNote'), saveFundBtn: $('saveFundBtn'), cancelFundEditBtn: $('cancelFundEditBtn'), fundCountLabel: $('fundCountLabel'), fundList: $('fundList'), copyPreviousBudget: $('copyPreviousBudget'), clearMonthBudget: $('clearMonthBudget'), categoryBudgetForm: $('categoryBudgetForm'), budgetCategory: $('budgetCategory'), budgetCategoryCustomWrap: $('budgetCategoryCustomWrap'), budgetCategoryCustom: $('budgetCategoryCustom'), budgetDescription: $('budgetDescription'), budgetPercent: $('budgetPercent'), budgetAmount: $('budgetAmount'), budgetAllocationModeHint: $('budgetAllocationModeHint'), budgetConversionHint: $('budgetConversionHint'), budgetSuggestion: $('budgetSuggestion'), useBudgetSuggestion: $('useBudgetSuggestion'), budgetEditList: $('budgetEditList'),
-      checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistOverviewDetails: $('checklistOverviewDetails'), checklistForm: $('checklistForm'), checklistFormDetails: $('checklistFormDetails'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistChildDialog: $('checklistChildDialog'), checklistChildForm: $('checklistChildForm'), checklistChildDialogTitle: $('checklistChildDialogTitle'), checklistChildParentId: $('checklistChildParentId'), checklistChildEditId: $('checklistChildEditId'), checklistChildLabel: $('checklistChildLabel'), checklistChildDueDay: $('checklistChildDueDay'), checklistChildNote: $('checklistChildNote'), cancelChecklistChild: $('cancelChecklistChild'),
-      trackerBalanceCard: $('trackerBalanceCard'), trackerBalanceKpi: $('trackerBalanceKpi'), trackerDepositsKpi: $('trackerDepositsKpi'), trackerWithdrawalsKpi: $('trackerWithdrawalsKpi'), trackerBanksKpi: $('trackerBanksKpi'), trackerTransactionsSub: $('trackerTransactionsSub'), trackerFormDetails: $('trackerFormDetails'), trackerForm: $('trackerForm'), trackerEditId: $('trackerEditId'), trackerDate: $('trackerDate'), trackerAmount: $('trackerAmount'), trackerBank: $('trackerBank'), trackerType: $('trackerType'), saveTrackerBtn: $('saveTrackerBtn'), cancelTrackerEditBtn: $('cancelTrackerEditBtn'), trackerRange: $('trackerRange'), trackerNetFlowCard: $('trackerNetFlowCard'), trackerNetFlowKpi: $('trackerNetFlowKpi'), trackerRangeLabel: $('trackerRangeLabel'), trackerPeriodDepositsKpi: $('trackerPeriodDepositsKpi'), trackerPeriodWithdrawalsKpi: $('trackerPeriodWithdrawalsKpi'), trackerRetentionKpi: $('trackerRetentionKpi'), trackerAverageSub: $('trackerAverageSub'), trackerMonthlyFlow: $('trackerMonthlyFlow'), trackerBankBreakdown: $('trackerBankBreakdown'), trackerInsights: $('trackerInsights'), trackerCountLabel: $('trackerCountLabel'), trackerTransactionList: $('trackerTransactionList'),
+      checklistMonthLabel: $('checklistMonthLabel'), checklistProgress: $('checklistProgress'), checklistFromPlan: $('checklistFromPlan'), copyPreviousChecklist: $('copyPreviousChecklist'), clearChecklist: $('clearChecklist'), checklistOverviewDetails: $('checklistOverviewDetails'), checklistForm: $('checklistForm'), checklistFormDetails: $('checklistFormDetails'), checklistEditId: $('checklistEditId'), checklistLabel: $('checklistLabel'), checklistCategory: $('checklistCategory'), checklistAmount: $('checklistAmount'), checklistDueDay: $('checklistDueDay'), checklistNote: $('checklistNote'), saveChecklistBtn: $('saveChecklistBtn'), cancelChecklistEditBtn: $('cancelChecklistEditBtn'), checklistCountLabel: $('checklistCountLabel'), checklistList: $('checklistList'), checklistChildDialog: $('checklistChildDialog'), checklistChildForm: $('checklistChildForm'), checklistChildDialogTitle: $('checklistChildDialogTitle'), checklistChildParentId: $('checklistChildParentId'), checklistChildEditId: $('checklistChildEditId'), checklistChildLabel: $('checklistChildLabel'), checklistChildDueDay: $('checklistChildDueDay'), checklistChildBank: $('checklistChildBank'), checklistChildType: $('checklistChildType'), checklistChildDateChecked: $('checklistChildDateChecked'), checklistChildNote: $('checklistChildNote'), cancelChecklistChild: $('cancelChecklistChild'),
+      trackerBalanceCard: $('trackerBalanceCard'), trackerBalanceKpi: $('trackerBalanceKpi'), trackerDepositsKpi: $('trackerDepositsKpi'), trackerWithdrawalsKpi: $('trackerWithdrawalsKpi'), trackerBanksKpi: $('trackerBanksKpi'), trackerTransactionsSub: $('trackerTransactionsSub'), trackerFormDetails: $('trackerFormDetails'), trackerAnalyticsDetails: $('trackerAnalyticsDetails'), trackerForm: $('trackerForm'), trackerEditId: $('trackerEditId'), trackerDate: $('trackerDate'), trackerAmount: $('trackerAmount'), trackerBank: $('trackerBank'), trackerType: $('trackerType'), trackerCategory: $('trackerCategory'), trackerNote: $('trackerNote'), saveTrackerBtn: $('saveTrackerBtn'), cancelTrackerEditBtn: $('cancelTrackerEditBtn'), trackerRange: $('trackerRange'), trackerNetFlowCard: $('trackerNetFlowCard'), trackerNetFlowKpi: $('trackerNetFlowKpi'), trackerRangeLabel: $('trackerRangeLabel'), trackerPeriodDepositsKpi: $('trackerPeriodDepositsKpi'), trackerPeriodWithdrawalsKpi: $('trackerPeriodWithdrawalsKpi'), trackerRetentionKpi: $('trackerRetentionKpi'), trackerAverageSub: $('trackerAverageSub'), trackerMonthlyFlow: $('trackerMonthlyFlow'), trackerBankBreakdown: $('trackerBankBreakdown'), trackerCategoryBreakdown: $('trackerCategoryBreakdown'), trackerInsights: $('trackerInsights'), trackerCountLabel: $('trackerCountLabel'), trackerTransactionList: $('trackerTransactionList'),
       currency: $('currency'), privacyToggle: $('privacyToggle'), persistenceStatus: $('persistenceStatus'), requestPersistence: $('requestPersistence'), storageSize: $('storageSize'), storageMeter: $('storageMeter'),
       exportFull: $('exportFull'), importData: $('importData'), exportExpensesJson: $('exportExpensesJson'), exportBudgetsJson: $('exportBudgetsJson'), exportCsv: $('exportCsv'), clearData: $('clearData'), importFile: $('importFile'), importDialog: $('importDialog'), importSummary: $('importSummary'), importMode: $('importMode'), importModeHelp: $('importModeHelp'), cancelImport: $('cancelImport'), confirmImport: $('confirmImport'), toast: $('toast')
     };
@@ -1074,12 +1110,21 @@
           }
           seen.add(id);
           const type = item.type === 'withdraw' ? 'withdraw' : 'deposit';
+          const category = normalizeText(item.category, CHECKLIST_LABEL_MAX) || 'Miscellaneous';
+          const checklistParentId = String(item.checklistParentId || '').trim().slice(0, 120);
+          const checklistChildId = String(item.checklistChildId || '').trim().slice(0, 120);
+          const sourceType = item.source === 'checklist' && checklistParentId && checklistChildId ? 'checklist' : 'manual';
           return {
             id,
             date: String(item.date || '').slice(0, 10),
             amount: Number(item.amount),
             bank: normalizeText(item.bank, 60),
             type,
+            category,
+            note: normalizeText(item.note, 240),
+            source: sourceType,
+            checklistParentId: sourceType === 'checklist' ? checklistParentId : '',
+            checklistChildId: sourceType === 'checklist' ? checklistChildId : '',
             createdAt: String(item.createdAt || new Date().toISOString()),
             updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
           };
@@ -1100,12 +1145,19 @@
           seen.add(id);
           const dueDay = Number(item.dueDay);
           const done = Boolean(item.done);
+          const doneAt = done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '';
+          const rawDateChecked = String(item.dateChecked || '').slice(0, 10);
+          const doneAtDate = doneAt.slice(0, 10);
+          const dateChecked = isValidDate(rawDateChecked) && rawDateChecked <= todayLocal() ? rawDateChecked : (done && isValidDate(doneAtDate) && doneAtDate <= todayLocal() ? doneAtDate : '');
           return {
             id,
             label: normalizeText(item.label, CHECKLIST_LABEL_MAX),
             dueDay: Number.isInteger(dueDay) && dueDay >= 1 && dueDay <= maxDay ? dueDay : 0,
+            bank: normalizeText(item.bank, 60),
+            type: item.type === 'withdraw' ? 'withdraw' : 'deposit',
+            dateChecked,
             done,
-            doneAt: done ? String(item.doneAt || item.updatedAt || new Date().toISOString()) : '',
+            doneAt,
             note: normalizeText(item.note, CHECKLIST_NOTE_MAX),
             createdAt: String(item.createdAt || new Date().toISOString()),
             updatedAt: String(item.updatedAt || item.createdAt || new Date().toISOString())
@@ -1299,6 +1351,63 @@
       const children = checklistChildren(item);
       const target = checklistItemTarget(item);
       return children.length && target > 0 ? target / children.length : 0;
+    }
+    function checklistLinkedNote(child) {
+      const label = normalizeText(child.label, CHECKLIST_LABEL_MAX);
+      const note = normalizeText(child.note, CHECKLIST_NOTE_MAX);
+      return normalizeText(note ? `${label} — ${note}` : label, 240);
+    }
+    function syncChecklistChildTransaction(parent, child) {
+      const matches = state.fundTransactions.filter(item => item.source === 'checklist' && item.checklistParentId === parent.id && item.checklistChildId === child.id);
+      const keep = matches[0] || null;
+      if (matches.length > 1) {
+        const duplicateIds = new Set(matches.slice(1).map(item => item.id));
+        state.fundTransactions = state.fundTransactions.filter(item => !duplicateIds.has(item.id));
+      }
+      const amount = checklistChildAmount(parent);
+      const bank = normalizeText(child.bank, 60);
+      const date = String(child.dateChecked || '').slice(0, 10);
+      const valid = child.done && amount > 0 && Boolean(bank) && isValidDate(date) && date <= todayLocal();
+      if (!valid) {
+        if (keep) state.fundTransactions = state.fundTransactions.filter(item => item.id !== keep.id);
+        return;
+      }
+      const now = new Date().toISOString();
+      const target = {
+        date,
+        amount,
+        bank,
+        type: child.type === 'deposit' ? 'deposit' : 'withdraw',
+        category: normalizeText(parent.label, CHECKLIST_LABEL_MAX) || 'Checklist',
+        note: checklistLinkedNote(child),
+        source: 'checklist',
+        checklistParentId: parent.id,
+        checklistChildId: child.id
+      };
+      if (keep) {
+        const changed = Object.entries(target).some(([key, value]) => keep[key] !== value);
+        if (changed) Object.assign(keep, target, { updatedAt: now });
+      } else {
+        state.fundTransactions.push({ id: createId(), ...target, createdAt: now, updatedAt: now });
+      }
+    }
+    function syncChecklistTransactionsForParent(parent) {
+      const children = checklistChildren(parent);
+      const childIds = new Set(children.map(child => child.id));
+      state.fundTransactions = state.fundTransactions.filter(item => item.source !== 'checklist' || item.checklistParentId !== parent.id || childIds.has(item.checklistChildId));
+      children.forEach(child => syncChecklistChildTransaction(parent, child));
+    }
+    function removeChecklistLinkedTransactions(parentId) {
+      state.fundTransactions = state.fundTransactions.filter(item => !(item.source === 'checklist' && item.checklistParentId === parentId));
+    }
+    function reconcileChecklistFundTransactions() {
+      const parentMap = new Map(state.checklist.map(parent => [parent.id, parent]));
+      state.fundTransactions = state.fundTransactions.filter(item => {
+        if (item.source !== 'checklist') return true;
+        const parent = parentMap.get(item.checklistParentId);
+        return Boolean(parent && checklistChildren(parent).some(child => child.id === item.checklistChildId));
+      });
+      state.checklist.forEach(syncChecklistTransactionsForParent);
     }
     function checklistItemDoneAmount(item) {
       const children = checklistChildren(item);
@@ -1792,6 +1901,10 @@
       const childAmount = checklistChildAmount(parent);
       if (childAmount > 0) meta.push(escapeHtml(money(childAmount)));
       if (child.dueDay) meta.push(escapeHtml(`due ${child.dueDay} ${monthLabel(month, 'short')}`));
+      if (child.bank) meta.push(escapeHtml(child.bank));
+      meta.push(escapeHtml(child.type === 'deposit' ? 'Deposit' : 'Withdraw'));
+      if (child.done && child.dateChecked) meta.push(escapeHtml(`checked ${child.dateChecked}`));
+      if (child.done && !child.bank) meta.push('<span class="warn">Bank needed to sync</span>');
       if (child.done) meta.push('<span class="good">Paid / done</span>');
       else if (overdue) meta.push('<span class="bad">Overdue</span>');
       const note = child.note ? `<div class="checklist-meta">${escapeHtml(child.note)}</div>` : '';
@@ -1869,6 +1982,21 @@
         .sort((a, b) => b.net - a.net || b.deposits + b.withdrawals - (a.deposits + a.withdrawals))
         .map(row => `<div class="tracker-bank-row"><div class="tracker-bank-main"><strong>${escapeHtml(row.bank)}</strong><small>${row.count} transaction${row.count === 1 ? '' : 's'} · ${escapeHtml(shortMoney(row.deposits))} in · ${escapeHtml(shortMoney(row.withdrawals))} out</small></div><div class="tracker-bank-amount ${row.net < 0 ? 'negative' : ''}">${escapeHtml(money(row.net))}</div></div>`).join('');
     }
+    function trackerCategoryBreakdownHtml(items) {
+      if (!items.length) return '<div class="empty">No category activity in this period</div>';
+      const map = new Map();
+      items.forEach(item => {
+        const category = normalizeText(item.category, CHECKLIST_LABEL_MAX) || 'Miscellaneous';
+        const current = map.get(category) || { deposits: 0, withdrawals: 0, count: 0 };
+        current[item.type === 'deposit' ? 'deposits' : 'withdrawals'] += item.amount;
+        current.count += 1;
+        map.set(category, current);
+      });
+      return [...map.entries()].map(([category, data]) => ({ category, ...data, net: data.deposits - data.withdrawals, activity: data.deposits + data.withdrawals }))
+        .sort((a, b) => b.activity - a.activity || a.category.localeCompare(b.category))
+        .map(row => `<div class="tracker-bank-row"><div class="tracker-bank-main"><strong>${escapeHtml(row.category)}</strong><small>${row.count} transaction${row.count === 1 ? '' : 's'} · ${escapeHtml(shortMoney(row.deposits))} in · ${escapeHtml(shortMoney(row.withdrawals))} out</small></div><div class="tracker-bank-amount ${row.net < 0 ? 'negative' : ''}">${row.net > 0 ? '+' : ''}${escapeHtml(money(row.net))}</div></div>`).join('');
+    }
+
     function trackerInsightsHtml(items, range, totals) {
       if (!items.length) return '<div class="insight"><span class="insight-dot"></span><div>Add transactions to surface cash-flow signals.</div></div>';
       const insights = [];
@@ -1904,7 +2032,12 @@
       const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
       const deleteIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 15H6L5 6M10 11v5M14 11v5"/></svg>';
       const sign = item.type === 'deposit' ? '+' : '−';
-      return `<div class="tracker-transaction">${trackerDateChip(item.date)}<div class="tracker-transaction-main"><strong>${escapeHtml(item.bank)}</strong><small>${escapeHtml(item.type)}</small></div><div class="tracker-transaction-right"><div class="tracker-transaction-amount ${item.type}">${sign}${escapeHtml(money(item.amount))}</div><div class="row-actions"><button type="button" data-tracker-edit="${escapeHtml(item.id)}" aria-label="Edit transaction" title="Edit">${editIcon}</button><button type="button" data-tracker-delete="${escapeHtml(item.id)}" aria-label="Delete transaction" title="Delete">${deleteIcon}</button></div></div></div>`;
+      const category = normalizeText(item.category, CHECKLIST_LABEL_MAX) || 'Miscellaneous';
+      const note = item.note ? `<div class="tracker-transaction-note">${escapeHtml(item.note)}</div>` : '';
+      const linked = item.source === 'checklist';
+      const linkedBadge = linked ? '<span class="tracker-category-pill" title="Synced from Checklist">Checklist linked</span>' : '';
+      const actions = linked ? '' : `<div class="row-actions"><button type="button" data-tracker-edit="${escapeHtml(item.id)}" aria-label="Edit transaction" title="Edit">${editIcon}</button><button type="button" data-tracker-delete="${escapeHtml(item.id)}" aria-label="Delete transaction" title="Delete">${deleteIcon}</button></div>`;
+      return `<div class="tracker-transaction">${trackerDateChip(item.date)}<div class="tracker-transaction-main"><strong>${escapeHtml(item.bank)}</strong><div class="tracker-transaction-meta"><small>${escapeHtml(item.type === 'withdraw' ? 'Withdraw' : 'Deposit')}</small><span class="tracker-category-pill">${escapeHtml(category)}</span>${linkedBadge}</div>${note}</div><div class="tracker-transaction-right"><div class="tracker-transaction-amount ${item.type}">${sign}${escapeHtml(money(item.amount))}</div>${actions}</div></div>`;
     }
     function renderFundTracker() {
       const all = trackerTransactionsSorted();
@@ -1929,6 +2062,7 @@
       els.trackerAverageSub.textContent = periodTotals.count ? `${money(periodTotals.activity / periodTotals.count)} avg activity` : 'Cash retained from deposits';
       els.trackerMonthlyFlow.innerHTML = trackerMonthFlowHtml(periodItems, range);
       els.trackerBankBreakdown.innerHTML = trackerBankBreakdownHtml(all);
+      els.trackerCategoryBreakdown.innerHTML = trackerCategoryBreakdownHtml(periodItems);
       els.trackerInsights.innerHTML = trackerInsightsHtml(periodItems, range, periodTotals);
       els.trackerCountLabel.textContent = `${all.length} record${all.length === 1 ? '' : 's'}`;
       els.trackerTransactionList.innerHTML = all.length ? all.map(trackerTransactionHtml).join('') : '<div class="empty">No fund transactions yet</div>';
@@ -1939,6 +2073,8 @@
       els.trackerDate.value = todayLocal();
       els.trackerDate.max = todayLocal();
       els.trackerType.value = 'deposit';
+      els.trackerCategory.value = 'Miscellaneous';
+      els.trackerNote.value = '';
       els.saveTrackerBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-text">Add transaction</span>';
       els.saveTrackerBtn.setAttribute('aria-label', 'Add transaction');
       els.saveTrackerBtn.title = 'Add transaction';
@@ -1947,11 +2083,14 @@
     function editTrackerTransaction(id) {
       const item = state.fundTransactions.find(entry => entry.id === id);
       if (!item) return;
+      if (item.source === 'checklist') { showToast('Edit linked transactions from Checklist'); return; }
       els.trackerEditId.value = item.id;
       els.trackerDate.value = item.date;
       els.trackerAmount.value = String(item.amount);
       els.trackerBank.value = item.bank;
       els.trackerType.value = item.type;
+      els.trackerCategory.value = FUND_TRACKER_CATEGORIES.includes(item.category) ? item.category : 'Miscellaneous';
+      els.trackerNote.value = item.note || '';
       els.trackerFormDetails.open = true;
       els.saveTrackerBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg><span class="btn-text">Save transaction</span>';
       els.saveTrackerBtn.setAttribute('aria-label', 'Save transaction');
@@ -1963,6 +2102,7 @@
     function deleteTrackerTransaction(id) {
       const item = state.fundTransactions.find(entry => entry.id === id);
       if (!item) return;
+      if (item.source === 'checklist') { showToast('Uncheck or edit it from Checklist'); return; }
       if (!confirm(`Delete the ${item.type} of ${rawMoney(item.amount)} at ${item.bank}?`)) return;
       state.fundTransactions = state.fundTransactions.filter(entry => entry.id !== id);
       if (els.trackerEditId.value === id) resetTrackerForm();
@@ -2051,6 +2191,7 @@
       if (!confirm(`Remove “${item.label}” from the ${monthLabel(item.month)} checklist?`)) return;
       const index = state.checklist.findIndex(entry => entry.id === id);
       if (index >= 0) state.checklist.splice(index, 1);
+      removeChecklistLinkedTransactions(item.id);
       if (els.checklistEditId.value === id) resetChecklistForm();
       saveState('Checklist item removed');
       render();
@@ -2061,13 +2202,25 @@
       const now = new Date().toISOString();
       const nextDone = !item.done;
       const children = checklistChildren(item);
+      if (children.length && nextDone) {
+        if (checklistChildAmount(item) <= 0) { showToast('Add a parent target amount before checking children'); editChecklistItem(item.id); return; }
+        const missingBank = children.find(child => !normalizeText(child.bank, 60));
+        if (missingBank) { showToast('Add a bank before checking this child'); openChecklistChildDialog(item.id, missingBank.id); return; }
+      }
       if (children.length) {
-        children.forEach(child => { child.done = nextDone; child.doneAt = nextDone ? now : ''; child.updatedAt = now; });
+        children.forEach(child => {
+          child.done = nextDone;
+          child.doneAt = nextDone ? now : '';
+          child.dateChecked = nextDone ? (isValidDate(child.dateChecked) && child.dateChecked <= todayLocal() ? child.dateChecked : todayLocal()) : '';
+          child.type = child.type === 'withdraw' ? 'withdraw' : 'deposit';
+          child.updatedAt = now;
+        });
       }
       item.done = nextDone;
       item.doneAt = nextDone ? now : '';
       item.updatedAt = now;
-      saveState(nextDone ? (children.length ? 'All child items marked done' : 'Marked as taken care of') : (children.length ? 'All child items reopened' : 'Marked as open'));
+      if (children.length) syncChecklistTransactionsForParent(item);
+      saveState(nextDone ? (children.length ? 'All child items marked done and synced' : 'Marked as taken care of') : (children.length ? 'All child items reopened and unlinked' : 'Marked as open'));
       render();
     }
 
@@ -2081,6 +2234,10 @@
       els.checklistChildLabel.value = child?.label || '';
       els.checklistChildDueDay.max = String(daysInMonth(parent.month));
       els.checklistChildDueDay.value = child?.dueDay ? String(child.dueDay) : '';
+      els.checklistChildBank.value = child?.bank || '';
+      els.checklistChildType.value = child ? (child.type === 'withdraw' ? 'withdraw' : 'deposit') : 'deposit';
+      els.checklistChildDateChecked.max = todayLocal();
+      els.checklistChildDateChecked.value = child?.dateChecked || '';
       els.checklistChildNote.value = child?.note || '';
       els.checklistChildDialog.showModal();
       setTimeout(() => els.checklistChildLabel.focus(), 30);
@@ -2089,6 +2246,8 @@
       els.checklistChildForm.reset();
       els.checklistChildParentId.value = '';
       els.checklistChildEditId.value = '';
+      els.checklistChildType.value = 'deposit';
+      els.checklistChildDateChecked.value = '';
       els.checklistChildDialog.close();
     }
     function toggleChecklistChild(parentId, childId) {
@@ -2096,12 +2255,18 @@
       const child = parent ? checklistChildren(parent).find(entry => entry.id === childId) : null;
       if (!parent || !child) return;
       const now = new Date().toISOString();
-      child.done = !child.done;
-      child.doneAt = child.done ? now : '';
+      const nextDone = !child.done;
+      if (nextDone && checklistChildAmount(parent) <= 0) { showToast('Add a parent target amount before checking this child'); editChecklistItem(parent.id); return; }
+      if (nextDone && !normalizeText(child.bank, 60)) { showToast('Add a bank before checking this child'); openChecklistChildDialog(parent.id, child.id); return; }
+      child.done = nextDone;
+      child.doneAt = nextDone ? now : '';
+      child.dateChecked = nextDone ? (isValidDate(child.dateChecked) && child.dateChecked <= todayLocal() ? child.dateChecked : todayLocal()) : '';
+      child.type = child.type === 'withdraw' ? 'withdraw' : 'deposit';
       child.updatedAt = now;
       syncChecklistParent(parent);
       parent.updatedAt = now;
-      saveState(child.done ? 'Child item marked done' : 'Child item reopened');
+      syncChecklistChildTransaction(parent, child);
+      saveState(child.done ? 'Child item checked and synced' : 'Child item reopened and unlinked');
       render();
     }
     function deleteChecklistChild(parentId, childId) {
@@ -2110,9 +2275,11 @@
       if (!parent || !child) return;
       if (!confirm(`Remove “${child.label}” from ${parent.label}?`)) return;
       parent.children = checklistChildren(parent).filter(entry => entry.id !== childId);
+      state.fundTransactions = state.fundTransactions.filter(item => !(item.source === 'checklist' && item.checklistParentId === parent.id && item.checklistChildId === childId));
       if (parent.children.length) syncChecklistParent(parent);
       else { parent.done = false; parent.doneAt = ''; }
       parent.updatedAt = new Date().toISOString();
+      syncChecklistTransactionsForParent(parent);
       saveState('Child item removed');
       render();
     }
@@ -2549,11 +2716,13 @@
       const amount = Number(els.trackerAmount.value);
       const bank = normalizeText(els.trackerBank.value, 60);
       const type = els.trackerType.value === 'withdraw' ? 'withdraw' : 'deposit';
+      const category = FUND_TRACKER_CATEGORIES.includes(els.trackerCategory.value) ? els.trackerCategory.value : 'Miscellaneous';
+      const note = normalizeText(els.trackerNote.value, 240);
       if (!isValidDate(date) || date > todayLocal()) { showToast('Enter a valid transaction date'); els.trackerDate.focus(); return; }
       if (!Number.isFinite(amount) || amount <= 0) { showToast('Enter a valid amount'); els.trackerAmount.focus(); return; }
       if (!bank) { showToast('Enter a bank'); els.trackerBank.focus(); return; }
       const now = new Date().toISOString();
-      const data = { date, amount, bank, type, updatedAt: now };
+      const data = { date, amount, bank, type, category, note, updatedAt: now };
       let message = 'Funds transaction added';
       if (els.trackerEditId.value) {
         const index = state.fundTransactions.findIndex(item => item.id === els.trackerEditId.value);
@@ -2601,7 +2770,10 @@
       if (els.checklistEditId.value) {
         const index = state.checklist.findIndex(entry => entry.id === els.checklistEditId.value);
         if (index < 0) { showToast('Checklist item not found'); return; }
+        const existingChildren = checklistChildren(state.checklist[index]);
+        if (amount <= 0 && existingChildren.some(child => child.done)) { showToast('Checked children need a parent target amount'); els.checklistAmount.focus(); return; }
         state.checklist[index] = { ...state.checklist[index], ...data };
+        syncChecklistTransactionsForParent(state.checklist[index]);
         saveState('Checklist item updated');
       } else {
         const duplicate = checklistForMonth(month).some(entry => entry.label.toLowerCase() === label.toLowerCase());
@@ -2640,20 +2812,27 @@
       const dueDay = rawDueDay === '' ? 0 : Number(rawDueDay);
       const maxDay = daysInMonth(parent.month);
       if (!Number.isInteger(dueDay) || dueDay < 0 || dueDay > maxDay) { showToast(`Due day must be between 1 and ${maxDay}`); els.checklistChildDueDay.focus(); return; }
+      const bank = normalizeText(els.checklistChildBank.value, 60);
+      const type = els.checklistChildType.value === 'deposit' ? 'deposit' : 'withdraw';
+      const rawDateChecked = String(els.checklistChildDateChecked.value || '').slice(0, 10);
+      if (rawDateChecked && (!isValidDate(rawDateChecked) || rawDateChecked > todayLocal())) { showToast('Enter a valid date checked'); els.checklistChildDateChecked.focus(); return; }
       const now = new Date().toISOString();
-      const data = { label, dueDay, note: normalizeText(els.checklistChildNote.value, CHECKLIST_NOTE_MAX), updatedAt: now };
+      const data = { label, dueDay, bank, type, dateChecked: rawDateChecked, note: normalizeText(els.checklistChildNote.value, CHECKLIST_NOTE_MAX), updatedAt: now };
       parent.children ||= [];
       let message = 'Child item added';
       if (els.checklistChildEditId.value) {
         const child = parent.children.find(entry => entry.id === els.checklistChildEditId.value);
         if (!child) { showToast('Child item not found'); return; }
+        if (child.done && !bank) { showToast('Bank is required for a checked child'); els.checklistChildBank.focus(); return; }
+        if (child.done && !data.dateChecked) data.dateChecked = todayLocal();
         Object.assign(child, data);
-        message = 'Child item updated';
+        message = child.done ? 'Child item updated and synced' : 'Child item updated';
       } else {
         parent.children.push({ id: createId(), ...data, done: false, doneAt: '', createdAt: now });
       }
       syncChecklistParent(parent);
       parent.updatedAt = now;
+      syncChecklistTransactionsForParent(parent);
       saveState(message);
       closeChecklistChildDialog();
       render();
@@ -2700,9 +2879,11 @@
       if (checklistForMonth(month).length && !confirm(`Replace the ${monthLabel(month)} checklist with ${monthLabel(previous)}?`)) return;
       const now = new Date().toISOString();
       const maxDay = daysInMonth(month);
+      const replacedParentIds = new Set(checklistForMonth(month).map(item => item.id));
+      state.fundTransactions = state.fundTransactions.filter(item => !(item.source === 'checklist' && replacedParentIds.has(item.checklistParentId)));
       state.checklist = state.checklist.filter(item => item.month !== month);
       source.forEach(item => {
-        state.checklist.push({ ...item, id: createId(), month, dueDay: item.dueDay ? Math.min(item.dueDay, maxDay) : 0, done: false, doneAt: '', children: checklistChildren(item).map(child => ({ ...child, id: createId(), dueDay: child.dueDay ? Math.min(child.dueDay, maxDay) : 0, done: false, doneAt: '', createdAt: now, updatedAt: now })), createdAt: now, updatedAt: now });
+        state.checklist.push({ ...item, id: createId(), month, dueDay: item.dueDay ? Math.min(item.dueDay, maxDay) : 0, done: false, doneAt: '', children: checklistChildren(item).map(child => ({ ...child, id: createId(), dueDay: child.dueDay ? Math.min(child.dueDay, maxDay) : 0, done: false, doneAt: '', dateChecked: '', createdAt: now, updatedAt: now })), createdAt: now, updatedAt: now });
       });
       resetChecklistForm(month);
       saveState('Previous checklist copied');
@@ -2712,6 +2893,8 @@
       const month = els.selectedMonth.value;
       if (!checklistForMonth(month).length) { showToast('No checklist to clear'); return; }
       if (!confirm(`Clear the ${monthLabel(month)} checklist? Budgets, funds, and expenses stay.`)) return;
+      const clearedParentIds = new Set(checklistForMonth(month).map(item => item.id));
+      state.fundTransactions = state.fundTransactions.filter(item => !(item.source === 'checklist' && clearedParentIds.has(item.checklistParentId)));
       state.checklist = state.checklist.filter(item => item.month !== month);
       resetChecklistForm(month);
       saveState('Checklist cleared');
@@ -2950,6 +3133,7 @@
         }
         state.settings.currency = pendingImport.settings.currency || state.settings.currency;
       }
+      reconcileChecklistFundTransactions();
       pendingImport = null;
       saveState('Imported');
       els.importDialog.close();
@@ -2991,7 +3175,7 @@
     });
 
     window.addEventListener('storage', event => {
-      if (event.key === STORAGE_KEY) { state = loadState(); render(); showToast('Synced'); }
+      if (event.key === STORAGE_KEY) { state = loadState(); reconcileChecklistFundTransactions(); render(); showToast('Synced'); }
     });
 
     els.selectedMonth.value = currentMonthLocal();
@@ -3002,6 +3186,7 @@
     resetBudgetAllocationInputs();
     resetChecklistForm(currentMonthLocal());
     resetTrackerForm();
+    reconcileChecklistFundTransactions();
     saveState();
     render();
     refreshPersistenceStatus();

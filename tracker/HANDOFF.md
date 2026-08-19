@@ -10,7 +10,9 @@ The Checklist screen uses separate cards for its overview, `#checklistForm`, and
 
 Appearance supports a persistent manual light/dark toggle. Until the user explicitly chooses a mode, the app follows the device color-scheme preference. Checklist child items derive their displayed amount automatically from the parent target (`parent amount / number of children`); child forms do not accept separate amounts, and legacy child amounts are ignored.
 
-The **Monthly checklist** overview and **Add checklist item** editor are native `details` cards with icon-only chevron toggles. The app also has a standalone **Funds tracker** page in the floating navigation. Its transactions and analytics are deliberately independent of the selected month, Budget inflows, category allocations, expenses, and checklist data.
+The **Monthly checklist** overview and **Add checklist item** editor are native `details` cards with icon-only chevron toggles. The app also has a standalone **Funds tracker** page in the floating navigation. Its manually entered transactions and analytics remain independent of the selected month, Budget inflows, category allocations, and expenses. Detailed Funds analytics live inside one native `details` card so the whole analytics area can be collapsed.
+
+Checklist children now have `bank`, `type`, and `dateChecked` fields. **Deposit is the default child Type** for new items and legacy items with no stored Type, while explicitly saved Withdraw values are preserved. **Sterling Bank of Asia** is included in the bank suggestions. A checked child with a positive equal-share amount and bank is synchronized into the standalone Funds tracker as a checklist-owned transaction. Its mapping is: child equal-share amount → tracker amount, `dateChecked` → tracker date, child bank → tracker bank, child `deposit`/`withdraw` type → tracker type, and the **parent checklist label** → tracker category. These records store checklist parent/child IDs for duplicate-safe updates and are removed when the child is reopened/deleted. Parent amount/name changes and child-count changes resync existing linked records.
 
 Primary files:
 
@@ -97,7 +99,7 @@ The **Funds tracker** is its own top-level page and intentionally ignores the se
 fundTransactions
 ```
 
-Each transaction records only the user-requested fields plus internal IDs/timestamps:
+Each transaction records the ledger fields plus internal IDs/timestamps. Manual transactions use the existing fixed category choices; checklist-linked transactions may use the parent checklist label as their category and additionally store `source`, `checklistParentId`, and `checklistChildId` linkage metadata:
 
 ```json
 {
@@ -106,12 +108,14 @@ Each transaction records only the user-requested fields plus internal IDs/timest
   "amount": 50000,
   "bank": "BPI",
   "type": "deposit",
+  "category": "Emergency Fund",
+  "note": "Monthly reserve transfer",
   "createdAt": "2026-08-19T01:00:00.000Z",
   "updatedAt": "2026-08-19T01:00:00.000Z"
 }
 ```
 
-`type` is restricted to `deposit` or `withdraw`. Dates must be valid and cannot be in the future; amounts must be greater than zero; bank names are normalized/sanitized.
+`type` is restricted to `deposit` or `withdraw`. `category` is restricted to Investment, Travel, Health, Emergency Fund, Car Maintenance, or Miscellaneous. Dates must be valid and cannot be in the future; amounts must be greater than zero; bank names and notes are normalized/sanitized. Older tracker records with no category sanitize to `Miscellaneous`, and missing notes sanitize to blank.
 
 Core all-time tracker math:
 
@@ -128,11 +132,12 @@ Analytics include:
 - selectable Last 30 days, Last 90 days, Year to date, Last 12 months, and All time ranges
 - period net flow, deposits, withdrawals, and net/deposit retention ratio
 - monthly deposit/withdrawal flow with net result
+- selected-period activity by category, including transaction count, deposits, withdrawals, and category net flow
 - all-time tracked funds by bank
 - most-active bank by transaction activity
 - comparison with the immediately preceding comparable period when a bounded date range is selected
 
-The range selector affects analytics only; it never changes or filters the app's monthly Budget state. The month selector is hidden while this top-level page is active.
+The range selector affects analytics only; it never changes or filters the app's monthly Budget state. It also drives the category breakdown. The month selector is hidden while this top-level page is active.
 
 The analytics design is cash-flow oriented, informed by current personal-finance reporting patterns such as cash-flow income/spending/net views, selectable date ranges, comparable periods, and income/expense reports. No third-party service or analytics SDK is used at runtime.
 

@@ -13,7 +13,8 @@ Pocket Plan is a static, local-first monthly budget, expense, checklist, and sta
 - Budget vs actual spending and spending pace
 - Six-month funds / plan / spending context
 - A separate all-time Funds Tracker for bank deposits and withdrawals, independent of monthly Budget funds
-- Funds Tracker analytics for net flow, deposits, withdrawals, bank balances/activity, monthly flow, and comparable periods
+- Standalone fund transaction categories (Investment, Travel, Health, Emergency Fund, Car Maintenance, Miscellaneous) plus optional notes
+- Funds Tracker analytics in one collapsible area for net flow, deposits, withdrawals, bank balances/activity, category activity, monthly flow, and comparable periods
 
 ## Privacy
 
@@ -48,3 +49,8 @@ Saving a category that already has a budget for the selected month requires conf
 Built-in expense categories include separate **Leisure** and **Misc** choices. Older `Sports Leisure` records remain valid as legacy/custom data but it is no longer a built-in choice.
 
 Main file: `index.html`
+
+
+## Checklist child → Funds tracker
+
+Checklist child items can store a bank, checked date, and deposit/withdraw type. When a child is checked, Pocket Plan writes a linked Funds tracker transaction using the child’s equal share of the parent target. The parent checklist name becomes the tracker category. Reopening or deleting the child removes the linked record; edits and equal-share rebalancing resync it automatically.
