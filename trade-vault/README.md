@@ -6,11 +6,12 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 
 - Imports the exchange CSV format used by the app.
 - Supports manual add/edit/delete and bulk delete.
+- Provides separate general BUY and SELL fee percentages for newly created manual transactions (0.1% defaults); existing stored fees are left unchanged.
 - Calculates holdings and weighted-average realized P&L locally.
-- Shows current PHP inventory value using the public Coins.ph `bookTicker` WebSocket.
+- Shows current PHP inventory value using the public Coins.ph `bookTicker` WebSocket when live pricing is toggled on; live pricing starts off on each app load.
 - Stores transaction records encrypted in IndexedDB using AES-256-GCM.
 - Keeps the derived vault key in memory only while unlocked.
-- Works as a GitHub Pages site and can be installed as a PWA.
+- Works as a GitHub Pages site and can be installed as a PWA, with text-free iOS/Android install artwork.
 - Includes persistent light/dark UI themes; first launch follows the device preference.
 
 ## Views

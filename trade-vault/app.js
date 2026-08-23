@@ -10,7 +10,8 @@ const PBKDF2_ITERATIONS = 600000;
 const SCALE_DIGITS = 18;
 const SCALE = 10n ** BigInt(SCALE_DIGITS);
 const IDLE_LOCK_MS = 5 * 60 * 1000;
-const DEFAULT_FEE_RATE_PERCENT_TEXT = '0.12'; // synthetic sample fallback
+const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
+const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
 const MARKET_WS_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=';
 const MARKET_RECONNECT_BASE_MS = 4000;
 const MARKET_MAX_RECONNECT_MS = 60000;
@@ -27,7 +28,8 @@ let idleTimer = null;
 let hiddenAt = 0;
 let editingRecordKey = null;
 let selectedRecordKeys = new Set();
-let livePricingEnabled = true;
+let feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
+let livePricingEnabled = false;
 let marketSocket = null;
 let marketPrices = new Map();
 let marketStreamsKey = '';
@@ -36,7 +38,7 @@ let marketPingTimer = null;
 let marketRenderTimer = null;
 let marketReconnectAttempt = 0;
 let marketLastMessageAt = 0;
-let marketStatusText = 'Coins.ph live pricing idle';
+let marketStatusText = 'Live pricing off';
 
 const $ = id => document.getElementById(id);
 const icon = name => `<svg aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -263,6 +265,7 @@ function clearSensitiveUi() {
   if ($('warningBanner')) { $('warningBanner').hidden = true; $('warningBanner').textContent = ''; }
   if ($('searchInput')) $('searchInput').value = '';
   if ($('manualDialog')?.open) $('manualDialog').close();
+  if ($('settingsDialog')?.open) $('settingsDialog').close();
   if ($('manualForm')) $('manualForm').reset();
   editingRecordKey = null;
   selectedRecordKeys.clear();
@@ -1007,40 +1010,50 @@ async function restoreEncryptedBackup(file) {
   await idbClear('meta');
   await idbPut('meta', backup.vault);
   for (const record of backup.records) await idbPut('records', record);
+  await loadGeneralSettings();
   lockVault();
   toast('Backup restored. Unlock with the backup passphrase.');
 }
 
-function inferFeeProfile(side, base, quote) {
-  const expectedMode = side === 'SELL' ? 'QUOTE' : 'BASE';
-  const historical = transactions.filter(tx => tx.source === 'csv' && tx.side === side && parseFixed(tx.feeAmount || '0') > 0n);
-  const candidates = [];
+function normalizeFeeRatePercent(value) {
+  const normalized = normalizeDecimal(value);
+  const rate = parseFixed(normalized);
+  if (rate > parseFixed('100')) throw new Error('Fee percentage must be between 0 and 100.');
+  return normalized;
+}
 
-  for (const tx of historical) {
-    const fee = parseFixed(tx.feeAmount);
-    const qty = parseFixed(tx.executed);
-    const total = parseFixed(tx.total);
-    let mode = null;
-    let basis = 0n;
-    if (tx.feeAsset === tx.base && qty > 0n) { mode = 'BASE'; basis = qty; }
-    else if (tx.feeAsset === tx.quote && total > 0n) { mode = 'QUOTE'; basis = total; }
-    if (!mode || basis <= 0n) continue;
-    const ratePercent = divFixed(fee, basis) * 100n;
-    candidates.push({ mode, ratePercent });
+function configuredFeeProfile(side) {
+  const normalizedSide = side === 'SELL' ? 'SELL' : 'BUY';
+  return {
+    mode: normalizedSide === 'SELL' ? 'QUOTE' : 'BASE',
+    ratePercent: parseFixed(feeRatePercentBySide[normalizedSide]),
+    side: normalizedSide
+  };
+}
+
+async function loadGeneralSettings() {
+  const stored = await idbGet('meta', 'settings');
+  const next = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
+  if (stored) {
+    try { next.BUY = normalizeFeeRatePercent(stored.buyFeePercent ?? next.BUY); } catch {}
+    try { next.SELL = normalizeFeeRatePercent(stored.sellFeePercent ?? next.SELL); } catch {}
   }
+  feeRatePercentBySide = next;
+}
 
-  if (!candidates.length) {
-    return { mode: expectedMode, ratePercent: parseFixed(DEFAULT_FEE_RATE_PERCENT_TEXT), source: 'sample', varied: false, count: 0 };
-  }
+function populateSettingsForm() {
+  const form = $('settingsForm');
+  if (!form) return;
+  form.elements.buyFeePercent.value = feeRatePercentBySide.BUY;
+  form.elements.sellFeePercent.value = feeRatePercentBySide.SELL;
+}
 
-  const modeCounts = candidates.reduce((acc, item) => { acc[item.mode] = (acc[item.mode] || 0) + 1; return acc; }, {});
-  const mode = (modeCounts.BASE || 0) > (modeCounts.QUOTE || 0) ? 'BASE' : (modeCounts.QUOTE || 0) > (modeCounts.BASE || 0) ? 'QUOTE' : expectedMode;
-  const rates = candidates.filter(item => item.mode === mode).map(item => item.ratePercent).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
-  const middle = Math.floor(rates.length / 2);
-  const ratePercent = rates.length % 2 ? rates[middle] : (rates[middle - 1] + rates[middle]) / 2n;
-  const spread = rates[rates.length - 1] - rates[0];
-  const varied = spread > parseFixed('0.000001');
-  return { mode, ratePercent, source: 'csv', varied, count: rates.length };
+async function saveGeneralSettings(form) {
+  const buyFeePercent = normalizeFeeRatePercent(form.elements.buyFeePercent.value);
+  const sellFeePercent = normalizeFeeRatePercent(form.elements.sellFeePercent.value);
+  await idbPut('meta', { key: 'settings', version: 1, buyFeePercent, sellFeePercent });
+  feeRatePercentBySide = { BUY: buyFeePercent, SELL: sellFeePercent };
+  updateManualCalculations();
 }
 
 function updateManualCalculations(form = $('manualForm')) {
@@ -1053,12 +1066,11 @@ function updateManualCalculations(form = $('manualForm')) {
   const pair = String(form.elements.pair.value || '').trim().toUpperCase();
   const side = String(form.elements.side.value || 'BUY').toUpperCase();
   const [base = '', quote = ''] = pair.split('/');
-  const profile = inferFeeProfile(side, base, quote);
+  const profile = configuredFeeProfile(side);
   const rateText = formatFixed(profile.ratePercent, 6).replace(/,/g, '');
   const basisText = profile.mode === 'BASE' ? `executed ${base || 'base'} quantity` : `total ${quote || 'quote'} value`;
   const assetText = profile.mode === 'BASE' ? (base || 'base asset') : (quote || 'quote asset');
-  const sourceText = profile.source === 'csv' ? `inferred from ${profile.count} imported ${side} row${profile.count === 1 ? '' : 's'}` : 'using the synthetic sample CSV pattern';
-  if (noteEl) noteEl.textContent = `${side}: ${rateText}% of ${basisText}, charged in ${assetText} — ${sourceText}${profile.varied ? ' (historical rates vary; median used)' : ''}.`;
+  if (noteEl) noteEl.textContent = `${side}: ${rateText}% of ${basisText}, charged in ${assetText} — from General settings. The setting is used for new transactions only; Fee override still wins.`;
 
   try {
     const price = parseFixed(priceEl.value);
@@ -1214,6 +1226,7 @@ async function init() {
     return;
   }
   db = await openDb();
+  await loadGeneralSettings();
   const exists = await vaultExists();
   $('createVaultPanel').hidden = exists;
   $('unlockVaultPanel').hidden = !exists;
@@ -1221,6 +1234,24 @@ async function init() {
   registerServiceWorker();
   $('themeToggleBtn').addEventListener('click', toggleTheme);
   $('gateThemeBtn').addEventListener('click', toggleTheme);
+  $('settingsBtn').addEventListener('click', () => { populateSettingsForm(); $('settingsDialog').showModal(); });
+  $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
+  $('cancelSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
+  $('settingsForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('saveSettingsBtn');
+    try {
+      setBusy(button, true, 'Saving…');
+      await saveGeneralSettings(event.currentTarget);
+      $('settingsDialog').close();
+      toast('General settings saved. New transactions will use the updated fees.');
+    } catch (error) {
+      console.error(error);
+      toast(error.message || 'Could not save settings.');
+    } finally {
+      setBusy(button, false);
+    }
+  });
 
   ['pointerdown', 'keydown', 'touchstart'].forEach(name => document.addEventListener(name, resetIdleTimer, { passive: true }));
   document.addEventListener('visibilitychange', () => {
@@ -1447,6 +1478,7 @@ async function init() {
     if (answer !== 'CLEAR') return;
     await idbClear('records');
     await idbClear('meta');
+    feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
     stopMarketData({ clearPrices: true });
     selectedRecordKeys.clear();
     vaultKey = null;

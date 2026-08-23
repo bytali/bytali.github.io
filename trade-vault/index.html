@@ -12,7 +12,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' wss://wsapi.pro.coins.ph; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'">
   <title>Trade Vault</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -38,6 +38,7 @@
     <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5zM8 3v6h8V3M8 21v-7h8v7"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.4A8.5 8.5 0 0 1 9.6 3.5 8.5 8.5 0 1 0 20.5 14.4z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></symbol>
   </svg>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -68,6 +69,7 @@
       <button class="brand-button icon-only" type="button" data-view-target="overview" aria-label="Overview" title="Overview"><span class="brand-dot"></span></button>
       <div class="top-title"><strong id="pageTitle">Overview</strong><span id="storageStatus">Encrypted local vault</span></div>
       <div class="top-actions">
+        <button id="settingsBtn" class="icon-button icon-only" type="button" aria-label="General settings" title="General settings"><svg><use href="#i-settings"/></svg></button>
         <button id="themeToggleBtn" class="icon-button icon-only" type="button" aria-label="Switch theme" title="Switch theme"><svg><use href="#i-sun"/></svg></button>
         <button id="installBtn" class="icon-button icon-only" type="button" aria-label="Install app" title="Install app" hidden><svg><use href="#i-install"/></svg></button>
         <button id="lockBtn" class="icon-button icon-only" type="button" aria-label="Lock vault" title="Lock vault"><svg><use href="#i-lock"/></svg></button>
@@ -101,9 +103,9 @@
 
       <section id="holdingsPage" class="app-page" data-page="holdings" hidden>
         <div class="page-head">
-          <div><p class="eyebrow">PORTFOLIO</p><h2>Holdings</h2><div id="marketStatus" class="market-status">Live pricing idle</div></div>
+          <div><p class="eyebrow">PORTFOLIO</p><h2>Holdings</h2><div id="marketStatus" class="market-status">Live pricing off</div></div>
           <div class="head-actions">
-            <button id="marketToggleBtn" class="icon-button icon-only active" type="button" aria-pressed="true" aria-label="Turn live pricing off" title="Live pricing on"><svg><use href="#i-bolt"/></svg></button>
+            <button id="marketToggleBtn" class="icon-button icon-only" type="button" aria-pressed="false" aria-label="Turn live pricing on" title="Live pricing off"><svg><use href="#i-bolt"/></svg></button>
             <button id="marketRefreshBtn" class="icon-button icon-only" type="button" aria-label="Reconnect live pricing" title="Reconnect live pricing"><svg><use href="#i-refresh"/></svg></button>
           </div>
         </div>
@@ -160,6 +162,25 @@
     </nav>
   </div>
 
+  <dialog id="settingsDialog">
+    <form id="settingsForm" novalidate>
+      <div class="dialog-head">
+        <div><p class="eyebrow">PREFERENCES</p><h3>General settings</h3></div>
+        <button id="closeSettingsBtn" type="button" class="icon-button icon-only" aria-label="Close settings" title="Close settings"><svg><use href="#i-x"/></svg></button>
+      </div>
+      <p class="settings-copy">These fee percentages are defaults for newly created transactions. Existing transactions keep their stored fee values.</p>
+      <div class="form-grid">
+        <label>Buy fee (%)<input name="buyFeePercent" required type="text" inputmode="decimal" value="0.1" placeholder="0.1"></label>
+        <label>Sell fee (%)<input name="sellFeePercent" required type="text" inputmode="decimal" value="0.1" placeholder="0.1"></label>
+        <div class="calculation-note span-2">BUY fees are calculated from the executed base quantity. SELL fees are calculated from the quote total. You can still override the exact exchange-reported fee on each transaction.</div>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="cancelSettingsBtn" class="icon-button icon-only" aria-label="Cancel" title="Cancel"><svg><use href="#i-x"/></svg></button>
+        <button type="submit" id="saveSettingsBtn" class="icon-button primary icon-only" aria-label="Save settings" title="Save settings"><svg><use href="#i-save"/></svg></button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="manualDialog">
     <form id="manualForm" novalidate>
       <div class="dialog-head">
@@ -176,7 +197,7 @@
         <label>Quantity<input name="executed" required type="text" inputmode="decimal" placeholder="0.00015"></label>
         <label>Total <span class="auto-tag">AUTO</span><input name="total" readonly type="text" inputmode="decimal" placeholder="Calculated"></label>
         <label>Fee <span class="auto-tag">AUTO</span><input name="fee" readonly type="text" placeholder="Calculated"></label>
-        <div id="feeRuleNote" class="calculation-note span-2">Fee rule is learned from imported CSV history.</div>
+        <div id="feeRuleNote" class="calculation-note span-2">Fee rate comes from General settings and applies to new transactions only.</div>
         <label class="span-2">Fee override <span class="optional-tag">OPTIONAL</span><input name="feeOverride" type="text" placeholder="Use the exchange-reported fee if different"></label>
         <div id="manualStatus" class="manual-status span-2" role="status" aria-live="polite"></div>
       </div>

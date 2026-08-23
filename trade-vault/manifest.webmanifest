@@ -1,5 +1,5 @@
 {
-  "name": "Trade Vault \u2014 Local Trade Tracker",
+  "name": "Trade Vault — Local Trade Tracker",
   "short_name": "Trade Vault",
   "description": "An encrypted local-first trade transaction tracker and analytics PWA with optional public Coins.ph live pricing.",
   "start_url": "./",

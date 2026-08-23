@@ -223,6 +223,7 @@ tbody tr:hover { background: var(--row-hover); }
 .nav-button.active { color: var(--accent); background: rgba(132,243,189,.08); }
 .nav-primary { margin-left: 2px; background: var(--accent); color: var(--accent-contrast); }
 
+.settings-copy { margin: 14px 0 2px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .calculation-note { margin-top: 12px; padding: 10px 12px; border: 1px solid rgba(132,243,189,.16); border-radius: 11px; background: rgba(132,243,189,.045); color: var(--note-text); font-size: 11px; }
 .manual-status { min-height: 16px; margin-top: 7px; color: var(--note-text); font-size: 11px; }
 .manual-status.error { padding: 9px 11px; border: 1px solid rgba(255,143,143,.22); border-radius: 10px; background: rgba(255,143,143,.07); color: var(--danger-text); }

@@ -1,4 +1,4 @@
-const CACHE = 'trade-vault-shell-v9';
+const CACHE = 'trade-vault-shell-v10';
 const SHELL = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const SHELL = [
   './app.js',
   './manifest.webmanifest',
   './sample-trades.csv',
+  './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];

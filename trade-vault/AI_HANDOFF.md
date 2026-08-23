@@ -27,7 +27,7 @@ On screens <= 760 px, holdings and ledger switch from desktop tables to card lay
 - `app.js`: crypto, IndexedDB, parser, accounting, UI rendering, transaction management, client-side routing, Coins.ph WebSocket.
 - `sw.js`: small offline shell cache.
 - `manifest.webmanifest`: PWA metadata.
-- `icons/`: install icons.
+- `icons/`: install icons (180px iOS touch icon plus 192px/512px PWA icons; artwork is graphical and contains no “TV” text).
 - `sample-trades.csv`: synthetic demo data only.
 - `.nojekyll`: GitHub Pages compatibility.
 
@@ -87,13 +87,14 @@ Expected headers:
 
 The parser preserves IDs as text and validates numeric fields.
 
-Fee behavior learned from CSV history:
+Fee behavior:
 
-- BUY examples generally charge a percentage of acquired base quantity in the base asset.
-- SELL examples generally charge a percentage of quote proceeds in the quote asset.
-- Manual entry infers BUY and SELL fee profiles separately from imported CSV rows.
-- If there is insufficient history, the synthetic fallback is 0.12% with the same base/quote convention.
+- General settings contain separate BUY and SELL fee percentages. Both default to 0.1%.
+- The settings apply only to newly created manual transactions; stored transaction fee values are never retroactively rewritten.
+- BUY fees are calculated as a percentage of acquired base quantity and charged in the base asset.
+- SELL fees are calculated as a percentage of quote proceeds and charged in the quote asset.
 - The user can override the calculated fee with the exchange-reported actual fee.
+- Fee settings are non-sensitive local metadata in IndexedDB (`meta/settings`) and are not included in encrypted backup format v1.
 
 ## Accounting
 
@@ -116,7 +117,9 @@ Important behavior:
 
 `wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=`
 
-The app subscribes only to open `*/PHP` holdings using `<symbol>@bookTicker` streams.
+Live pricing starts OFF on every app load. The user can explicitly toggle it on from Holdings.
+
+When enabled, the app subscribes only to open `*/PHP` holdings using `<symbol>@bookTicker` streams.
 
 Use the best bid as the current PHP liquidation-oriented value:
 
