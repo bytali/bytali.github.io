@@ -1,87 +1,102 @@
-# Property Lot Map v2 — Handoff Guide
+# Ubay Property Lot Map v4 — Handoff
 
-This is the hardened version of the 8-lot client map.
+This package contains **two adjoining survey-derived parcel shapes** based on the two supplied TCT technical-description images.
 
-## What changed in v2
+## What changed in v4
 
-- Uses the current canonical OpenStreetMap raster tile URL: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`.
-- Removed the old `{a,b,c}` OpenStreetMap subdomain pattern.
-- Removed aggressive tile-update settings that could leave a temporarily blank-looking map during zoom/pan.
-- Added Leaflet CDN failover: jsDelivr → cdnjs → unpkg.
-- Added a visible **Retry map** control.
-- Added recovery for resize, orientation changes, browser back/forward restore, tab visibility changes, and late layout changes.
-- Keeps lot polygons independent from background tile errors once the map engine has loaded.
-- Uses `lots.js` as the maintenance boundary for property data.
+- Removed the generated 10 km sample parcel.
+- Removed the dashed distance connector and all distance-label code.
+- Added **Lot 2** from TCT `101-CARP2023000086`.
+- Kept **Lot 1** from TCT `101-CARP2023000087`.
+- Clicking either polygon now opens a speech-bubble/cloud-style detail card on the map.
+- The popup includes TCT number, area, tie point, bearings/distances, adjoining boundaries, survey/approval dates, monument description and geodetic engineer.
+- Both parcels remain usable even if OpenStreetMap background tiles are unavailable.
+
+## Survey relationship between the lots
+
+The two descriptions use the same tie point and the same Corner 1 call:
+
+- Tie point: **BLLM No. 1, Municipality of Ubay, Province of Bohol**
+- To Corner 1: **S 32°43′ E — 6,918.52 m**
+
+They also contain a matching shared edge:
+
+- Lot 1, line **1→2:** N 44°33′ W — **156.91 m**
+- Lot 2, line **4→1:** S 44°33′ E — **156.91 m**
+
+Those calls are reverse directions of the same length, so the demo geometry preserves them as the shared boundary between Lot 1 and Lot 2.
+
+## Lot 1
+
+TCT: `101-CARP2023000087`
+
+- 1→2: N 44°33′ W — 156.91 m
+- 2→3: N 54°23′ E — 145.40 m
+- 3→4: S 44°30′ E — 129.79 m
+- 4→1: S 43°38′ W — 143.57 m
+- Stated area: 20,580 sqm, more or less
+- Subdivision/Consolidation Survey: January 23–24, 2014
+- Approved: May 6, 2014
+- Geodetic Engineer: Arnel D. Cabulao
+
+## Lot 2
+
+TCT: `101-CARP2023000086`
+
+- 1→2: S 43°38′ W — 122.23 m
+- 2→3: N 44°33′ W — 179.99 m
+- 3→4: N 54°23′ E — 123.67 m
+- 4→1: S 44°33′ E — 156.91 m
+- Stated area: 20,580 sqm, more or less
+- Subdivision/Consolidation Survey: January 23–24, 2014
+- Approved: May 6, 2014
+- Geodetic Engineer: Arnel D. Cabulao
+
+The Lot 2 traverse closes to roughly 0.002 m when calculated from the supplied calls; its calculated planar area is approximately 20,579.5 sqm, which is consistent with the stated 20,580 sqm.
+
+## Important georeferencing limitation
+
+The official coordinate of **BLLM No. 1, Ubay** has not been supplied. Because of that, Corner 1 is currently placed at a demo anchor near Ubay.
+
+Therefore:
+
+- the **shape** of each parcel is survey-derived;
+- their **relative adjacency/shared edge** is survey-derived;
+- the **absolute latitude/longitude location is illustrative only**.
+
+Do not use the current basemap placement as an official legal/title boundary. Once an official BLLM No. 1 coordinate is available, the same survey calls can be georeferenced without changing the UI.
 
 ## Files
 
-- `index.html` — page shell.
-- `style.css` — layout and branding.
-- `lots.js` — edit lot coordinates/details here.
-- `bootstrap.js` — loads Leaflet from multiple CDNs and starts the app.
-- `app.js` — map/polygon logic.
-- `start-server.bat` — Windows local server.
-- `start-server.sh` — macOS/Linux local server.
+- `index.html` — page structure and map popup container.
+- `style.css` — layout, polygons and speech-bubble popup styling.
+- `lots.js` — all TCT/survey data and demo coordinates.
+- `app.js` — built-in map renderer, pan/zoom, polygon interaction and popup logic.
+- `start-server.bat` — Windows HTTP helper.
+- `start-server.sh` — macOS/Linux HTTP helper.
 
-## Run locally
+## Quick start
 
-Recommended: do not double-click `index.html` for client testing. Use HTTP.
+For a quick test, open `index.html` directly. For development/deployment, use HTTP.
 
 ### Windows
 
-Double-click `start-server.bat`, then open:
+Double-click `start-server.bat`, then open `http://localhost:8080`.
 
-`http://localhost:8080`
+### macOS/Linux
 
-### macOS / Linux
+Run:
 
 ```bash
 ./start-server.sh
 ```
 
-Then open:
+Then open `http://localhost:8080`.
 
-`http://localhost:8080`
+## OpenStreetMap background
 
-## Edit lot data
+The only network dependency is the raster background at:
 
-Only edit `lots.js` for normal property updates.
+`https://tile.openstreetmap.org/{z}/{x}/{y}.png`
 
-```js
-{
-  id: "Lot 1",
-  area: "240 sqm",
-  price: "₱3,600,000",
-  status: "Available",
-  coordinates: [
-    [14.60000, 120.98200],
-    [14.60000, 120.98240],
-    [14.60040, 120.98240],
-    [14.60040, 120.98200]
-  ]
-}
-```
-
-Coordinates are `[latitude, longitude]`, ordered around the lot boundary.
-
-## Important operational note
-
-The code is local, but the map engine and background imagery still require internet access. `bootstrap.js` can recover from one blocked CDN by trying two others. Background map tiles come from OpenStreetMap.
-
-For a public/high-traffic commercial website, use a dedicated production tile provider rather than relying on OpenStreetMap's community tile service as an SLA-backed service.
-
-## If the map still appears wrong
-
-1. Run through `http://localhost:8080`, not `file://`.
-2. Confirm the browser can access jsDelivr/cdnjs/unpkg and `tile.openstreetmap.org`.
-3. Disable an ad/privacy blocker for the test page if it blocks map/CDN domains.
-4. Press **Retry map**.
-5. If the lots are in the wrong place, the problem is the coordinates in `lots.js`, not map rendering.
-6. If the gray map area shows but lot cards do not, inspect `lots.js` for malformed JavaScript.
-
-## Future handoff boundary
-
-- Lot data → `lots.js`
-- Branding/layout → `style.css` / `index.html`
-- Dependency startup → `bootstrap.js`
-- Map behavior/provider → `app.js`
+The polygons and title-detail popup still render if those background images cannot be reached.

@@ -1,46 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Property Lot Map</title>
+  <title>Ubay Property Lot Viewer</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Property lot list">
-      <div class="sidebar-header">
+      <header class="sidebar-header">
         <p class="eyebrow">PROPERTY MAP</p>
-        <h1>Available Lots</h1>
-        <p class="intro">Select a lot from the list or directly on the map.</p>
+        <h1>Ubay Lot Viewer</h1>
+        <p class="intro">Two adjoining parcel shapes reconstructed from the supplied TCT technical descriptions. Click either lot on the map to view its survey details.</p>
+      </header>
+
+      <div class="accuracy-note" role="note">
+        <strong>Placement note:</strong> The parcel shapes and their relative shared boundary are survey-derived. Their absolute position on the basemap is illustrative until the official coordinate of BLLM No. 1, Ubay, is supplied.
       </div>
 
-      <div class="legend" aria-label="Lot status legend">
-        <span><i class="dot dot-available"></i>Available</span>
-        <span><i class="dot dot-reserved"></i>Reserved</span>
-        <span><i class="dot dot-sold"></i>Sold</span>
+      <div class="legend" aria-label="Map legend">
+        <span><i class="swatch lot1"></i>Lot 1 · TCT 0087</span>
+        <span><i class="swatch lot2"></i>Lot 2 · TCT 0086</span>
       </div>
 
       <div id="lot-list" class="lot-list"></div>
     </aside>
 
-    <main class="map-panel">
-      <div id="map" aria-label="Interactive property lot map"></div>
+    <main class="map-panel" aria-label="Interactive property map">
+      <div id="map" class="map" tabindex="0" aria-label="Map. Drag to pan and use the zoom buttons or mouse wheel to zoom.">
+        <div id="tile-layer" class="tile-layer" aria-hidden="true"></div>
+        <svg id="vector-layer" class="vector-layer" aria-label="Property boundaries"></svg>
+
+        <section id="lot-popup" class="lot-popup" aria-live="polite" aria-label="Selected lot details" hidden>
+          <button id="popup-close" class="popup-close" type="button" aria-label="Close lot details">×</button>
+          <div id="popup-content"></div>
+          <span class="popup-arrow" aria-hidden="true"></span>
+        </section>
+
+        <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
+      </div>
+
       <div id="map-status" class="map-status" role="status" aria-live="polite">Starting map…</div>
+
+      <div class="zoom-controls" aria-label="Map zoom controls">
+        <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+        <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+      </div>
+
       <div class="map-actions">
-        <button id="reset-view" class="map-action" type="button" disabled>Show all lots</button>
-        <button id="retry-map" class="map-action" type="button">Retry map</button>
+        <button id="show-all" type="button">Show both lots</button>
+        <button id="retry-tiles" type="button">Retry background</button>
       </div>
     </main>
   </div>
 
-  <noscript>
-    <div class="noscript-message">JavaScript is required to display the interactive lot map.</div>
-  </noscript>
-
   <script src="lots.js"></script>
-  <script src="bootstrap.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
