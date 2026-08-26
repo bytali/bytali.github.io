@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Property Lot Map</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Property lot list">
+      <div class="sidebar-header">
+        <p class="eyebrow">PROPERTY MAP</p>
+        <h1>Available Lots</h1>
+        <p class="intro">Select a lot from the list or directly on the map.</p>
+      </div>
+
+      <div class="legend" aria-label="Lot status legend">
+        <span><i class="dot dot-available"></i>Available</span>
+        <span><i class="dot dot-reserved"></i>Reserved</span>
+        <span><i class="dot dot-sold"></i>Sold</span>
+      </div>
+
+      <div id="lot-list" class="lot-list"></div>
+    </aside>
+
+    <main class="map-panel">
+      <div id="map" aria-label="Interactive property lot map"></div>
+      <div id="map-status" class="map-status" role="status" aria-live="polite">Starting map…</div>
+      <div class="map-actions">
+        <button id="reset-view" class="map-action" type="button" disabled>Show all lots</button>
+        <button id="retry-map" class="map-action" type="button">Retry map</button>
+      </div>
+    </main>
+  </div>
+
+  <noscript>
+    <div class="noscript-message">JavaScript is required to display the interactive lot map.</div>
+  </noscript>
+
+  <script src="lots.js"></script>
+  <script src="bootstrap.js"></script>
+</body>
+</html>
