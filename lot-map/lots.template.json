@@ -1,0 +1,43 @@
+{
+  "id": "Lot 9",
+  "shortLabel": "LOT 9",
+  "surveyLot": "Lot B-999",
+  "plan": "Bsd-00-000000 (AR)",
+  "barangay": "Ubay, Bohol",
+  "areaSqm": 25000,
+  "tiePoint": "BLLM No. 1, Ubay, Bohol",
+  "tie": {
+    "bearing": "S 35d32' E",
+    "distanceM": 6852.94
+  },
+  "boundaries": [
+    {
+      "line": "1-2",
+      "direction": "NW",
+      "adjoining": "Lot B-100"
+    }
+  ],
+  "traverse": [
+    {
+      "line": "1-2",
+      "bearing": "N 43d50' E",
+      "distanceM": 220.07
+    },
+    {
+      "line": "2-3",
+      "bearing": "S 25d02' E",
+      "distanceM": 119.73
+    },
+    {
+      "line": "3-1",
+      "bearing": "S 60d00' W",
+      "distanceM": 200.0
+    }
+  ],
+  "bearingsTrue": true,
+  "originalSurveyDate": "",
+  "surveyDate": "",
+  "approvedDate": "",
+  "engineer": "",
+  "cornerDescription": ""
+}

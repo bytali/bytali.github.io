@@ -1,61 +1,94 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>Ubay Property Lot Viewer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f2">
+  <title>Ubay Property Lots</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" aria-label="Property lot list">
-      <header class="sidebar-header">
-        <p class="eyebrow">PROPERTY MAP</p>
-        <h1>Ubay Lot Viewer</h1>
-        <p class="intro">Two adjoining parcel shapes reconstructed from the supplied TCT technical descriptions. Click either lot on the map to view its survey details.</p>
-      </header>
+  <div class="app-shell" id="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Property lots">
+      <div id="sidebar-list-view" class="sidebar-view">
+        <header class="sidebar-header">
+          <p class="eyebrow">PROPERTY VIEWER</p>
+          <h1>Ubay Lots</h1>
+          <p class="intro">Tap a parcel on the map or in the list. Its survey details will load here without changing the map zoom or position.</p>
+        </header>
 
-      <div class="accuracy-note" role="note">
-        <strong>Placement note:</strong> The parcel shapes and their relative shared boundary are survey-derived. Their absolute position on the basemap is illustrative until the official coordinate of BLLM No. 1, Ubay, is supplied.
+        <div class="reference-note">
+          <strong>BLLM reference configured</strong>
+          <span>10.0575399083, 124.4719672419 · WGS84</span>
+        </div>
+
+        <div class="lot-list" id="lot-list"></div>
       </div>
 
-      <div class="legend" aria-label="Map legend">
-        <span><i class="swatch lot1"></i>Lot 1 · TCT 0087</span>
-        <span><i class="swatch lot2"></i>Lot 2 · TCT 0086</span>
-      </div>
-
-      <div id="lot-list" class="lot-list"></div>
+      <section id="sidebar-details-view" class="sidebar-details-view" hidden aria-label="Selected lot details">
+        <div class="sidebar-details-nav">
+          <button id="sidebar-back" class="sidebar-back" type="button" aria-label="Back to lot list">
+            <span aria-hidden="true">←</span> Back to lots
+          </button>
+        </div>
+        <div id="details-content" class="details-content sidebar-details-content"></div>
+      </section>
     </aside>
 
-    <main class="map-panel" aria-label="Interactive property map">
-      <div id="map" class="map" tabindex="0" aria-label="Map. Drag to pan and use the zoom buttons or mouse wheel to zoom.">
-        <div id="tile-layer" class="tile-layer" aria-hidden="true"></div>
-        <svg id="vector-layer" class="vector-layer" aria-label="Property boundaries"></svg>
+    <main class="map-panel" id="map-panel">
+      <div class="map-toolbar" aria-label="Map toolbar">
+        <div class="provider-switch" role="group" aria-label="Map provider">
+          <button id="provider-osm" type="button" class="is-active">OpenStreetMap</button>
+          <button id="provider-google" type="button">Google Maps</button>
+        </div>
 
-        <section id="lot-popup" class="lot-popup" aria-live="polite" aria-label="Selected lot details" hidden>
-          <button id="popup-close" class="popup-close" type="button" aria-label="Close lot details">×</button>
-          <div id="popup-content"></div>
-          <span class="popup-arrow" aria-hidden="true"></span>
-        </section>
+        <label class="layer-control" id="osm-layer-control">
+          <span>Layer</span>
+          <select id="osm-layer" aria-label="OpenStreetMap layer">
+            <option value="standard">Street</option>
+            <option value="humanitarian">Humanitarian</option>
+          </select>
+        </label>
 
-        <div class="map-attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
+        <button id="show-all" type="button">All 8 lots</button>
+        <button id="fullscreen" type="button">Fullscreen</button>
       </div>
 
-      <div id="map-status" class="map-status" role="status" aria-live="polite">Starting map…</div>
+      <div id="osm-map" class="map map-osm" tabindex="0" aria-label="Interactive OpenStreetMap lot viewer">
+        <div id="tile-layer" class="tile-layer" aria-hidden="true"></div>
+        <svg id="vector-layer" class="vector-layer" aria-label="Property lot polygons"></svg>
+        <div id="map-attribution" class="map-attribution">
+          &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
+        </div>
+      </div>
 
-      <div class="zoom-controls" aria-label="Map zoom controls">
+      <div id="google-map" class="map map-google" hidden aria-label="Google Maps lot viewer"></div>
+
+      <div class="zoom-controls" aria-label="Zoom controls">
         <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
         <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
       </div>
 
-      <div class="map-actions">
-        <button id="show-all" type="button">Show both lots</button>
-        <button id="retry-tiles" type="button">Retry background</button>
-      </div>
+      <div id="map-status" class="map-status" role="status" aria-live="polite">Loading map…</div>
+
     </main>
   </div>
 
+  <dialog id="google-dialog" class="google-dialog">
+    <form method="dialog" id="google-form">
+      <h2>Google Maps setup</h2>
+      <p>Google Maps JavaScript API requires a browser API key. For a deployed site, place the key in <code>config.js</code> and restrict it to your domain.</p>
+      <label for="google-key">Google Maps API key</label>
+      <input id="google-key" type="password" autocomplete="off" placeholder="AIza…">
+      <p class="dialog-note">This device can remember the key in browser storage. OpenStreetMap remains available without a Google key.</p>
+      <div class="dialog-actions">
+        <button value="cancel" type="button" id="google-cancel">Cancel</button>
+        <button value="default" type="submit" class="primary">Save &amp; use Google</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
   <script src="lots.js"></script>
   <script src="app.js"></script>
 </body>
