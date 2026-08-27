@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f6f2">
-  <title>Ubay Property Lots</title>
+  <title>Property Lots</title>
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin>
+  <link rel="dns-prefetch" href="//tile.openstreetmap.org">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +15,7 @@
       <div id="sidebar-list-view" class="sidebar-view">
         <header class="sidebar-header">
           <p class="eyebrow">PROPERTY VIEWER</p>
-          <h1>Ubay Lots</h1>
+          <h1>Lots</h1>
           <p class="intro">Tap a parcel on the map or in the list. Its survey details will load here without changing the map zoom or position.</p>
         </header>
 
@@ -37,16 +39,11 @@
 
     <main class="map-panel" id="map-panel">
       <div class="map-toolbar" aria-label="Map toolbar">
-        <div class="provider-switch" role="group" aria-label="Map provider">
-          <button id="provider-osm" type="button" class="is-active">OpenStreetMap</button>
-          <button id="provider-google" type="button">Google Maps</button>
-        </div>
-
-        <label class="layer-control" id="osm-layer-control">
-          <span>Layer</span>
-          <select id="osm-layer" aria-label="OpenStreetMap layer">
+        <label class="layer-control">
+          <span>Map</span>
+          <select id="osm-layer" aria-label="Map background">
             <option value="standard">Street</option>
-            <option value="humanitarian">Humanitarian</option>
+            <option value="satellite">Satellite</option>
           </select>
         </label>
 
@@ -54,15 +51,13 @@
         <button id="fullscreen" type="button">Fullscreen</button>
       </div>
 
-      <div id="osm-map" class="map map-osm" tabindex="0" aria-label="Interactive OpenStreetMap lot viewer">
+      <div id="osm-map" class="map map-osm" tabindex="0" aria-label="Interactive property lot map">
         <div id="tile-layer" class="tile-layer" aria-hidden="true"></div>
         <svg id="vector-layer" class="vector-layer" aria-label="Property lot polygons"></svg>
         <div id="map-attribution" class="map-attribution">
           &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
         </div>
       </div>
-
-      <div id="google-map" class="map map-google" hidden aria-label="Google Maps lot viewer"></div>
 
       <div class="zoom-controls" aria-label="Zoom controls">
         <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
@@ -73,20 +68,6 @@
 
     </main>
   </div>
-
-  <dialog id="google-dialog" class="google-dialog">
-    <form method="dialog" id="google-form">
-      <h2>Google Maps setup</h2>
-      <p>Google Maps JavaScript API requires a browser API key. For a deployed site, place the key in <code>config.js</code> and restrict it to your domain.</p>
-      <label for="google-key">Google Maps API key</label>
-      <input id="google-key" type="password" autocomplete="off" placeholder="AIza…">
-      <p class="dialog-note">This device can remember the key in browser storage. OpenStreetMap remains available without a Google key.</p>
-      <div class="dialog-actions">
-        <button value="cancel" type="button" id="google-cancel">Cancel</button>
-        <button value="default" type="submit" class="primary">Save &amp; use Google</button>
-      </div>
-    </form>
-  </dialog>
 
   <script src="config.js"></script>
   <script src="lots.js"></script>

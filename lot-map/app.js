@@ -23,23 +23,25 @@
     ["#526b2f", "#789447"],
     ["#66538a", "#8770ad"]
   ];
-  const INACTIVE = { stroke: "#686f6a", fill: "#9aa09c" };
+  const LOT_HIGHLIGHT = { stroke: "#e0b400", fill: "#ffd84d" };
+  const LOT_SELECTED = { stroke: "#d95f02", fill: "#ff8a00" };
 
-  const OSM_LAYERS = {
+  const MAP_LAYERS = {
+    satellite: {
+      label: "Satellite",
+      maxZoom: 20,
+      url: (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
+      attribution: 'Imagery &copy; Esri, Vantor, Earthstar Geographics, GIS User Community'
+    },
     standard: {
       label: "Street",
+      maxZoom: 19,
       url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
-    },
-    humanitarian: {
-      label: "Humanitarian",
-      url: (z, x, y) => `https://tile.openstreetmap.fr/hot/${z}/${x}/${y}.png`,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Tiles: HOT'
     }
   };
 
   const osmMapEl = document.getElementById("osm-map");
-  const googleMapEl = document.getElementById("google-map");
   const mapPanel = document.getElementById("map-panel");
   const tileLayer = document.getElementById("tile-layer");
   const svg = document.getElementById("vector-layer");
@@ -50,19 +52,12 @@
   const zoomInBtn = document.getElementById("zoom-in");
   const zoomOutBtn = document.getElementById("zoom-out");
   const fullscreenBtn = document.getElementById("fullscreen");
-  const providerOsmBtn = document.getElementById("provider-osm");
-  const providerGoogleBtn = document.getElementById("provider-google");
-  const osmLayerControl = document.getElementById("osm-layer-control");
   const osmLayerSelect = document.getElementById("osm-layer");
   const sidebarEl = document.getElementById("sidebar");
   const sidebarListView = document.getElementById("sidebar-list-view");
   const sidebarDetailsView = document.getElementById("sidebar-details-view");
   const sidebarBack = document.getElementById("sidebar-back");
   const detailsContent = document.getElementById("details-content");
-  const googleDialog = document.getElementById("google-dialog");
-  const googleForm = document.getElementById("google-form");
-  const googleKeyInput = document.getElementById("google-key");
-  const googleCancel = document.getElementById("google-cancel");
 
   function esc(value) {
     return String(value ?? "")
@@ -221,10 +216,10 @@
     console.error(error);
   }
 
-  const initialLayer = OSM_LAYERS[CONFIG.defaultOsmLayer] ? CONFIG.defaultOsmLayer : "standard";
+  const configuredLayer = CONFIG.defaultMapLayer || CONFIG.defaultOsmLayer || "standard";
+  const initialLayer = MAP_LAYERS[configuredLayer] ? configuredLayer : "standard";
   const state = {
-    provider: CONFIG.defaultProvider === "google" ? "google" : "osm",
-    osmLayer: initialLayer,
+    layer: initialLayer,
     center: { lat: configuredBllm().lat, lng: configuredBllm().lng },
     zoom: 15,
     selectedId: null,
@@ -237,10 +232,6 @@
 
   const polygonEls = new Map();
   const cardEls = new Map();
-  let googleMap = null;
-  let googlePolygons = new Map();
-  let googleLoadPromise = null;
-  let suppressGoogleIdleSync = false;
 
   function setStatus(message, kind = "") {
     statusEl.textContent = message;
@@ -403,9 +394,9 @@
     LOTS.forEach(lot => {
       const polygon = svgEl("polygon", {
         class: "lot-polygon",
-        fill: INACTIVE.fill,
-        "fill-opacity": "0.34",
-        stroke: INACTIVE.stroke,
+        fill: LOT_HIGHLIGHT.fill,
+        "fill-opacity": "0.30",
+        stroke: LOT_HIGHLIGHT.stroke,
         "stroke-width": "4",
         "data-id": lot.id,
         tabindex: "0",
@@ -431,30 +422,16 @@
   function updateSelectionStyles() {
     LOTS.forEach(lot => {
       const selected = state.selectedId === lot.id;
-      const color = ACTIVE_COLORS[lot.colorIndex];
       const polygon = polygonEls.get(lot.id);
       if (polygon) {
         polygon.classList.toggle("is-selected", selected);
-        polygon.setAttribute("stroke", selected ? color[0] : INACTIVE.stroke);
-        polygon.setAttribute("fill", selected ? color[1] : INACTIVE.fill);
-        polygon.setAttribute("fill-opacity", selected ? "0.58" : "0.34");
+        polygon.setAttribute("stroke", selected ? LOT_SELECTED.stroke : LOT_HIGHLIGHT.stroke);
+        polygon.setAttribute("fill", selected ? LOT_SELECTED.fill : LOT_HIGHLIGHT.fill);
+        polygon.setAttribute("fill-opacity", selected ? "0.52" : "0.30");
       }
       cardEls.get(lot.id)?.classList.toggle("is-selected", selected);
     });
 
-    googlePolygons.forEach((polygon, id) => {
-      const lot = LOTS.find(item => item.id === id);
-      if (!lot) return;
-      const selected = state.selectedId === id;
-      const color = ACTIVE_COLORS[lot.colorIndex];
-      polygon.setOptions({
-        strokeWeight: selected ? 6 : 4,
-        fillOpacity: selected ? 0.58 : 0.34,
-        strokeColor: selected ? color[0] : INACTIVE.stroke,
-        fillColor: selected ? color[1] : INACTIVE.fill,
-        zIndex: selected ? 10 : 1
-      });
-    });
   }
 
   let sidebarListScrollTop = 0;
@@ -505,24 +482,14 @@
     scheduleRender();
   }
 
-  function fitGoogle(lots) {
-    if (!googleMap || !window.google?.maps) return;
-    const bounds = new google.maps.LatLngBounds();
-    lots.flatMap(lot => lot.coordinates).forEach(point => bounds.extend({ lat: point[0], lng: point[1] }));
-    suppressGoogleIdleSync = true;
-    googleMap.fitBounds(bounds, 80);
-    window.setTimeout(() => { suppressGoogleIdleSync = false; syncStateFromGoogle(); }, 300);
-  }
-
   function fitAll() {
     closeDetails();
     if (!LOTS.length) return;
-    if (state.provider === "google") fitGoogle(LOTS);
-    else fitBoundsOsm(boundsForLots(LOTS), 18, 85);
+    fitBoundsOsm(boundsForLots(LOTS), 18, 85);
   }
 
   function scheduleRender() {
-    if (state.renderQueued || state.provider !== "osm") return;
+    if (state.renderQueued) return;
     state.renderQueued = true;
     requestAnimationFrame(() => {
       state.renderQueued = false;
@@ -542,7 +509,7 @@
   }
 
   function currentLayer() {
-    return OSM_LAYERS[state.osmLayer] || OSM_LAYERS.standard;
+    return MAP_LAYERS[state.layer] || MAP_LAYERS.standard;
   }
 
   function clearTiles() {
@@ -555,18 +522,19 @@
   function renderTiles(topLeft, w, h) {
     const z = state.zoom;
     const n = 2 ** z;
-    const buffer = 1;
+    const buffer = 0;
     const minX = Math.floor(topLeft.x / TILE_SIZE) - buffer;
     const maxX = Math.floor((topLeft.x + w) / TILE_SIZE) + buffer;
     const minY = Math.max(0, Math.floor(topLeft.y / TILE_SIZE) - buffer);
     const maxY = Math.min(n - 1, Math.floor((topLeft.y + h) / TILE_SIZE) + buffer);
     const needed = new Set();
+    const layerKey = state.layer;
     const layer = currentLayer();
 
     for (let tx = minX; tx <= maxX; tx += 1) {
       const wrappedX = ((tx % n) + n) % n;
       for (let ty = minY; ty <= maxY; ty += 1) {
-        const key = `${state.osmLayer}:${z}/${wrappedX}/${ty}/${tx}`;
+        const key = `${layerKey}:${z}/${wrappedX}/${ty}/${tx}`;
         needed.add(key);
         let image = state.tiles.get(key);
         if (!image) {
@@ -577,13 +545,19 @@
           image.loading = "eager";
           image.draggable = false;
           image.addEventListener("load", () => {
+            if (!image.isConnected) return;
             state.tileLoadedOnce = true;
-            if (state.tileErrors === 0) setStatus(`${layer.label} map ready`, "is-ok");
+            if (image.dataset.fallback === "1") {
+              setStatus(`${layer.label} imagery is unavailable for part of this view; Street fallback is active.`, "is-error");
+            } else if (state.tileErrors === 0) {
+              setStatus(`${layer.label} map ready`, "is-ok");
+            }
           });
           image.addEventListener("error", () => {
-            if (state.osmLayer !== "standard" && image.dataset.fallback !== "1") {
+            if (!image.isConnected) return;
+            if (layerKey !== "standard" && image.dataset.fallback !== "1") {
               image.dataset.fallback = "1";
-              image.src = OSM_LAYERS.standard.url(z, wrappedX, ty);
+              image.src = MAP_LAYERS.standard.url(z, wrappedX, ty);
               return;
             }
             state.tileErrors += 1;
@@ -594,8 +568,9 @@
           tileLayer.appendChild(image);
           state.tiles.set(key, image);
         }
-        image.style.left = `${Math.round(tx * TILE_SIZE - topLeft.x)}px`;
-        image.style.top = `${Math.round(ty * TILE_SIZE - topLeft.y)}px`;
+        const tileX = Math.round(tx * TILE_SIZE - topLeft.x);
+        const tileY = Math.round(ty * TILE_SIZE - topLeft.y);
+        image.style.transform = `translate3d(${tileX}px, ${tileY}px, 0)`;
       }
     }
 
@@ -624,7 +599,8 @@
 
   function zoomByOsm(delta, anchorX = osmMapEl.clientWidth / 2, anchorY = osmMapEl.clientHeight / 2) {
     const oldZoom = state.zoom;
-    const newZoom = clamp(oldZoom + delta, MIN_ZOOM, MAX_ZOOM);
+    const layerMaxZoom = currentLayer().maxZoom || MAX_ZOOM;
+    const newZoom = clamp(oldZoom + delta, MIN_ZOOM, layerMaxZoom);
     if (newZoom === oldZoom) return;
     const oldCenter = project(state.center.lat, state.center.lng, oldZoom);
     const oldTopLeft = {
@@ -642,132 +618,13 @@
     scheduleRender();
   }
 
-  function getGoogleKey() {
-    return String(CONFIG.googleMapsApiKey || localStorage.getItem("lotMapGoogleApiKey") || "").trim();
-  }
-
-  function loadGoogle(key) {
-    if (window.google?.maps) return Promise.resolve(window.google.maps);
-    if (googleLoadPromise) return googleLoadPromise;
-    googleLoadPromise = new Promise((resolve, reject) => {
-      const callback = "__lotMapGoogleReady";
-      window[callback] = () => {
-        delete window[callback];
-        resolve(window.google.maps);
-      };
-      const script = document.createElement("script");
-      script.id = "google-maps-loader";
-      script.async = true;
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&callback=${callback}&v=quarterly`;
-      script.onerror = () => {
-        googleLoadPromise = null;
-        script.remove();
-        reject(new Error("Google Maps failed to load"));
-      };
-      document.head.appendChild(script);
-    });
-    return googleLoadPromise;
-  }
-
-  async function ensureGoogle() {
-    const key = getGoogleKey();
-    if (!key) {
-      googleKeyInput.value = "";
-      googleDialog.showModal();
-      return false;
-    }
-    try {
-      setStatus("Loading Google Maps…");
-      await loadGoogle(key);
-      if (!googleMap) createGoogleMap();
-      setStatus("Google Maps ready", "is-ok");
-      return true;
-    } catch (error) {
-      console.error(error);
-      setStatus("Google Maps could not load. Check the API key, billing, restrictions, and internet connection.", "is-error");
-      return false;
-    }
-  }
-
-  function createGoogleMap() {
-    googleMap = new google.maps.Map(googleMapEl, {
-      center: state.center,
-      zoom: state.zoom,
-      mapTypeId: CONFIG.googleMapType || "roadmap",
-      gestureHandling: "greedy",
-      streetViewControl: false,
-      fullscreenControl: false,
-      mapTypeControl: true,
-      clickableIcons: false
-    });
-
-    googlePolygons.clear();
-    LOTS.forEach(lot => {
-      const polygon = new google.maps.Polygon({
-        paths: lot.coordinates.map(point => ({ lat: point[0], lng: point[1] })),
-        strokeColor: INACTIVE.stroke,
-        strokeOpacity: 1,
-        strokeWeight: 4,
-        fillColor: INACTIVE.fill,
-        fillOpacity: 0.34,
-        map: googleMap
-      });
-      polygon.addListener("click", () => selectLot(lot));
-      googlePolygons.set(lot.id, polygon);
-    });
-
-    googleMap.addListener("idle", () => {
-      if (!suppressGoogleIdleSync) syncStateFromGoogle();
-    });
-    updateSelectionStyles();
-  }
-
-  function syncStateFromGoogle() {
-    if (!googleMap) return;
-    const center = googleMap.getCenter();
-    const zoom = googleMap.getZoom();
-    if (center) state.center = { lat: center.lat(), lng: center.lng() };
-    if (Number.isFinite(zoom)) state.zoom = clamp(Math.round(zoom), MIN_ZOOM, MAX_ZOOM);
-  }
-
-  async function switchProvider(provider) {
-    if (provider === state.provider) return;
-
-    if (provider === "google") {
-      const ok = await ensureGoogle();
-      if (!ok) return;
-      state.provider = "google";
-      osmMapEl.hidden = true;
-      googleMapEl.hidden = false;
-      providerOsmBtn.classList.remove("is-active");
-      providerGoogleBtn.classList.add("is-active");
-      osmLayerControl.hidden = true;
-      window.setTimeout(() => {
-        google.maps.event.trigger(googleMap, "resize");
-        suppressGoogleIdleSync = true;
-        googleMap.setCenter(state.center);
-        googleMap.setZoom(state.zoom);
-        window.setTimeout(() => { suppressGoogleIdleSync = false; }, 120);
-      }, 50);
-      return;
-    }
-
-    if (googleMap) syncStateFromGoogle();
-    state.provider = "osm";
-    googleMapEl.hidden = true;
-    osmMapEl.hidden = false;
-    providerGoogleBtn.classList.remove("is-active");
-    providerOsmBtn.classList.add("is-active");
-    osmLayerControl.hidden = false;
-    scheduleRender();
-  }
-
-  function setOsmLayer(layerKey) {
-    if (!OSM_LAYERS[layerKey] || state.osmLayer === layerKey) return;
-    state.osmLayer = layerKey;
-    attributionEl.innerHTML = OSM_LAYERS[layerKey].attribution;
+  function setMapLayer(layerKey) {
+    if (!MAP_LAYERS[layerKey] || state.layer === layerKey) return;
+    state.layer = layerKey;
+    state.zoom = clamp(state.zoom, MIN_ZOOM, MAP_LAYERS[layerKey].maxZoom || MAX_ZOOM);
+    attributionEl.innerHTML = MAP_LAYERS[layerKey].attribution;
     clearTiles();
-    setStatus(`Loading ${OSM_LAYERS[layerKey].label} layer…`);
+    setStatus(`Loading ${MAP_LAYERS[layerKey].label} layer...`);
     scheduleRender();
   }
 
@@ -816,20 +673,11 @@
   sidebarBack.addEventListener("click", closeDetails);
   bindDetailsAccordions();
 
-  zoomInBtn.addEventListener("click", () => {
-    if (state.provider === "google") googleMap?.setZoom((googleMap.getZoom() || state.zoom) + 1);
-    else zoomByOsm(1);
-  });
-
-  zoomOutBtn.addEventListener("click", () => {
-    if (state.provider === "google") googleMap?.setZoom((googleMap.getZoom() || state.zoom) - 1);
-    else zoomByOsm(-1);
-  });
+  zoomInBtn.addEventListener("click", () => zoomByOsm(1));
+  zoomOutBtn.addEventListener("click", () => zoomByOsm(-1));
 
   showAllBtn.addEventListener("click", fitAll);
-  providerOsmBtn.addEventListener("click", () => switchProvider("osm"));
-  providerGoogleBtn.addEventListener("click", () => switchProvider("google"));
-  osmLayerSelect.addEventListener("change", () => setOsmLayer(osmLayerSelect.value));
+  osmLayerSelect.addEventListener("change", () => setMapLayer(osmLayerSelect.value));
 
   fullscreenBtn.addEventListener("click", async () => {
     try {
@@ -840,45 +688,18 @@
     }
   });
 
-  googleCancel.addEventListener("click", () => googleDialog.close());
-  googleForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const key = googleKeyInput.value.trim();
-    if (!key) {
-      googleKeyInput.focus();
-      return;
-    }
-    localStorage.setItem("lotMapGoogleApiKey", key);
-    googleDialog.close();
-    googleLoadPromise = null;
-    await switchProvider("google");
-  });
 
-  const resizeObserver = new ResizeObserver(() => {
-    scheduleRender();
-    if (state.provider === "google" && googleMap && window.google?.maps) {
-      google.maps.event.trigger(googleMap, "resize");
-    }
-  });
+  const resizeObserver = new ResizeObserver(() => scheduleRender());
   resizeObserver.observe(mapPanel);
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) return;
-    window.setTimeout(() => {
-      if (state.provider === "osm") scheduleRender();
-      else if (googleMap && window.google?.maps) google.maps.event.trigger(googleMap, "resize");
-    }, 80);
+    if (!document.hidden) window.setTimeout(scheduleRender, 80);
   });
 
-  window.addEventListener("orientationchange", () => {
-    window.setTimeout(() => {
-      if (state.provider === "osm") scheduleRender();
-      else if (googleMap && window.google?.maps) google.maps.event.trigger(googleMap, "resize");
-    }, 120);
-  });
+  window.addEventListener("orientationchange", () => window.setTimeout(scheduleRender, 120));
 
   // Initialize.
-  osmLayerSelect.value = state.osmLayer;
+  osmLayerSelect.value = state.layer;
   attributionEl.innerHTML = currentLayer().attribution;
   createSidebar();
   createVectors();
@@ -887,17 +708,13 @@
   if (!LOTS.length) {
     setStatus("No valid lot data could be loaded. Check config.js and lots.js.", "is-error");
   } else {
-    setStatus("Loading OpenStreetMap background…");
+    setStatus(`Loading ${currentLayer().label} background...`);
     fitBoundsOsm(boundsForLots(LOTS), 18, 85);
   }
 
-  if (state.provider === "google") {
-    state.provider = "osm";
-    switchProvider("google");
-  }
 
   window.setTimeout(() => {
-    if (state.provider === "osm" && !state.tileLoadedOnce) {
+    if (!state.tileLoadedOnce) {
       setStatus("The lot viewer is ready. Background tiles may still be loading; lot boundaries remain available.", "is-error");
     }
   }, 5000);

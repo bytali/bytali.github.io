@@ -159,11 +159,11 @@ Copy `lots.template.json`, convert it into a JavaScript object inside the `lots`
 
 Remember to put commas between objects in the `lots` array.
 
-## Map providers and layers
+## Map backgrounds
 
-There is only one coordinate calculation. Google Maps and OpenStreetMap share it.
+There is only one coordinate calculation. **Street / Satellite** all use the exact same WGS84 parcel geometry.
 
-OpenStreetMap's **Street / Humanitarian** layer selector changes only the background tiles; it does not recalculate or shift the parcel.
+The map selector changes only the background tiles; it does not recalculate, offset, or shift the parcel. Street is the default background.
 
 ## Quality checks
 

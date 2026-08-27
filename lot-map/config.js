@@ -6,15 +6,6 @@ window.LOT_MAP_CONFIG = {
     datum: "WGS84"
   },
 
-  // Optional Google Maps JavaScript API browser key.
-  // Leave blank to ask for a key only when Google Maps is selected.
-  googleMapsApiKey: "",
-  googleMapType: "roadmap",
-
-  // "osm" or "google"
-  defaultProvider: "osm",
-
-  // Minimal OpenStreetMap layer selector.
-  // "standard" or "humanitarian"
-  defaultOsmLayer: "standard"
+  // Default lightweight basemap. "standard" or "satellite".
+  defaultMapLayer: "standard"
 };
