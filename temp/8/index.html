@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Wedding invitation — Amara Bennett & Julian Hart, 17 October 2026, The Willow Conservatory, Charleston.">
+<meta name="theme-color" content="#0d1f1a">
+<meta name="format-detection" content="telephone=no">
+<title>Amara &amp; Julian — 17 October 2026</title>
+<script>document.documentElement.className=document.documentElement.className.replace("no-js","js");</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- scroll progress -->
+<div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+<!-- ambient petals -->
+<canvas id="petals" class="petals" aria-hidden="true"></canvas>
+
+<!-- pointer glow (fine pointers only) -->
+<div class="glow" id="glow" aria-hidden="true"></div>
+
+<!-- ============ ENVELOPE GATE ============ -->
+<div class="gate" id="gate">
+  <div class="gate-rays" aria-hidden="true"></div>
+
+  <div class="gate-inner">
+    <p class="gate-kicker" id="gateKicker">
+      <span>Y</span><span>o</span><span>u</span><span>&nbsp;</span><span>a</span><span>r</span><span>e</span><span>&nbsp;</span><span>i</span><span>n</span><span>v</span><span>i</span><span>t</span><span>e</span><span>d</span>
+    </p>
+
+    <button class="env-stage" id="envStage" type="button" aria-label="Open the invitation" aria-expanded="false">
+      <span class="env-shadow" aria-hidden="true"></span>
+
+      <span class="env" aria-hidden="true">
+        <span class="env-back"></span>
+
+        <span class="card">
+          <span class="card-sheen"></span>
+          <span class="card-body">
+            <span class="card-eyebrow">Together with their families</span>
+            <span class="card-names"><b>Amara</b><i>&amp;</i><b>Julian</b></span>
+            <span class="card-rule"></span>
+            <span class="card-date">17 · 10 · 2026</span>
+          </span>
+        </span>
+
+        <span class="flap">
+          <span class="flap-face flap-out"></span>
+          <span class="flap-face flap-in"></span>
+        </span>
+
+        <span class="env-front"></span>
+        <span class="pocket pocket-l"></span>
+        <span class="pocket pocket-r"></span>
+        <span class="pocket pocket-b"></span>
+
+        <span class="seal">
+          <span class="seal-half seal-half-l"></span>
+          <span class="seal-half seal-half-r"></span>
+          <span class="seal-mark">A<i>&amp;</i>J</span>
+        </span>
+      </span>
+    </button>
+
+    <p class="gate-cue" id="gateCue"><span>Tap to open</span><i></i></p>
+  </div>
+</div>
+
+<!-- ============ SITE ============ -->
+<main class="site" id="site">
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="panes" aria-hidden="true">
+      <span data-depth="0.06"></span><span data-depth="0.10"></span>
+      <span data-depth="0.14"></span><span data-depth="0.09"></span>
+    </div>
+    <div class="rays" data-depth="0.04" aria-hidden="true"></div>
+    <div class="vine vine-l" data-depth="0.16" aria-hidden="true"></div>
+    <div class="vine vine-r" data-depth="-0.12" aria-hidden="true"></div>
+
+    <div class="hero-inner">
+      <p class="eyebrow anim" data-anim="fade">Together with their families</p>
+
+      <h1 class="names">
+        <span class="name" data-split>Amara</span>
+        <span class="amp anim" data-anim="pop">&amp;</span>
+        <span class="name" data-split>Julian</span>
+      </h1>
+
+      <p class="hero-meta anim" data-anim="rise">
+        <span>Saturday 17 October 2026</span>
+        <i aria-hidden="true"></i>
+        <span>The Willow Conservatory, Charleston</span>
+      </p>
+
+      <div class="hero-actions anim" data-anim="rise">
+        <a class="btn btn-solid" href="#rsvp" data-magnet>Reply to the invitation</a>
+        <button class="btn btn-ghost" id="calBtn" type="button" data-magnet>Add to calendar</button>
+      </div>
+    </div>
+
+    <a class="scroll-cue" href="#countdown" aria-label="Scroll to the countdown">
+      <span>Scroll</span><i aria-hidden="true"></i>
+    </a>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section class="band countdown" id="countdown">
+    <p class="index anim" data-anim="fade">The wait</p>
+    <h2 class="band-title anim" data-anim="rise">Counting down to the aisle</h2>
+
+    <div class="clock anim" data-anim="rise" id="clock" role="timer" aria-live="off">
+      <div class="unit"><span class="digits" id="cdDays">00</span><span class="unit-label">Days</span></div>
+      <div class="unit"><span class="digits" id="cdHours">00</span><span class="unit-label">Hours</span></div>
+      <div class="unit"><span class="digits" id="cdMins">00</span><span class="unit-label">Minutes</span></div>
+      <div class="unit"><span class="digits" id="cdSecs">00</span><span class="unit-label">Seconds</span></div>
+    </div>
+
+    <p class="clock-note anim" data-anim="fade" id="clockNote">Ceremony begins 4:30 PM, Eastern Time.</p>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section class="band schedule">
+   <div class="schedule-grid">
+    <div class="schedule-head">
+      <p class="index anim" data-anim="fade">The day</p>
+      <h2 class="band-title anim" data-anim="rise">Afternoon light,<br>then candles</h2>
+      <p class="lead anim" data-anim="rise">Everything happens in one place. Come when the doors open and stay as late as you like.</p>
+    </div>
+
+    <ol class="timeline" id="timeline">
+      <li class="anim" data-anim="rise"><span class="t-time">4:00</span><div><h3>Arrival</h3><p>Doors open in the glasshouse. Find a seat, find a drink.</p></div></li>
+      <li class="anim" data-anim="rise"><span class="t-time">4:30</span><div><h3>Ceremony</h3><p>Under the west glass, while the light is still gold.</p></div></li>
+      <li class="anim" data-anim="rise"><span class="t-time">5:15</span><div><h3>Drinks in the courtyard</h3><p>Photographs, greenery, and something cold.</p></div></li>
+      <li class="anim" data-anim="rise"><span class="t-time">6:30</span><div><h3>Dinner</h3><p>Long tables, low light, a few short speeches.</p></div></li>
+      <li class="anim" data-anim="rise"><span class="t-time">9:00</span><div><h3>Dancing</h3><p>The courtyard reopens. Bring shoes you can move in.</p></div></li>
+      <li class="anim" data-anim="rise"><span class="t-time">11:30</span><div><h3>Send-off</h3><p>Sparklers along the garden path.</p></div></li>
+    </ol>
+   </div>
+  </section>
+
+  <!-- VENUE -->
+  <section class="band venue">
+    <div class="venue-grid">
+      <div class="venue-copy">
+        <p class="index anim" data-anim="fade">The place</p>
+        <h2 class="band-title anim" data-anim="rise">The Willow<br>Conservatory</h2>
+        <p class="lead anim" data-anim="rise">A glasshouse garden of climbing greenery and soft, filtered light, with an intimate courtyard that opens for the evening.</p>
+        <p class="addr anim" data-anim="rise">114 Ashley Row, Charleston, South Carolina</p>
+
+        <div class="chips anim" data-anim="rise">
+          <div class="chip"><span>Dress code</span><strong>Garden formal</strong></div>
+          <div class="chip"><span>Reception</span><strong>On site</strong></div>
+          <div class="chip"><span>Parking</span><strong>Valet from 3:30</strong></div>
+        </div>
+      </div>
+
+      <figure class="glasshouse anim" data-anim="rise" aria-hidden="true">
+        <svg class="gh" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="glassG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2f6450" stop-opacity=".38"/>
+              <stop offset="55%" stop-color="#12261f" stop-opacity=".55"/>
+              <stop offset="100%" stop-color="#0a1714" stop-opacity=".8"/>
+            </linearGradient>
+            <linearGradient id="sunG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f4dda8" stop-opacity=".22"/>
+              <stop offset="60%" stop-color="#d9b166" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="ghClip">
+              <path d="M20 480 V190 A180 180 0 0 1 380 190 V480 Z"/>
+            </clipPath>
+          </defs>
+
+          <!-- glass body -->
+          <path class="gh-body" d="M20 480 V190 A180 180 0 0 1 380 190 V480 Z" fill="url(#glassG)"/>
+
+          <g clip-path="url(#ghClip)">
+            <!-- glazing bars -->
+            <g class="gh-bars">
+              <path d="M110 480 V190 M200 480 V190 M290 480 V190"/>
+              <path d="M20 300 H380 M20 390 H380 M20 190 H380"/>
+              <path d="M200 190 L73 63 M200 190 L200 10 M200 190 L327 63"/>
+              <path d="M110 190 A90 90 0 0 1 290 190"/>
+            </g>
+            <!-- daylight through the glass -->
+            <path class="gh-sun" d="M20 480 V190 A180 180 0 0 1 380 190 V480 Z" fill="url(#sunG)"/>
+
+            <!-- climbing vines -->
+            <g class="gh-vine gh-vine-a">
+              <path class="stem" d="M34 486 C 60 400 30 340 62 268 C 86 214 60 168 92 118"/>
+              <g class="leaf"><ellipse cx="52" cy="440" rx="21" ry="9" transform="rotate(-28 52 440)"/></g>
+              <g class="leaf"><ellipse cx="40" cy="386" rx="18" ry="8" transform="rotate(22 40 386)"/></g>
+              <g class="leaf"><ellipse cx="58" cy="330" rx="22" ry="9" transform="rotate(-34 58 330)"/></g>
+              <g class="leaf"><ellipse cx="48" cy="278" rx="17" ry="8" transform="rotate(16 48 278)"/></g>
+              <g class="leaf"><ellipse cx="76" cy="228" rx="20" ry="9" transform="rotate(-30 76 228)"/></g>
+              <g class="leaf"><ellipse cx="66" cy="176" rx="16" ry="7" transform="rotate(20 66 176)"/></g>
+              <g class="leaf"><ellipse cx="92" cy="132" rx="18" ry="8" transform="rotate(-26 92 132)"/></g>
+            </g>
+
+            <g class="gh-vine gh-vine-b">
+              <path class="stem" d="M368 486 C 344 412 372 352 340 288 C 316 240 342 196 312 150"/>
+              <g class="leaf"><ellipse cx="350" cy="452" rx="20" ry="9" transform="rotate(28 350 452)"/></g>
+              <g class="leaf"><ellipse cx="362" cy="400" rx="17" ry="8" transform="rotate(-20 362 400)"/></g>
+              <g class="leaf"><ellipse cx="344" cy="346" rx="21" ry="9" transform="rotate(33 344 346)"/></g>
+              <g class="leaf"><ellipse cx="354" cy="296" rx="16" ry="7" transform="rotate(-18 354 296)"/></g>
+              <g class="leaf"><ellipse cx="326" cy="244" rx="19" ry="8" transform="rotate(30 326 244)"/></g>
+              <g class="leaf"><ellipse cx="336" cy="196" rx="15" ry="7" transform="rotate(-22 336 196)"/></g>
+            </g>
+
+            <!-- planted bed along the floor -->
+            <g class="gh-bed">
+              <ellipse cx="150" cy="474" rx="46" ry="18"/>
+              <ellipse cx="196" cy="468" rx="34" ry="22"/>
+              <ellipse cx="244" cy="476" rx="42" ry="16"/>
+              <ellipse cx="118" cy="478" rx="30" ry="13"/>
+              <ellipse cx="276" cy="472" rx="28" ry="15"/>
+            </g>
+            <g class="gh-vine gh-vine-c">
+              <path class="stem" d="M172 476 C 178 448 166 432 182 412"/>
+              <path class="stem" d="M226 476 C 220 444 234 430 216 410"/>
+              <g class="leaf"><ellipse cx="166" cy="446" rx="15" ry="7" transform="rotate(-28 166 446)"/></g>
+              <g class="leaf"><ellipse cx="186" cy="418" rx="13" ry="6" transform="rotate(20 186 418)"/></g>
+              <g class="leaf"><ellipse cx="234" cy="442" rx="15" ry="7" transform="rotate(28 234 442)"/></g>
+              <g class="leaf"><ellipse cx="214" cy="416" rx="13" ry="6" transform="rotate(-20 214 416)"/></g>
+            </g>
+
+            <!-- light sweeping across the glass -->
+            <rect class="gh-glint" x="-160" y="-40" width="90" height="580"/>
+          </g>
+
+          <!-- outer frame -->
+          <path class="gh-edge" d="M20 480 V190 A180 180 0 0 1 380 190 V480 Z"/>
+          <line class="gh-floor" x1="8" y1="480" x2="392" y2="480"/>
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- RSVP -->
+  <section class="band rsvp" id="rsvp">
+    <p class="index anim" data-anim="fade">The reply</p>
+    <h2 class="band-title anim" data-anim="rise">We hope you'll<br>be there</h2>
+    <p class="lead center anim" data-anim="rise">Kindly reply by 20 September 2026.</p>
+
+    <div class="form-shell anim" data-anim="rise">
+      <form id="rsvpForm" novalidate>
+        <div class="field">
+          <label for="fName">Your name</label>
+          <input id="fName" name="name" type="text" autocomplete="name" placeholder="First and last name">
+          <p class="err" id="errName"></p>
+        </div>
+
+        <fieldset class="field">
+          <legend>Will you be joining us?</legend>
+          <div class="choice">
+            <label class="opt"><input type="radio" name="attending" value="yes" checked><span>Joyfully accepts</span></label>
+            <label class="opt"><input type="radio" name="attending" value="no"><span>Regretfully declines</span></label>
+          </div>
+        </fieldset>
+
+        <div class="field" id="guestField">
+          <label for="fGuests">Guests in your party</label>
+          <div class="stepper">
+            <button type="button" class="step-btn" id="guestMinus" aria-label="Fewer guests">−</button>
+            <input id="fGuests" name="guests" type="text" inputmode="numeric" value="1" readonly aria-live="polite">
+            <button type="button" class="step-btn" id="guestPlus" aria-label="More guests">+</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fDiet">Dietary notes <em>optional</em></label>
+          <input id="fDiet" name="diet" type="text" placeholder="Allergies, preferences, anything we should know">
+        </div>
+
+        <div class="field">
+          <label for="fMsg">A note for the couple <em>optional</em></label>
+          <textarea id="fMsg" name="message" rows="3" placeholder="Say something kind"></textarea>
+          <p class="count"><span id="msgCount">0</span>/280</p>
+        </div>
+
+        <button class="btn btn-solid btn-wide" type="submit" id="submitBtn" data-magnet>
+          <span class="btn-label">Send reply</span>
+          <span class="btn-spin" aria-hidden="true"></span>
+        </button>
+        <p class="form-foot">Saved on this device. Bring it to Olivia if the page ever loses it.</p>
+      </form>
+
+      <div class="done" id="rsvpDone" hidden>
+        <div class="tick" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l8 8 15-16"/></svg></div>
+        <h3 id="doneTitle">Reply sent</h3>
+        <p id="doneBody"></p>
+        <div class="done-actions">
+          <button class="btn btn-ghost btn-sm" type="button" id="copyBtn">Copy reply</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="editBtn">Change it</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact anim" data-anim="fade">
+      <p>Questions? Reach Olivia Bennett</p>
+      <div class="contact-row">
+        <button class="link-btn" type="button" data-copy="(843) 555-0184">(843) 555-0184</button>
+        <button class="link-btn" type="button" data-copy="olivia@example.com">olivia@example.com</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-mark anim" data-anim="pop">A<i>&amp;</i>J</div>
+    <p class="anim" data-anim="fade">17 · 10 · 2026 — Charleston</p>
+    <div class="foot-actions anim" data-anim="fade">
+      <button class="link-btn" type="button" id="shareBtn">Share this invitation</button>
+      <button class="link-btn" type="button" id="calBtn2">Add to calendar</button>
+    </div>
+  </footer>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="nojs">Amara &amp; Julian — Saturday 17 October 2026, 4:30 PM, The Willow Conservatory, Charleston, SC. RSVP to Olivia Bennett, (843) 555-0184.</div>
+</noscript>
+
+<script src="script.js"></script>
+</body>
+</html>
