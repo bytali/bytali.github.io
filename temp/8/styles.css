@@ -558,7 +558,7 @@ button{font:inherit;color:inherit}
 .name{display:block;overflow:hidden}
 .name .ch{
   display:inline-block;
-  transform:translateY(105%) rotate(6deg);
+  transform:none;
   background:linear-gradient(96deg,var(--vellum) 30%,var(--brass-hi) 50%,var(--vellum) 70%);
   background-size:280% 100%;
   background-position:120% 0;
@@ -566,17 +566,6 @@ button{font:inherit;color:inherit}
   color:transparent;
   -webkit-text-fill-color:transparent;
 }
-.is-live .name .ch{
-  animation:
-    ch-up .95s var(--ease) forwards var(--d,0s),
-    ch-shimmer 3.4s ease 1.6s;
-}
-@keyframes ch-up{to{transform:none}}
-@keyframes ch-shimmer{
-  0%{background-position:120% 0}
-  100%{background-position:-120% 0}
-}
-
 .amp{
   font-family:var(--display);
   font-style:italic;

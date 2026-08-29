@@ -219,84 +219,11 @@
   }());
 
   /* ============================================================
-     ENVELOPE GATE
+     DIRECT ENTRY
      ============================================================ */
-  var gate = $("gate");
-  var stage = $("envStage");
   var site = $("site");
-  var opened = false;
-
-  /* stagger the "You are invited" letters */
-  $$("#gateKicker span").forEach(function (s, i) {
-    s.style.animationDelay = (0.12 + i * 0.045).toFixed(3) + "s";
-  });
-
-  function revealSite() {
-    if (!site) return;
-    site.className = "site is-live";
-    root.className = root.className.replace(/\s*gate-locked/, "");
-    petals.start();
-    scan();
-    render();
-    setTimeout(function () { petals.burst(40); }, 220);
-  }
-
-  function openGate() {
-    if (opened || legacy) return;
-    opened = true;
-
-    if (stage) {
-      stage.className = "env-stage is-open";
-      stage.setAttribute("aria-expanded", "true");
-      stage.disabled = true;
-    }
-
-    if (gate) gate.className = "gate opening";
-
-    if (reduced.matches) {
-      if (gate) gate.className = "gate opening is-gone";
-      revealSite();
-      return;
-    }
-
-    petals.start();
-    setTimeout(function () { petals.burst(30); }, 380);   /* seal cracks */
-
-    setTimeout(function () {
-      if (gate) gate.className = "gate opening is-gone";
-      revealSite();
-    }, 2450);
-
-    setTimeout(function () {
-      if (gate) gate.style.display = "none";
-    }, 3550);
-  }
-
-  if (legacy) {
-    if (gate) gate.style.display = "none";
-    if (site) site.className = "site is-live";
-  } else {
-    root.className += " gate-locked";
-    if (stage) stage.addEventListener("click", openGate, false);
-  }
-
-  /* envelope tilt follows the pointer */
-  if (gate && stage && fine && !reduced.matches && !legacy) {
-    var env = stage.querySelector(".env");
-    gate.addEventListener("pointermove", function (e) {
-      if (opened || !env) return;
-      var r = stage.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width - 0.5;
-      var y = (e.clientY - r.top) / r.height - 0.5;
-      env.style.setProperty("--ty", (x * 13).toFixed(2) + "deg");
-      env.style.setProperty("--tx", (-y * 9).toFixed(2) + "deg");
-    }, false);
-    gate.addEventListener("pointerleave", function () {
-      if (!env) return;
-      env.style.setProperty("--ty", "0deg");
-      env.style.setProperty("--tx", "0deg");
-    }, false);
-  }
+  if (site) site.className = "site is-live";
+  petals.start();
 
   /* ============================================================
      SCROLL — progress, parallax, time of day
