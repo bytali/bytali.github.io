@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="theme-color" content="#f7f1e8" />
+  <title>Miguel & Sofia — Wedding Invitation</title>
+  <meta name="description" content="You are warmly invited to celebrate the wedding of Miguel and Sofia in Quezon City, Philippines." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=DM+Sans:wght@400;500;600&family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #f7f1e8;
+      --cream-2: #eee4d5;
+      --wine: #7b2d3d;
+      --wine-dark: #56202c;
+      --gold: #b38a4a;
+      --ink: #2f2927;
+      --muted: #6f625b;
+      --card: rgba(255,255,255,.80);
+      --line: rgba(123,45,61,.16);
+      --shadow: 0 18px 55px rgba(72, 44, 38, .14);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(179,138,74,.14), transparent 28%),
+        radial-gradient(circle at 85% 30%, rgba(123,45,61,.10), transparent 25%),
+        linear-gradient(180deg, #f9f4ec 0%, var(--cream) 55%, #efe3d3 100%);
+      color: var(--ink);
+      font-family: "DM Sans", system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(2px);
+      opacity: .22;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 50% 15%, transparent 45%, rgba(123,45,61,.20) 47% 50%, transparent 52%),
+        radial-gradient(ellipse at 20% 50%, transparent 45%, rgba(179,138,74,.25) 47% 50%, transparent 52%);
+    }
+    body::before { top: -80px; left: -110px; transform: rotate(28deg); }
+    body::after { bottom: -100px; right: -100px; transform: rotate(208deg); }
+
+    .shell {
+      width: min(100%, 430px);
+      margin: 0 auto;
+      min-height: 100vh;
+      background: rgba(255,255,255,.15);
+      box-shadow: 0 0 55px rgba(75, 50, 42, .12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .lang {
+      position: fixed;
+      top: 14px;
+      right: max(14px, calc((100vw - 430px)/2 + 14px));
+      z-index: 40;
+      border: 1px solid rgba(123,45,61,.18);
+      background: rgba(255,255,255,.84);
+      backdrop-filter: blur(12px);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--wine-dark);
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(72,44,38,.08);
+    }
+
+    .opening {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(rgba(39, 22, 24, .18), rgba(39, 22, 24, .28)),
+        radial-gradient(circle at 50% 15%, rgba(255,255,255,.9), transparent 34%),
+        linear-gradient(145deg, #f5eadf, #dfc9b6 55%, #c9a899);
+      transition: opacity .7s ease, visibility .7s ease;
+    }
+    .opening.hidden { opacity: 0; visibility: hidden; }
+
+    .envelope {
+      width: min(86vw, 350px);
+      aspect-ratio: 1.35;
+      position: relative;
+      filter: drop-shadow(0 28px 26px rgba(55, 29, 33, .22));
+      transform: translateY(-24px);
+    }
+    .envelope-base {
+      position: absolute;
+      inset: 18% 0 0;
+      border-radius: 8px;
+      background: #efe0cf;
+      border: 1px solid rgba(86,32,44,.15);
+      overflow: hidden;
+    }
+    .envelope-base::before, .envelope-base::after {
+      content: "";
+      position: absolute;
+      width: 70%;
+      height: 100%;
+      bottom: -10%;
+      background: #ead7c4;
+    }
+    .envelope-base::before { left: -18%; transform: rotate(31deg); }
+    .envelope-base::after { right: -18%; transform: rotate(-31deg); }
+    .flap {
+      position: absolute;
+      left: 3%; right: 3%; top: 18%;
+      height: 52%;
+      background: #f4e7d8;
+      clip-path: polygon(0 0, 100% 0, 50% 92%);
+      filter: drop-shadow(0 4px 2px rgba(67,40,37,.05));
+    }
+    .seal {
+      position: absolute;
+      left: 50%; top: 52%;
+      transform: translate(-50%, -50%);
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #f8e9db;
+      background: radial-gradient(circle at 35% 25%, #a94e5f, var(--wine) 60%, #5b1f2e);
+      border: 2px solid rgba(255,255,255,.28);
+      font-family: "Great Vibes", cursive;
+      /* font-size: 26px; */
+      font-size: 16px;
+      box-shadow: 0 6px 14px rgba(85, 28, 41, .25);
+    }
+    .opening-copy {
+      position: absolute;
+      left: 50%; bottom: 13%;
+      transform: translateX(-50%);
+      width: min(84vw, 330px);
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,.25);
+    }
+    .opening-copy .script { font-family: "Great Vibes", cursive; font-size: 28px; }
+    .opening-copy .tap { margin-top: 12px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+
+    .hero {
+      min-height: 100svh;
+      padding: 100px 26px 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      isolation: isolate;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(180deg, rgba(247,241,232,.15), rgba(247,241,232,.78)),
+        repeating-radial-gradient(ellipse at 50% 0%, rgba(123,45,61,.045) 0 1px, transparent 1px 7px);
+    }
+    .eyebrow { font-size: 11px; letter-spacing: .25em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+    .names {
+      margin: 26px 0 8px;
+      font-family: "Great Vibes", cursive;
+      font-size: clamp(58px, 16vw, 78px);
+      line-height: .92;
+      color: var(--wine);
+      font-weight: 400;
+    }
+    .amp { display: block; font-size: .58em; margin: 12px 0; color: var(--gold); }
+    .hero-line { width: 54px; height: 1px; background: var(--gold); margin: 22px auto; }
+    .hero-date { font-family: "Cormorant Garamond", serif; font-size: 20px; letter-spacing: .07em; }
+    .hero-place { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .scroll-hint { margin-top: 44px; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+
+    section.content { padding: 66px 22px; }
+    .section-kicker { text-align: center; color: var(--gold); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; font-weight: 700; }
+    h2 {
+      text-align: center;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 500;
+      font-size: 38px;
+      line-height: 1;
+      margin: 12px 0 28px;
+      color: var(--wine-dark);
+    }
+    .intro {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 20px;
+      line-height: 1.55;
+      text-align: center;
+      max-width: 330px;
+      margin: 0 auto;
+      color: #4a403c;
+    }
+
+    .countdown {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .count-box {
+      padding: 14px 5px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      text-align: center;
+      background: rgba(255,255,255,.55);
+      box-shadow: 0 8px 25px rgba(90,60,50,.05);
+    }
+    .count-box strong { display: block; font-family: "Cormorant Garamond", serif; font-size: 28px; color: var(--wine); }
+    .count-box span { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      margin-top: 16px;
+    }
+    .event-icon { font-size: 26px; text-align: center; margin-bottom: 8px; }
+    .card h3 { font-family: "Cormorant Garamond", serif; color: var(--wine-dark); text-align: center; font-size: 28px; margin: 6px 0; font-weight: 600; }
+    .card p { text-align: center; margin: 5px 0; color: var(--muted); line-height: 1.55; font-size: 14px; }
+    .card .time { color: var(--wine); font-weight: 700; }
+
+    .btn-row { display: grid; gap: 10px; margin-top: 18px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      border-radius: 999px;
+      border: 1px solid var(--wine);
+      padding: 0 18px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .btn.primary { background: var(--wine); color: white; }
+    .btn.secondary { color: var(--wine); background: rgba(255,255,255,.7); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(86,32,44,.12); }
+
+    .timeline { position: relative; margin-top: 28px; }
+    .timeline::before { content: ""; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 1px; background: rgba(179,138,74,.4); }
+    .timeline-item { position: relative; width: 50%; padding: 0 18px 28px; }
+    .timeline-item:nth-child(odd) { text-align: right; }
+    .timeline-item:nth-child(even) { margin-left: 50%; text-align: left; }
+    .timeline-item::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); position: absolute; top: 4px; }
+    .timeline-item:nth-child(odd)::after { right: -5px; }
+    .timeline-item:nth-child(even)::after { left: -4px; }
+    .timeline-item b { color: var(--wine); font-size: 12px; }
+    .timeline-item span { display: block; margin-top: 4px; font-family: "Cormorant Garamond", serif; font-size: 18px; }
+
+    .dress-swatches { display: flex; justify-content: center; gap: 10px; margin: 18px 0; }
+    .swatch { width: 36px; height: 36px; border-radius: 50%; box-shadow: 0 0 0 4px #fff, 0 0 0 5px rgba(0,0,0,.05); }
+    .s1 { background: #7b2d3d; } .s2 { background: #b38a4a; } .s3 { background: #d9c6b2; } .s4 { background: #536b5e; }
+
+    .rsvp-form { display: grid; gap: 12px; margin-top: 22px; }
+    label { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--wine-dark); }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid rgba(123,45,61,.18);
+      background: rgba(255,255,255,.82);
+      border-radius: 12px;
+      padding: 13px 14px;
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(179,138,74,.12); }
+    textarea { min-height: 86px; resize: vertical; }
+    .field-note { font-size: 11px; color: var(--muted); margin-top: -5px; }
+    .success { display: none; margin-top: 14px; padding: 14px; border-radius: 12px; background: #eef7ef; color: #35613a; font-size: 13px; line-height: 1.5; }
+
+    .gift-note {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 18px;
+      line-height: 1.5;
+      text-align: center;
+      color: #4a403c;
+    }
+    .gcash {
+      margin: 18px auto 0;
+      width: min(100%, 300px);
+      text-align: center;
+      padding: 16px;
+      background: rgba(255,255,255,.74);
+      border: 1px dashed rgba(123,45,61,.25);
+      border-radius: 14px;
+    }
+    .gcash strong { color: var(--wine); }
+
+    footer {
+      padding: 70px 24px 85px;
+      text-align: center;
+      background: linear-gradient(180deg, transparent, rgba(123,45,61,.06));
+    }
+    footer .script { font-family: "Great Vibes", cursive; color: var(--wine); font-size: 42px; }
+    footer p { color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+    .petal {
+      position: fixed;
+      top: -20px;
+      width: 9px;
+      height: 13px;
+      border-radius: 70% 30% 70% 30%;
+      background: rgba(123,45,61,.18);
+      pointer-events: none;
+      z-index: 2;
+      animation: fall linear forwards;
+    }
+    @keyframes fall { to { transform: translate3d(var(--drift), 110vh, 0) rotate(540deg); opacity: .1; } }
+
+    .tl { display: none; }
+    body[data-lang="tl"] .en { display: none !important; }
+    body[data-lang="tl"] .tl { display: initial; }
+    body[data-lang="tl"] div.tl, body[data-lang="tl"] p.tl, body[data-lang="tl"] span.tl { display: block; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+      .petal { display: none; }
+    }
+  </style>
+</head>
+<body data-lang="en">
+  <button class="lang" id="langBtn" aria-label="Toggle English and Tagalog">🇵🇭 EN / TL</button>
+
+  <div class="opening" id="opening" role="button" tabindex="0" aria-label="Open invitation">
+    <div class="envelope" aria-hidden="true">
+      <div class="envelope-base"></div>
+      <div class="flap"></div>
+      <div class="seal">M&S</div>
+    </div>
+    <div class="opening-copy">
+      <div class="script en">You are invited to our special day</div>
+      <div class="script tl">Inaanyayahan ka sa aming natatanging araw</div>
+      <div class="tap en">Tap to open</div>
+      <div class="tap tl">Pindutin para buksan</div>
+    </div>
+  </div>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow en">Together with our families</div>
+      <div class="eyebrow tl">Kasama ang aming mga pamilya</div>
+      <h1 class="names">Miguel <span class="amp">&</span> Sofia</h1>
+      <div class="hero-line"></div>
+      <div class="hero-date">12 December 2026 · Saturday · 3:30 PM</div>
+      <div class="hero-place">Fernwood Gardens · Quezon City, Philippines</div>
+      <div class="scroll-hint en">Scroll for details ↓</div>
+      <div class="scroll-hint tl">Mag-scroll para sa detalye ↓</div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">Our invitation</div>
+      <div class="section-kicker tl">Ang aming paanyaya</div>
+      <h2 class="en">We would love to celebrate with you</h2>
+      <h2 class="tl">Sana'y makasama ka namin sa pagdiriwang</h2>
+      <p class="intro en">With joyful hearts, we invite you to witness our vows and share an evening of good food, music, laughter, and love.</p>
+      <p class="intro tl">Buong puso namin kayong inaanyayahang masaksihan ang aming pag-iisang dibdib at makisalo sa isang gabing puno ng saya, pagkain, musika, tawanan, at pagmamahal.</p>
+
+      <div class="countdown" aria-label="Countdown to wedding">
+        <div class="count-box"><strong id="days">--</strong><span>Days</span></div>
+        <div class="count-box"><strong id="hours">--</strong><span>Hours</span></div>
+        <div class="count-box"><strong id="mins">--</strong><span>Mins</span></div>
+        <div class="count-box"><strong id="secs">--</strong><span>Secs</span></div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">When & where</div>
+      <div class="section-kicker tl">Kailan at saan</div>
+      <h2 class="en">Wedding Day</h2>
+      <h2 class="tl">Araw ng Kasal</h2>
+
+      <div class="card">
+        <div class="event-icon">💍</div>
+        <h3 class="en">Ceremony</h3><h3 class="tl">Seremonya</h3>
+        <p class="time">3:30 PM</p>
+        <p>Fernwood Gardens, Quezon City</p>
+        <p class="en">Please arrive by 3:00 PM for seating.</p>
+        <p class="tl">Mangyaring dumating bago mag-3:00 PM para sa maayos na pag-upo.</p>
+        <div class="btn-row">
+          <a class="btn primary" href="https://www.google.com/maps/search/?api=1&query=Fernwood+Gardens+Quezon+City" target="_blank" rel="noopener">📍 Open in Google Maps</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="event-icon">🥂</div>
+        <h3 class="en">Reception</h3><h3 class="tl">Handaan</h3>
+        <p class="time">5:30 PM onwards</p>
+        <p>Garden Reception Hall</p>
+        <p class="en">Dinner, speeches, dancing, and a little karaoke—because we are in the Philippines.</p>
+        <p class="tl">Hapunan, mensahe, sayawan, at siyempre, kaunting karaoke.</p>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">Program</div>
+      <div class="section-kicker tl">Programa</div>
+      <h2 class="en">A little guide for the day</h2>
+      <h2 class="tl">Gabay para sa araw na ito</h2>
+      <div class="timeline">
+        <div class="timeline-item"><b>3:00 PM</b><span class="en">Guest arrival</span><span class="tl">Dating ng mga bisita</span></div>
+        <div class="timeline-item"><b>3:30 PM</b><span class="en">Ceremony</span><span class="tl">Seremonya</span></div>
+        <div class="timeline-item"><b>4:45 PM</b><span class="en">Photos & cocktails</span><span class="tl">Larawan at cocktails</span></div>
+        <div class="timeline-item"><b>5:30 PM</b><span class="en">Reception</span><span class="tl">Handaan</span></div>
+        <div class="timeline-item"><b>8:00 PM</b><span class="en">Dancing & karaoke</span><span class="tl">Sayawan at karaoke</span></div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">Dress code</div>
+      <div class="section-kicker tl">Kasuotan</div>
+      <h2 class="en">Filipiniana Formal</h2>
+      <h2 class="tl">Pormal na Filipiniana</h2>
+      <div class="card">
+        <p class="en">Barong Tagalog, modern Filipiniana, suits, or formal dresses are welcome. We would love to see you in warm earth tones or our palette below.</p>
+        <p class="tl">Maaaring magsuot ng Barong Tagalog, modern Filipiniana, suit, o pormal na bestida. Mainam ang warm earth tones o ang kulay sa ibaba.</p>
+        <div class="dress-swatches" aria-label="Suggested wedding colors">
+          <div class="swatch s1" title="Wine"></div><div class="swatch s2" title="Antique gold"></div><div class="swatch s3" title="Champagne"></div><div class="swatch s4" title="Sage"></div>
+        </div>
+        <p class="en"><b>Kindly reserve white and ivory for the bride.</b></p>
+        <p class="tl"><b>Hinihiling naming iwasan ang puti at ivory bilang paggalang sa bride.</b></p>
+      </div>
+    </section>
+
+    <section class="content" id="rsvp">
+      <div class="section-kicker">RSVP</div>
+      <h2 class="en">Will you celebrate with us?</h2>
+      <h2 class="tl">Makakasama ka ba namin?</h2>
+      <div class="card">
+        <p class="en">Please respond on or before <b>15 November 2026</b>. For Philippine mobile numbers, use the +63 format.</p>
+        <p class="tl">Mangyaring sumagot bago o sa <b>15 Nobyembre 2026</b>. Gamitin ang +63 format para sa mobile number.</p>
+        <form class="rsvp-form" id="rsvpForm">
+          <div>
+            <label for="name">FULL NAME</label>
+            <input id="name" name="name" autocomplete="name" required placeholder="Juan Dela Cruz" />
+          </div>
+          <div>
+            <label for="attendance">ATTENDANCE</label>
+            <select id="attendance" name="attendance" required>
+              <option value="">Choose one</option>
+              <option value="Joyfully accepts">Joyfully accepts / Makakadalo</option>
+              <option value="Regretfully declines">Regretfully declines / Hindi makakadalo</option>
+            </select>
+          </div>
+          <div>
+            <label for="guests">NUMBER OF GUESTS</label>
+            <select id="guests" name="guests">
+              <option>1</option><option>2</option><option>3</option><option>4</option>
+            </select>
+            <div class="field-note">Please follow the guest count indicated in your invitation.</div>
+          </div>
+          <div>
+            <label for="mobile">MOBILE NUMBER</label>
+            <input id="mobile" name="mobile" inputmode="tel" placeholder="+63 917 123 4567" />
+          </div>
+          <div>
+            <label for="message">MESSAGE FOR THE COUPLE</label>
+            <textarea id="message" name="message" placeholder="Your wishes for Miguel & Sofia"></textarea>
+          </div>
+          <button class="btn primary" type="submit">Send RSVP</button>
+        </form>
+        <div class="success" id="successBox">
+          <b>RSVP prepared!</b><br />For this standalone demo, your response is saved only in this browser. Use the button below to copy it and send via Messenger, SMS, or your preferred channel.
+          <div class="btn-row"><button class="btn secondary" id="copyBtn" type="button">Copy RSVP message</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">Gifts</div>
+      <div class="section-kicker tl">Regalo</div>
+      <h2 class="en">Your presence is the best present</h2>
+      <h2 class="tl">Ang inyong presensya ang pinakamahalagang regalo</h2>
+      <div class="card">
+        <p class="gift-note en">If you would still like to give, a small contribution toward our future home would be deeply appreciated.</p>
+        <p class="gift-note tl">Kung nais pa rin ninyong magbigay, lubos naming pahahalagahan ang munting ambag para sa aming magiging tahanan.</p>
+        <div class="gcash">
+          <div style="font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)">GCash</div>
+          <strong>09XX XXX 2026</strong><br />Sofia M.
+          <div class="field-note" style="margin-top:8px">Demo details — replace with the couple's real account before publishing.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="section-kicker en">Good to know</div>
+      <div class="section-kicker tl">Mahalagang paalala</div>
+      <h2 class="en">A few gentle reminders</h2>
+      <h2 class="tl">Ilang munting paalala</h2>
+      <div class="card">
+        <p class="en">🚗 Allow extra travel time for Metro Manila traffic.</p>
+        <p class="tl">🚗 Maglaan ng dagdag na oras dahil sa trapiko sa Metro Manila.</p>
+        <p class="en">☔ December is usually cooler, but a small umbrella is still handy for outdoor areas.</p>
+        <p class="tl">☔ Mas malamig karaniwan ang Disyembre, ngunit mainam pa ring may dalang maliit na payong.</p>
+        <p class="en">📸 Please keep phones lowered during the ceremony, then take all the photos you want at the reception.</p>
+        <p class="tl">📸 Iwasan muna ang paggamit ng phone sa seremonya; pagkatapos ay malaya nang kumuha ng litrato sa handaan.</p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="script">See you there!</div>
+      <p class="en">With love,<br /><b>Miguel & Sofia</b><br />#MiguelFoundHisSofia</p>
+      <p class="tl">Nagmamahal,<br /><b>Miguel & Sofia</b><br />#MiguelFoundHisSofia</p>
+    </footer>
+  </main>
+
+  <script>
+    const opening = document.getElementById('opening');
+    function openInvite() {
+      opening.classList.add('hidden');
+      setTimeout(() => opening.remove(), 750);
+      sprinklePetals();
+    }
+    opening.addEventListener('click', openInvite);
+    opening.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') openInvite();
+    });
+
+    const langBtn = document.getElementById('langBtn');
+    langBtn.addEventListener('click', () => {
+      document.body.dataset.lang = document.body.dataset.lang === 'en' ? 'tl' : 'en';
+    });
+
+    // Wedding date in Philippine Time (UTC+8)
+    const wedding = new Date('2026-12-12T15:30:00+08:00').getTime();
+    const ids = ['days', 'hours', 'mins', 'secs'];
+    function updateCountdown() {
+      let diff = Math.max(0, wedding - Date.now());
+      const d = Math.floor(diff / 86400000); diff %= 86400000;
+      const h = Math.floor(diff / 3600000); diff %= 3600000;
+      const m = Math.floor(diff / 60000); diff %= 60000;
+      const s = Math.floor(diff / 1000);
+      [d,h,m,s].forEach((n,i) => document.getElementById(ids[i]).textContent = String(n).padStart(2,'0'));
+    }
+    updateCountdown(); setInterval(updateCountdown, 1000);
+
+    let rsvpText = '';
+    const form = document.getElementById('rsvpForm');
+    const successBox = document.getElementById('successBox');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      rsvpText = `RSVP for Miguel & Sofia — Dec 12, 2026\nName: ${data.name}\nAttendance: ${data.attendance}\nGuests: ${data.guests}\nMobile: ${data.mobile || 'Not provided'}\nMessage: ${data.message || '—'}`;
+      localStorage.setItem('miguel_sofia_rsvp', JSON.stringify({...data, savedAt: new Date().toISOString()}));
+      successBox.style.display = 'block';
+      successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      if (!rsvpText) return;
+      try {
+        await navigator.clipboard.writeText(rsvpText);
+        document.getElementById('copyBtn').textContent = 'Copied ✓';
+      } catch {
+        prompt('Copy your RSVP:', rsvpText);
+      }
+    });
+
+    function sprinklePetals() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      for (let i = 0; i < 18; i++) {
+        const p = document.createElement('i');
+        p.className = 'petal';
+        p.style.left = Math.random() * 100 + 'vw';
+        p.style.setProperty('--drift', (Math.random() * 120 - 60) + 'px');
+        p.style.animationDuration = (5 + Math.random() * 4) + 's';
+        p.style.animationDelay = (Math.random() * 1.4) + 's';
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 10000);
+      }
+    }
+  </script>
+</body>
+</html>

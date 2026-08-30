@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f1e7" />
+  <title>Amelia & Noah — Wedding Invitation</title>
+  <meta name="description" content="A private wedding invitation for Amelia & Noah." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ivory:#f6f1e7;
+      --paper:#fffdf8;
+      --sage:#66725d;
+      --sage-dark:#3d4938;
+      --gold:#b69a62;
+      --ink:#2d312a;
+      --muted:#777b71;
+      --line:rgba(61,73,56,.18);
+      --shadow:0 24px 70px rgba(54,49,39,.14);
+      --radius:26px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(182,154,98,.10), transparent 28rem),
+        radial-gradient(circle at 82% 35%, rgba(102,114,93,.11), transparent 30rem),
+        var(--ivory);
+      color:var(--ink);
+      font-family:Montserrat,system-ui,sans-serif;
+      line-height:1.65;
+    }
+    a{color:inherit}
+    .shell{
+      width:min(100%,430px);
+      margin:0 auto;
+      background:var(--paper);
+      box-shadow:var(--shadow);
+      min-height:100vh;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero{
+      min-height:760px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:64px 28px;
+      position:relative;
+      isolation:isolate;
+      background:
+        linear-gradient(rgba(255,253,248,.30),rgba(255,253,248,.64)),
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,.98), transparent 30%),
+        linear-gradient(145deg,#dfe5d8,#f4ead9 52%,#ddd5c1);
+    }
+    .hero:before,.hero:after{
+      content:"";
+      position:absolute;
+      inset:auto;
+      width:240px;height:240px;
+      border:1px solid rgba(102,114,93,.3);
+      border-radius:50% 52% 48% 55%;
+      z-index:-1;
+    }
+    .hero:before{left:-105px;top:-55px;transform:rotate(18deg)}
+    .hero:after{right:-120px;bottom:-70px;transform:rotate(-28deg)}
+    .botanical{
+      position:absolute;
+      width:170px;height:330px;
+      opacity:.27;
+      z-index:-1;
+    }
+    .botanical.left{left:-25px;bottom:40px;transform:rotate(-9deg)}
+    .botanical.right{right:-28px;top:25px;transform:scaleX(-1) rotate(-5deg)}
+    .eyebrow{
+      text-transform:uppercase;
+      letter-spacing:.30em;
+      font-size:11px;
+      font-weight:600;
+      color:var(--sage);
+      margin-bottom:22px;
+    }
+    .names{
+      margin:0;
+      font-family:"Cormorant Garamond",serif;
+      font-weight:500;
+      font-size:61px;
+      line-height:.9;
+      letter-spacing:-.03em;
+    }
+    .amp{
+      font-family:Parisienne,cursive;
+      color:var(--gold);
+      font-size:46px;
+      line-height:1.2;
+      display:block;
+      margin:10px 0 5px;
+    }
+    .hero-copy{
+      max-width:310px;
+      margin:28px auto 0;
+      font-family:"Cormorant Garamond",serif;
+      font-size:21px;
+      font-style:italic;
+    }
+    .hero-date{
+      margin:34px auto 0;
+      display:inline-flex;
+      flex-direction:column;
+      gap:4px;
+      padding:14px 22px;
+      border-top:1px solid var(--gold);
+      border-bottom:1px solid var(--gold);
+      font-family:"Cormorant Garamond",serif;
+      font-size:19px;
+      letter-spacing:.08em;
+    }
+    .hero-date small{
+      font-family:Montserrat,sans-serif;
+      font-size:10px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+      color:var(--sage);
+    }
+    .scroll{
+      position:absolute;bottom:25px;left:50%;transform:translateX(-50%);
+      font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    }
+    section{padding:64px 24px}
+    .soft{background:#f1eee4}
+    .sage-bg{background:var(--sage-dark);color:#fff}
+    .kicker{
+      text-transform:uppercase;letter-spacing:.25em;font-size:10px;font-weight:600;color:var(--sage);
+      text-align:center;margin-bottom:10px
+    }
+    .sage-bg .kicker{color:#d6cfb7}
+    h2{
+      font-family:"Cormorant Garamond",serif;
+      font-weight:500;
+      text-align:center;
+      font-size:39px;
+      line-height:1.05;
+      margin:0 0 14px;
+    }
+    .lead{
+      text-align:center;
+      color:var(--muted);
+      max-width:330px;
+      margin:0 auto 30px;
+      font-size:13px;
+    }
+    .sage-bg .lead{color:#e3e5df}
+    .countdown{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+      margin-top:30px;
+    }
+    .time{
+      text-align:center;
+      padding:15px 5px;
+      background:rgba(255,255,255,.65);
+      border:1px solid var(--line);
+      border-radius:18px;
+    }
+    .time b{
+      display:block;
+      font:500 30px/1 "Cormorant Garamond",serif;
+      color:var(--sage-dark);
+    }
+    .time span{
+      font-size:8px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.72);
+      overflow:hidden;
+      box-shadow:0 10px 30px rgba(54,49,39,.05);
+    }
+    .venue-art{
+      height:220px;
+      background:
+        linear-gradient(rgba(45,49,42,.03),rgba(45,49,42,.18)),
+        url("https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1000&q=85") center/cover;
+    }
+    .card-body{padding:25px}
+    .card h3{
+      margin:0 0 7px;
+      font:600 25px/1.15 "Cormorant Garamond",serif;
+    }
+    .meta{font-size:12px;color:var(--muted)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--sage);
+      color:var(--sage-dark);text-decoration:none;font-size:11px;font-weight:600;
+      letter-spacing:.08em;text-transform:uppercase;background:transparent;
+      cursor:pointer;transition:.2s ease;
+    }
+    .btn:hover{background:var(--sage-dark);color:white;transform:translateY(-1px)}
+    .btn.fill{background:var(--sage-dark);color:#fff}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+    .quote{
+      text-align:center;
+      font:italic 24px/1.35 "Cormorant Garamond",serif;
+      max-width:340px;margin:0 auto;
+    }
+    .signature{
+      font-family:Parisienne,cursive;color:var(--gold);font-size:35px;text-align:center;margin-top:20px
+    }
+    .photo{
+      margin:34px auto 0;
+      width:280px;height:360px;
+      border-radius:150px 150px 26px 26px;
+      overflow:hidden;border:8px solid white;
+      box-shadow:0 18px 40px rgba(54,49,39,.12);
+    }
+    .photo img{width:100%;height:100%;object-fit:cover}
+    .timeline{position:relative;margin-top:28px}
+    .timeline:before{
+      content:"";position:absolute;left:51px;top:15px;bottom:15px;width:1px;background:rgba(255,255,255,.25)
+    }
+    .event{display:grid;grid-template-columns:72px 1fr;gap:16px;padding:14px 0;position:relative}
+    .event time{font:500 22px/1 "Cormorant Garamond",serif;color:#d8c89e;text-align:right;padding-top:3px}
+    .event h3{margin:0 0 3px;font-size:13px;text-transform:uppercase;letter-spacing:.12em}
+    .event p{margin:0;color:#d9ddd5;font-size:12px}
+    .menu{display:grid;gap:14px;margin-top:28px}
+    .course{
+      padding:22px 20px;border:1px solid var(--line);border-radius:22px;text-align:center;background:#fffdf9;
+    }
+    .course small{display:block;color:var(--gold);text-transform:uppercase;letter-spacing:.2em;font-weight:600;font-size:9px}
+    .course h3{font:600 22px/1.2 "Cormorant Garamond",serif;margin:7px 0 5px}
+    .course p{font-size:11px;color:var(--muted);margin:0}
+    .dress{
+      text-align:center;
+      border:1px solid rgba(182,154,98,.35);
+      background:linear-gradient(180deg,#fbf7ed,#f0ebde);
+      border-radius:28px;padding:28px 20px;
+    }
+    .dress h3{font:600 28px/1 "Cormorant Garamond",serif;margin:5px 0 10px}
+    .swatches{display:flex;justify-content:center;gap:12px;margin:22px 0 4px}
+    .swatch{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.8);box-shadow:0 0 0 1px rgba(0,0,0,.08)}
+    .gift-box{
+      text-align:center;border:1px solid var(--line);border-radius:28px;padding:30px 22px;background:white
+    }
+    .gift-box p{font:italic 19px/1.45 "Cormorant Garamond",serif}
+    .lodging{display:grid;gap:14px}
+    .hotel{padding:20px;border-radius:22px;border:1px solid var(--line);background:#fff}
+    .hotel h3{margin:0 0 5px;font:600 22px/1.2 "Cormorant Garamond",serif}
+    .hotel p{margin:0;color:var(--muted);font-size:11px}
+    details{border-bottom:1px solid var(--line);padding:0}
+    summary{cursor:pointer;list-style:none;padding:18px 0;font-size:13px;font-weight:600;display:flex;justify-content:space-between;gap:18px}
+    summary::-webkit-details-marker{display:none}
+    summary:after{content:"+";font-size:20px;font-weight:300;color:var(--sage)}
+    details[open] summary:after{content:"–"}
+    details p{margin:-3px 0 18px;color:var(--muted);font-size:12px}
+    .rsvp{
+      background:
+        linear-gradient(rgba(61,73,56,.93),rgba(61,73,56,.96)),
+        url("https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1000&q=80") center/cover;
+      color:white;
+    }
+    form{display:grid;gap:13px;margin-top:26px}
+    label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#e1e4dc}
+    input,select,textarea{
+      width:100%;margin-top:6px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.10);
+      color:#fff;border-radius:14px;padding:13px 14px;font:inherit;font-size:13px;outline:none
+    }
+    option{color:#222}
+    textarea{min-height:88px;resize:vertical}
+    .rsvp .btn{border-color:#fff;color:#fff;background:transparent;width:100%;margin-top:4px}
+    .rsvp .btn:hover{background:#fff;color:var(--sage-dark)}
+    #formStatus{text-align:center;min-height:23px;font-size:12px;color:#f2e2b5}
+    footer{
+      padding:38px 24px 48px;text-align:center;background:#22271f;color:#dcded8
+    }
+    footer .monogram{font:400 44px/1 Parisienne,cursive;color:#d7c392;margin-bottom:8px}
+    footer p{font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin:0}
+    @media (max-width:360px){
+      .names{font-size:52px}
+      .countdown{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (min-width:700px){
+      body{padding:24px 0}
+      .shell{border-radius:34px}
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <svg class="botanical left" viewBox="0 0 120 260" aria-hidden="true">
+        <g fill="none" stroke="#53604c" stroke-width="2">
+          <path d="M61 252C62 190 56 136 67 79C72 53 84 29 100 7"/>
+          <path d="M66 181C39 170 23 151 13 128"/>
+          <path d="M66 143C83 125 94 105 100 82"/>
+          <path d="M62 110C44 94 35 77 31 58"/>
+          <path d="M72 72C84 64 95 52 104 39"/>
+        </g>
+        <g fill="#718069">
+          <ellipse cx="31" cy="155" rx="9" ry="22" transform="rotate(-50 31 155)"/>
+          <ellipse cx="23" cy="128" rx="8" ry="20" transform="rotate(-36 23 128)"/>
+          <ellipse cx="89" cy="115" rx="8" ry="21" transform="rotate(31 89 115)"/>
+          <ellipse cx="37" cy="81" rx="8" ry="20" transform="rotate(-35 37 81)"/>
+          <ellipse cx="96" cy="50" rx="8" ry="19" transform="rotate(38 96 50)"/>
+        </g>
+      </svg>
+      <svg class="botanical right" viewBox="0 0 120 260" aria-hidden="true">
+        <g fill="none" stroke="#53604c" stroke-width="2">
+          <path d="M61 252C62 190 56 136 67 79C72 53 84 29 100 7"/>
+          <path d="M66 181C39 170 23 151 13 128"/>
+          <path d="M66 143C83 125 94 105 100 82"/>
+          <path d="M62 110C44 94 35 77 31 58"/>
+          <path d="M72 72C84 64 95 52 104 39"/>
+        </g>
+        <g fill="#718069">
+          <ellipse cx="31" cy="155" rx="9" ry="22" transform="rotate(-50 31 155)"/>
+          <ellipse cx="23" cy="128" rx="8" ry="20" transform="rotate(-36 23 128)"/>
+          <ellipse cx="89" cy="115" rx="8" ry="21" transform="rotate(31 89 115)"/>
+          <ellipse cx="37" cy="81" rx="8" ry="20" transform="rotate(-35 37 81)"/>
+          <ellipse cx="96" cy="50" rx="8" ry="19" transform="rotate(38 96 50)"/>
+        </g>
+      </svg>
+
+      <div>
+        <div class="eyebrow">Together with their families</div>
+        <h1 class="names">Amelia Rose</h1>
+        <span class="amp">&</span>
+        <h1 class="names">Noah James</h1>
+        <p class="hero-copy">joyfully invite you to celebrate the beginning of their forever.</p>
+        <div class="hero-date">
+          <strong>October 10, 2027</strong>
+          <small>Charleston, South Carolina</small>
+        </div>
+      </div>
+      <div class="scroll">Scroll to celebrate ↓</div>
+    </header>
+
+    <section>
+      <div class="kicker">The countdown</div>
+      <h2>Until we say “I do”</h2>
+      <p class="lead">We’re counting every sunrise until we can celebrate with our favorite people.</p>
+      <div class="countdown" aria-label="Countdown to the wedding">
+        <div class="time"><b id="days">--</b><span>Days</span></div>
+        <div class="time"><b id="hours">--</b><span>Hours</span></div>
+        <div class="time"><b id="minutes">--</b><span>Minutes</span></div>
+        <div class="time"><b id="seconds">--</b><span>Seconds</span></div>
+      </div>
+    </section>
+
+    <section class="soft">
+      <div class="kicker">Ceremony & reception</div>
+      <h2>The Willow Conservatory</h2>
+      <p class="lead">An evening of candlelight, garden views, dinner, and dancing.</p>
+      <article class="card">
+        <div class="venue-art" role="img" aria-label="Elegant garden wedding venue"></div>
+        <div class="card-body">
+          <h3>The Willow Conservatory</h3>
+          <div class="meta">88 Garden Lane · Charleston, SC 29401</div>
+          <div class="actions">
+            <a class="btn fill" href="https://www.google.com/maps/search/?api=1&query=Charleston%20SC" target="_blank" rel="noopener">Directions</a>
+            <a class="btn" href="#schedule">View schedule</a>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section>
+      <div class="kicker">Our story</div>
+      <h2>A little note from us</h2>
+      <p class="quote">“From a rainy coffee-shop hello to a lifetime of ordinary mornings together — we cannot imagine this day without you.”</p>
+      <div class="signature">Amelia & Noah</div>
+      <figure class="photo">
+        <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=85" alt="Wedding couple walking outdoors">
+      </figure>
+    </section>
+
+    <section class="sage-bg" id="schedule">
+      <div class="kicker">October 10, 2027</div>
+      <h2>Wedding day timeline</h2>
+      <p class="lead">Please arrive a little early so we can begin right on time.</p>
+      <div class="timeline">
+        <div class="event">
+          <time>4:00</time>
+          <div><h3>Guest arrival</h3><p>Welcome lemonade and garden seating.</p></div>
+        </div>
+        <div class="event">
+          <time>4:30</time>
+          <div><h3>Ceremony</h3><p>Vows beneath the old oak trees.</p></div>
+        </div>
+        <div class="event">
+          <time>5:15</time>
+          <div><h3>Cocktail hour</h3><p>Champagne, small bites, and live strings.</p></div>
+        </div>
+        <div class="event">
+          <time>6:30</time>
+          <div><h3>Dinner</h3><p>A seasonal three-course supper.</p></div>
+        </div>
+        <div class="event">
+          <time>8:00</time>
+          <div><h3>Dancing</h3><p>Meet us under the lights.</p></div>
+        </div>
+        <div class="event">
+          <time>11:30</time>
+          <div><h3>Farewell</h3><p>Sparklers, hugs, and one last song.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">Dinner</div>
+      <h2>Tonight’s menu</h2>
+      <p class="lead">A garden-inspired menu with vegetarian and allergy-friendly alternatives available.</p>
+      <div class="menu">
+        <div class="course">
+          <small>Starter</small>
+          <h3>Whipped Ricotta Crostini</h3>
+          <p>Roasted pear · thyme honey · toasted pistachio</p>
+        </div>
+        <div class="course">
+          <small>Main</small>
+          <h3>Herb-Roasted Chicken</h3>
+          <p>Wild mushroom risotto · charred broccolini · rosemary jus</p>
+        </div>
+        <div class="course">
+          <small>Vegetarian</small>
+          <h3>Butternut Squash Ravioli</h3>
+          <p>Brown butter · sage · pecorino · hazelnut</p>
+        </div>
+        <div class="course">
+          <small>Dessert</small>
+          <h3>Vanilla Bean Cake</h3>
+          <p>Lemon curd · blackberry compote · mascarpone</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="soft">
+      <div class="kicker">What to wear</div>
+      <h2>Dress code</h2>
+      <div class="dress">
+        <div class="eyebrow" style="margin:0 0 8px">Garden formal</div>
+        <h3>Elegant, soft & celebratory</h3>
+        <p class="meta">Midi or floor-length dresses, suits, and dressy separates. The ceremony is outdoors, so block heels are encouraged.</p>
+        <div class="swatches" aria-label="Suggested colors">
+          <span class="swatch" style="background:#75806b"></span>
+          <span class="swatch" style="background:#c8b99e"></span>
+          <span class="swatch" style="background:#d8c7c0"></span>
+          <span class="swatch" style="background:#7b6b61"></span>
+          <span class="swatch" style="background:#a59b86"></span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">With love</div>
+      <h2>Gifts</h2>
+      <div class="gift-box">
+        <p>Your presence is the greatest gift. If you would still like to contribute, we are saving for our first home and future adventures.</p>
+        <a href="#rsvp" class="btn">Celebrate with us</a>
+      </div>
+    </section>
+
+    <section class="soft">
+      <div class="kicker">Stay nearby</div>
+      <h2>Accommodation</h2>
+      <p class="lead">Sample lodging suggestions for guests traveling into Charleston.</p>
+      <div class="lodging">
+        <article class="hotel">
+          <h3>Harbor House Hotel</h3>
+          <p>Historic district · approx. 8 minutes from the venue · sample rate $229/night</p>
+        </article>
+        <article class="hotel">
+          <h3>The Magnolia Inn</h3>
+          <p>Garden quarter · approx. 12 minutes from the venue · sample rate $189/night</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="kicker">Good to know</div>
+      <h2>Frequently asked</h2>
+      <details>
+        <summary>Can I bring a plus one?</summary>
+        <p>Please refer to the names listed on your invitation. If a guest is included, the RSVP form will allow you to add them.</p>
+      </details>
+      <details>
+        <summary>Are children invited?</summary>
+        <p>We love your little ones, but our celebration will be adults-only except for children in the wedding party.</p>
+      </details>
+      <details>
+        <summary>Will the wedding be outdoors?</summary>
+        <p>The ceremony is planned for the garden. Dinner and dancing will take place inside the conservatory.</p>
+      </details>
+      <details>
+        <summary>Is parking available?</summary>
+        <p>Yes. Complimentary valet parking will be available from 3:45 PM until the end of the reception.</p>
+      </details>
+    </section>
+
+    <section class="rsvp" id="rsvp">
+      <div class="kicker">Kindly reply</div>
+      <h2>RSVP by August 15, 2027</h2>
+      <p class="lead">This demo form confirms locally in your browser. Connect it to your preferred form service when publishing.</p>
+      <form id="rsvpForm">
+        <label>
+          Full name
+          <input name="name" autocomplete="name" required placeholder="Your name">
+        </label>
+        <label>
+          Will you attend?
+          <select name="attendance" required>
+            <option value="">Choose an option</option>
+            <option>Joyfully accepts</option>
+            <option>Regretfully declines</option>
+          </select>
+        </label>
+        <label>
+          Meal preference
+          <select name="meal">
+            <option>Herb-Roasted Chicken</option>
+            <option>Butternut Squash Ravioli</option>
+          </select>
+        </label>
+        <label>
+          Dietary notes
+          <textarea name="notes" placeholder="Allergies or dietary requirements"></textarea>
+        </label>
+        <button class="btn" type="submit">Send RSVP</button>
+        <div id="formStatus" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <footer>
+      <div class="monogram">A + N</div>
+      <p>10 · 10 · 2027 · Charleston</p>
+    </footer>
+  </main>
+
+  <script>
+    const weddingDate = new Date("2027-10-10T16:30:00-04:00").getTime();
+    const els = {
+      days: document.getElementById("days"),
+      hours: document.getElementById("hours"),
+      minutes: document.getElementById("minutes"),
+      seconds: document.getElementById("seconds")
+    };
+
+    function updateCountdown(){
+      let diff = weddingDate - Date.now();
+      if(diff <= 0){
+        Object.values(els).forEach(el => el.textContent = "00");
+        return;
+      }
+      const day = 86400000, hour = 3600000, minute = 60000;
+      els.days.textContent = Math.floor(diff / day);
+      diff %= day;
+      els.hours.textContent = String(Math.floor(diff / hour)).padStart(2,"0");
+      diff %= hour;
+      els.minutes.textContent = String(Math.floor(diff / minute)).padStart(2,"0");
+      els.seconds.textContent = String(Math.floor((diff % minute) / 1000)).padStart(2,"0");
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    document.getElementById("rsvpForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      const data = new FormData(this);
+      const name = data.get("name") || "Guest";
+      document.getElementById("formStatus").textContent =
+        `Thank you, ${name}! Your demo RSVP has been recorded on this page.`;
+      this.reset();
+    });
+  </script>
+</body>
+</html>
