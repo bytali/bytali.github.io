@@ -55,7 +55,7 @@ Encryption:
 - version-2 records authenticate their record key via AAD `trade-vault-record-v2:<recordKey>`
 - Web Crypto key is non-exportable
 
-The user's passphrase is never persisted. `vaultKey`, decrypted `transactions`, `analyticsCache`, and live market prices are memory state and are cleared on lock/pagehide.
+The user's passphrase is never persisted. `vaultKey`, decrypted `transactions`, `analyticsCache`, and live market prices are memory state and are cleared on lock/pagehide. An optional 4-digit PIN can wrap the derived 256-bit vault key in local `meta/pin`; it is device-local, is not exported, and deliberately trades security strength for convenience. The passphrase remains the recovery credential.
 
 ## Transaction schema
 
@@ -75,6 +75,7 @@ Normalized transaction fields include:
 - `feeAsset`
 - `feeInferred`
 - `source`
+- `notes` (optional, encrypted with the record)
 - `addedAt`
 
 Decimal trade arithmetic uses fixed-point `BigInt` with 18 decimal places. Do not replace accounting arithmetic with JavaScript `Number` unless only formatting/chart ratios are involved.
@@ -94,7 +95,8 @@ Fee behavior:
 - BUY fees are calculated as a percentage of acquired base quantity and charged in the base asset.
 - SELL fees are calculated as a percentage of quote proceeds and charged in the quote asset.
 - The user can override the calculated fee with the exchange-reported actual fee.
-- Fee settings are non-sensitive local metadata in IndexedDB (`meta/settings`) and are not included in encrypted backup format v1.
+- Fee and auto-lock settings are non-sensitive local metadata in IndexedDB (`meta/settings`) and are not included in encrypted backup format v1.
+- PIN wrapping metadata is stored separately at `meta/pin`; encrypted backup restore removes any stale local PIN wrapper so it cannot point at a different restored vault.
 
 ## Accounting
 
@@ -141,6 +143,10 @@ Do not add authenticated Coins.ph endpoints or API keys without an explicit prod
 
 This is deliberately not multiple HTML files: a full navigation would destroy the in-memory vault key and force an unlock on every page change.
 
+## Screenshot-assisted entry
+
+Manual entry can optionally read order-detail screenshots using the browser's native `TextDetector` API when exposed. The app performs no image upload or network request and discards the chosen file after parsing. Because native text recognition is not broadly available across browsers, the UI also supports pasting text extracted by the operating system (for example, iOS Live Text). No OCR library/model is bundled.
+
 ## Transaction management
 
 The ledger supports:
@@ -170,7 +176,7 @@ Desktop and mobile renderers share the same event delegation and record keys. Wh
 
 ## PWA/service worker
 
-The service worker is network-first for same-origin shell files with cached fallback. Bump the cache name whenever shipping runtime changes so installed versions update cleanly.
+The service worker serves a versioned cached shell immediately when available and refreshes it in the background. This avoids slow/offline PWA launches getting stuck on the platform splash icon. Bump the cache name whenever shipping runtime changes so installed versions update cleanly.
 
 The service worker must never cache user transaction exports/backups or market responses.
 
@@ -181,8 +187,11 @@ The service worker must never cache user transaction exports/backups or market r
 - verify every `$('<id>')` reference exists in `index.html`
 - check duplicate HTML IDs
 - verify every service-worker shell path exists
-- test create/unlock/lock vault
-- test manual live total/fee calculation and save
+- test create/unlock/lock vault, including automatic passphrase unlock and 4-digit PIN unlock
+- test setting/changing PIN on an existing vault and passphrase fallback
+- test configurable auto-lock at a short interval and after backgrounding
+- test manual live total/fee calculation, leading-decimal autocorrection, notes, and save
+- test screenshot-text parsing with a representative order detail; test native `TextDetector` only on a browser that exposes it
 - test CSV import and duplicate handling
 - test edit/delete/bulk-delete
 - test encrypted backup/restore

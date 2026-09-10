@@ -5,11 +5,14 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 ## What it does
 
 - Imports the exchange CSV format used by the app.
-- Supports manual add/edit/delete and bulk delete.
+- Supports manual add/edit/delete and bulk delete, with optional encrypted transaction notes.
 - Provides separate general BUY and SELL fee percentages for newly created manual transactions (0.1% defaults); existing stored fees are left unchanged.
 - Calculates holdings and weighted-average realized P&L locally.
 - Shows current PHP inventory value using the public Coins.ph `bookTicker` WebSocket when live pricing is toggled on; live pricing starts off on each app load.
-- Stores transaction records encrypted in IndexedDB using AES-256-GCM.
+- Stores transaction records (including notes) encrypted in IndexedDB using AES-256-GCM.
+- Supports automatic passphrase unlock after typing and an optional 4-digit local PIN convenience unlock.
+- Supports configurable 1–120 minute auto-lock.
+- Can parse supported order-detail screenshot text locally when the browser exposes `TextDetector`; otherwise users can paste device-extracted text (for example iOS Live Text) with no upload.
 - Keeps the derived vault key in memory only while unlocked.
 - Works as a GitHub Pages site and can be installed as a PWA, with text-free iOS/Android install artwork.
 - Includes persistent light/dark UI themes; first launch follows the device preference.
@@ -53,6 +56,9 @@ Developer context:
 - `AI_HANDOFF.md`
 
 ## Security boundary
+
+A 4-digit PIN is intentionally a convenience credential and is weaker than the vault passphrase. The PIN wrapper stays on the local device and is excluded from encrypted backups; the passphrase remains the recovery credential.
+
 
 The vault is designed to reduce exposure, not make a compromised browser/device safe.
 

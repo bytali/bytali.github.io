@@ -1,11 +1,9 @@
-const CACHE = 'trade-vault-shell-v10';
+const CACHE = 'trade-vault-shell-v11';
 const SHELL = [
-  './',
   './index.html',
   './styles.css',
   './app.js',
   './manifest.webmanifest',
-  './sample-trades.csv',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -24,27 +22,39 @@ self.addEventListener('activate', event => {
   );
 });
 
+async function fetchAndCache(request, cacheKey = request) {
+  const response = await fetch(request);
+  if (response.ok && response.type === 'basic') {
+    const copy = response.clone();
+    await caches.open(CACHE).then(cache => cache.put(cacheKey, copy));
+  }
+  return response;
+}
+
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
   const scope = self.registration.scope;
+  const indexUrl = new URL('./index.html', scope).href;
   const shellUrls = new Set(SHELL.map(path => new URL(path, scope).href));
-  const cacheable = shellUrls.has(request.url);
+  const isShell = shellUrls.has(request.url) || request.mode === 'navigate';
+  if (!isShell) return;
 
-  event.respondWith(
-    fetch(request).then(response => {
-      if (cacheable && response.ok && response.type === 'basic') {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(request, copy));
-      }
-      return response;
-    }).catch(async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-      if (request.mode === 'navigate') return caches.match(new URL('./index.html', scope).href);
-      throw new Error('Offline and resource is not cached.');
-    })
-  );
+  const cacheKey = request.mode === 'navigate' ? indexUrl : request;
+  const networkUpdate = fetchAndCache(request, cacheKey).catch(() => null);
+  event.waitUntil(networkUpdate);
+
+  event.respondWith((async () => {
+    const cached = await caches.match(cacheKey);
+    if (cached) return cached;
+    const response = await networkUpdate;
+    if (response) return response;
+    if (request.mode === 'navigate') {
+      const fallback = await caches.match(indexUrl);
+      if (fallback) return fallback;
+    }
+    throw new Error('Offline and resource is not cached.');
+  })());
 });

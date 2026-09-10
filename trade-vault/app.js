@@ -9,7 +9,12 @@ const VERIFY_TEXT = 'trade-vault-ok-v1';
 const PBKDF2_ITERATIONS = 600000;
 const SCALE_DIGITS = 18;
 const SCALE = 10n ** BigInt(SCALE_DIGITS);
-const IDLE_LOCK_MS = 5 * 60 * 1000;
+const DEFAULT_AUTO_LOCK_MINUTES = 5;
+const MIN_AUTO_LOCK_MINUTES = 1;
+const MAX_AUTO_LOCK_MINUTES = 120;
+const PIN_ITERATIONS = 600000;
+const PIN_WRAP_AAD = new TextEncoder().encode('trade-vault-pin-wrap-v1');
+const MAX_NOTES_LENGTH = 2000;
 const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
 const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
 const MARKET_WS_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=';
@@ -29,6 +34,10 @@ let hiddenAt = 0;
 let editingRecordKey = null;
 let selectedRecordKeys = new Set();
 let feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
+let autoLockMinutes = DEFAULT_AUTO_LOCK_MINUTES;
+let pinConfigured = false;
+let unlockDebounceTimer = null;
+let unlockInFlight = false;
 let livePricingEnabled = false;
 let marketSocket = null;
 let marketPrices = new Map();
@@ -119,13 +128,29 @@ function randomBytes(length) {
 async function openDb() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('Local storage took too long to open. Close other Trade Vault tabs and reopen the app.'));
+    }, 10000);
+    const finish = (fn, value) => {
+      if (settled) {
+        if (fn === resolve) value?.close?.();
+        return;
+      }
+      settled = true;
+      clearTimeout(timeout);
+      fn(value);
+    };
     request.onupgradeneeded = () => {
       const database = request.result;
       if (!database.objectStoreNames.contains('meta')) database.createObjectStore('meta', { keyPath: 'key' });
       if (!database.objectStoreNames.contains('records')) database.createObjectStore('records', { keyPath: 'key' });
     };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onblocked = () => finish(reject, new Error('Local storage is busy in another tab. Close other Trade Vault tabs and reopen the app.'));
+    request.onsuccess = () => finish(resolve, request.result);
+    request.onerror = () => finish(reject, request.error || new Error('Could not open local storage.'));
   });
 }
 
@@ -169,15 +194,18 @@ function idbClear(storeName) {
   });
 }
 
-async function deriveKey(passphrase, salt, iterations) {
-  const baseKey = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
-    baseKey,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
-  );
+async function deriveKeyBytes(secret, salt, iterations) {
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, baseKey, 256);
+  return new Uint8Array(bits);
+}
+
+async function importVaultKey(rawBytes) {
+  return crypto.subtle.importKey('raw', rawBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+async function deriveKey(secret, salt, iterations) {
+  return importVaultKey(await deriveKeyBytes(secret, salt, iterations));
 }
 
 async function encryptBytes(key, bytes, aad) {
@@ -220,9 +248,43 @@ async function vaultExists() {
   return Boolean(await idbGet('meta', 'vault'));
 }
 
-async function createVault(passphrase) {
+function validatePin(pin) {
+  const text = String(pin ?? '').trim();
+  if (!/^\d{4}$/.test(text)) throw new Error('PIN must be exactly 4 digits.');
+  return text;
+}
+
+async function savePinWrapperFromRaw(pin, rawVaultKey) {
+  const cleanPin = validatePin(pin);
   const salt = randomBytes(16);
-  const key = await deriveKey(passphrase, salt, PBKDF2_ITERATIONS);
+  const pinKey = await deriveKey(cleanPin, salt, PIN_ITERATIONS);
+  const wrap = await encryptBytes(pinKey, rawVaultKey, PIN_WRAP_AAD);
+  await idbPut('meta', {
+    key: 'pin', version: 1, kdf: 'PBKDF2-SHA-256', iterations: PIN_ITERATIONS,
+    salt: bytesToB64(salt), wrap
+  });
+  pinConfigured = true;
+}
+
+async function savePinForPassphrase(pin, passphrase) {
+  const vault = await idbGet('meta', 'vault');
+  if (!vault) throw new Error('No vault exists.');
+  const rawVaultKey = await deriveKeyBytes(passphrase, b64ToBytes(vault.salt), vault.iterations);
+  const candidate = await importVaultKey(rawVaultKey);
+  try {
+    const check = dec.decode(await decryptBytes(candidate, vault.verifier, VERIFY_AAD));
+    if (check !== VERIFY_TEXT) throw new Error('Incorrect passphrase.');
+  } catch (error) {
+    if (error?.message === 'Incorrect passphrase.') throw error;
+    throw new Error('Incorrect passphrase.');
+  }
+  await savePinWrapperFromRaw(pin, rawVaultKey);
+}
+
+async function createVault(passphrase, pin) {
+  const salt = randomBytes(16);
+  const rawVaultKey = await deriveKeyBytes(passphrase, salt, PBKDF2_ITERATIONS);
+  const key = await importVaultKey(rawVaultKey);
   const verifier = await encryptBytes(key, enc.encode(VERIFY_TEXT), VERIFY_AAD);
   const vault = {
     key: 'vault',
@@ -233,31 +295,58 @@ async function createVault(passphrase) {
     verifier
   };
   await idbPut('meta', vault);
+  await savePinWrapperFromRaw(pin, rawVaultKey);
   vaultKey = key;
   transactions = [];
-  await requestPersistence();
   showApp();
   renderAll();
+  requestPersistence();
+}
+
+async function finishUnlock(key) {
+  vaultKey = key;
+  await loadTransactions();
+  showApp();
+  renderAll();
+  requestPersistence();
 }
 
 async function unlockVault(passphrase) {
   const vault = await idbGet('meta', 'vault');
   if (!vault) throw new Error('No vault exists.');
   const key = await deriveKey(passphrase, b64ToBytes(vault.salt), vault.iterations);
-  const check = dec.decode(await decryptBytes(key, vault.verifier, VERIFY_AAD));
-  if (check !== VERIFY_TEXT) throw new Error('Incorrect passphrase.');
-  vaultKey = key;
-  await loadTransactions();
-  await requestPersistence();
-  showApp();
-  renderAll();
+  try {
+    const check = dec.decode(await decryptBytes(key, vault.verifier, VERIFY_AAD));
+    if (check !== VERIFY_TEXT) throw new Error('Incorrect passphrase.');
+  } catch (error) {
+    if (error?.message === 'Incorrect passphrase.') throw error;
+    throw new Error('Incorrect passphrase.');
+  }
+  await finishUnlock(key);
+}
+
+async function unlockVaultWithPin(pin) {
+  const [vault, pinMeta] = await Promise.all([idbGet('meta', 'vault'), idbGet('meta', 'pin')]);
+  if (!vault) throw new Error('No vault exists.');
+  if (!pinMeta?.wrap) throw new Error('No PIN is configured on this device.');
+  try {
+    const pinKey = await deriveKey(validatePin(pin), b64ToBytes(pinMeta.salt), pinMeta.iterations || PIN_ITERATIONS);
+    const rawVaultKey = await decryptBytes(pinKey, pinMeta.wrap, PIN_WRAP_AAD);
+    const key = await importVaultKey(rawVaultKey);
+    const check = dec.decode(await decryptBytes(key, vault.verifier, VERIFY_AAD));
+    if (check !== VERIFY_TEXT) throw new Error('Incorrect PIN.');
+    await finishUnlock(key);
+  } catch (error) {
+    if (error?.message === 'No PIN is configured on this device.') throw error;
+    throw new Error('Incorrect PIN.');
+  }
 }
 
 function clearSensitiveUi() {
   const txBody = $('transactionsBody');
   const holdingsBody = $('holdingsBody');
   const allocation = $('allocationChart');
-  if (txBody) txBody.innerHTML = '<tr><td colspan="10" class="empty-cell">Vault locked.</td></tr>';
+  if (txBody) txBody.innerHTML = '<tr><td colspan="11" class="empty-cell">Vault locked.</td></tr>';
   if (holdingsBody) holdingsBody.innerHTML = '<tr><td colspan="7" class="empty-cell">Vault locked.</td></tr>';
   if ($('transactionsCards')) $('transactionsCards').innerHTML = '<div class="empty-card">Vault locked.</div>';
   if ($('holdingsCards')) $('holdingsCards').innerHTML = '<div class="empty-card">Vault locked.</div>';
@@ -273,18 +362,31 @@ function clearSensitiveUi() {
   if ($('selectionCount')) { $('selectionCount').hidden = true; $('selectionCount').textContent = ''; }
 }
 
+function showUnlockMethod(method) {
+  const usePin = method === 'pin' && pinConfigured;
+  $('pinUnlockGroup').hidden = !usePin;
+  $('passphraseUnlockGroup').hidden = usePin;
+  $('usePinBtn').hidden = !pinConfigured;
+  $('unlockStatus').textContent = '';
+  $('unlockStatus').className = 'gate-status';
+  setTimeout(() => (usePin ? $('unlockPin') : $('unlockPassphrase'))?.focus(), 0);
+}
+
 function lockVault() {
   stopMarketData({ clearPrices: true, resetStatus: true });
   vaultKey = null;
   transactions = [];
   analyticsCache = null;
   clearTimeout(idleTimer);
+  clearTimeout(unlockDebounceTimer);
   clearSensitiveUi();
   $('appShell').hidden = true;
   $('vaultGate').hidden = false;
   $('unlockPassphrase').value = '';
+  $('unlockPin').value = '';
   $('unlockVaultPanel').hidden = false;
   $('createVaultPanel').hidden = true;
+  showUnlockMethod(pinConfigured ? 'pin' : 'passphrase');
 }
 
 async function loadTransactions() {
@@ -360,10 +462,11 @@ function showApp() {
 function resetIdleTimer() {
   if (!vaultKey) return;
   clearTimeout(idleTimer);
+  const timeoutMs = autoLockMinutes * 60 * 1000;
   idleTimer = setTimeout(() => {
     lockVault();
-    toast('Vault locked after inactivity.');
-  }, IDLE_LOCK_MS);
+    toast(`Vault locked after ${autoLockMinutes} minute${autoLockMinutes === 1 ? '' : 's'} of inactivity.`);
+  }, timeoutMs);
 }
 
 function toast(message) {
@@ -383,8 +486,9 @@ function setBusy(button, busy, busyText) {
 }
 
 function normalizeDecimal(value, allowEmpty = false) {
-  const text = String(value ?? '').trim().replace(/,/g, '');
+  let text = String(value ?? '').trim().replace(/,/g, '');
   if (allowEmpty && text === '') return '';
+  if (/^\.\d+$/.test(text)) text = `0${text}`;
   if (!/^\d+(?:\.\d+)?$/.test(text)) throw new Error(`Invalid decimal value: ${value}`);
   return text;
 }
@@ -482,6 +586,7 @@ function normalizeTransaction(input, source = 'manual') {
     feeRaw: fee.raw,
     feeInferred: fee.inferred,
     totalMismatch: diff > tolerance,
+    notes: String(input.notes ?? '').trim().slice(0, MAX_NOTES_LENGTH),
     source,
     addedAt: new Date().toISOString()
   };
@@ -528,7 +633,8 @@ function csvRowsToTransactions(text) {
         price: r[index['Executed Price']],
         executed: r[index.Executed],
         total: r[index.Total],
-        fee: r[index.Fee]
+        fee: r[index.Fee],
+        notes: index.Notes === undefined ? '' : r[index.Notes]
       }, 'csv');
     } catch (error) {
       throw new Error(`CSV row ${rowIndex + 2}: ${error.message}`);
@@ -876,7 +982,7 @@ function filteredTransactions() {
   const side = $('sideFilter')?.value || '';
   return transactions.filter(tx => {
     if (side && tx.side !== side) return false;
-    return !q || [tx.id, tx.pair, tx.side, tx.type, tx.feeAsset, tx.source].some(v => String(v).toLowerCase().includes(q));
+    return !q || [tx.id, tx.pair, tx.side, tx.type, tx.feeAsset, tx.source, tx.notes].some(v => String(v ?? '').toLowerCase().includes(q));
   });
 }
 
@@ -918,7 +1024,7 @@ function renderTransactions() {
   const filtered = filteredTransactions();
   if (!filtered.length) {
     const message = transactions.length ? 'No matches.' : 'No transactions yet.';
-    body.innerHTML = `<tr><td colspan="10" class="empty-cell">${message}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="11" class="empty-cell">${message}</td></tr>`;
     if (cards) cards.innerHTML = `<div class="empty-card">${message}</div>`;
     updateSelectionUi(filtered);
     return;
@@ -943,6 +1049,7 @@ function renderTransactions() {
     <td>${formatFixed(parseFixed(tx.executed), 10)}</td>
     <td><strong>${totalText}</strong></td>
     <td>${feeText}</td>
+    <td class="note-cell" title="${escapeHtml(tx.notes || '')}">${tx.notes ? escapeHtml(tx.notes) : '—'}</td>
     <td class="status ${warn ? 'warn' : ''}" title="${escapeHtml(notes.join(' · '))}">${notes.length ? escapeHtml(notes[0]) : 'OK'}</td>
     <td><div class="row-actions"><button type="button" class="table-action icon-only" data-action="edit" data-key="${escapeHtml(tx._recordKey)}" aria-label="Edit transaction" title="Edit">${icon('edit')}</button><button type="button" class="table-action danger icon-only" data-action="delete" data-key="${escapeHtml(tx._recordKey)}" aria-label="Delete transaction" title="Delete">${icon('trash')}</button></div></td>
   </tr>`).join('');
@@ -962,6 +1069,7 @@ function renderTransactions() {
       <div class="value-cell"><span>Fee</span><strong>${feeText}</strong></div>
       <div class="tx-status ${warn ? 'warn' : ''}">${notes.length ? escapeHtml(notes[0]) : 'OK'}</div>
     </div>
+    ${tx.notes ? `<div class="tx-notes">${escapeHtml(tx.notes)}</div>` : ''}
   </article>`).join('');
   updateSelectionUi(filtered);
 }
@@ -1009,10 +1117,12 @@ async function restoreEncryptedBackup(file) {
   await idbClear('records');
   await idbClear('meta');
   await idbPut('meta', backup.vault);
+  await idbDelete('meta', 'pin');
+  pinConfigured = false;
   for (const record of backup.records) await idbPut('records', record);
   await loadGeneralSettings();
   lockVault();
-  toast('Backup restored. Unlock with the backup passphrase.');
+  toast('Backup restored. Unlock with the backup passphrase, then set a new local PIN if wanted.');
 }
 
 function normalizeFeeRatePercent(value) {
@@ -1031,14 +1141,25 @@ function configuredFeeProfile(side) {
   };
 }
 
+function normalizeAutoLockMinutes(value) {
+  const minutes = Number(value);
+  if (!Number.isInteger(minutes) || minutes < MIN_AUTO_LOCK_MINUTES || minutes > MAX_AUTO_LOCK_MINUTES) {
+    throw new Error(`Auto-lock must be a whole number from ${MIN_AUTO_LOCK_MINUTES} to ${MAX_AUTO_LOCK_MINUTES} minutes.`);
+  }
+  return minutes;
+}
+
 async function loadGeneralSettings() {
   const stored = await idbGet('meta', 'settings');
   const next = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
+  let nextAutoLockMinutes = DEFAULT_AUTO_LOCK_MINUTES;
   if (stored) {
     try { next.BUY = normalizeFeeRatePercent(stored.buyFeePercent ?? next.BUY); } catch {}
     try { next.SELL = normalizeFeeRatePercent(stored.sellFeePercent ?? next.SELL); } catch {}
+    try { nextAutoLockMinutes = normalizeAutoLockMinutes(stored.autoLockMinutes ?? nextAutoLockMinutes); } catch {}
   }
   feeRatePercentBySide = next;
+  autoLockMinutes = nextAutoLockMinutes;
 }
 
 function populateSettingsForm() {
@@ -1046,14 +1167,38 @@ function populateSettingsForm() {
   if (!form) return;
   form.elements.buyFeePercent.value = feeRatePercentBySide.BUY;
   form.elements.sellFeePercent.value = feeRatePercentBySide.SELL;
+  form.elements.autoLockMinutes.value = String(autoLockMinutes);
+  form.elements.pinPassphrase.value = '';
+  form.elements.newPin.value = '';
+  form.elements.confirmPin.value = '';
+  $('pinStatus').textContent = pinConfigured ? 'PIN enabled on this device' : 'No PIN set yet';
 }
 
 async function saveGeneralSettings(form) {
   const buyFeePercent = normalizeFeeRatePercent(form.elements.buyFeePercent.value);
   const sellFeePercent = normalizeFeeRatePercent(form.elements.sellFeePercent.value);
-  await idbPut('meta', { key: 'settings', version: 1, buyFeePercent, sellFeePercent });
+  const nextAutoLockMinutes = normalizeAutoLockMinutes(form.elements.autoLockMinutes.value);
+  const pinPassphrase = String(form.elements.pinPassphrase.value || '');
+  const newPin = String(form.elements.newPin.value || '').trim();
+  const confirmPin = String(form.elements.confirmPin.value || '').trim();
+  const wantsPinChange = Boolean(pinPassphrase || newPin || confirmPin);
+
+  if (wantsPinChange) {
+    if (!pinPassphrase) throw new Error('Enter the vault passphrase to set or change the PIN.');
+    validatePin(newPin);
+    if (newPin !== confirmPin) throw new Error('PINs do not match.');
+    await savePinForPassphrase(newPin, pinPassphrase);
+  }
+
+  await idbPut('meta', {
+    key: 'settings', version: 2, buyFeePercent, sellFeePercent,
+    autoLockMinutes: nextAutoLockMinutes
+  });
   feeRatePercentBySide = { BUY: buyFeePercent, SELL: sellFeePercent };
+  autoLockMinutes = nextAutoLockMinutes;
+  resetIdleTimer();
   updateManualCalculations();
+  return { pinChanged: wantsPinChange };
 }
 
 function updateManualCalculations(form = $('manualForm')) {
@@ -1076,11 +1221,13 @@ function updateManualCalculations(form = $('manualForm')) {
     const price = parseFixed(priceEl.value);
     const qty = parseFixed(qtyEl.value);
     if (price <= 0n || qty <= 0n) throw new Error('incomplete');
-    const total = mulFixed(price, qty);
-    totalEl.value = formatFixed(total, 18).replace(/,/g, '');
+    const calculatedTotal = mulFixed(price, qty);
+    const reportedTotalText = String(form.elements.reportedTotal?.value || '').trim();
+    const effectiveTotal = reportedTotalText ? parseFixed(reportedTotalText) : calculatedTotal;
+    totalEl.value = reportedTotalText || formatFixed(calculatedTotal, 18).replace(/,/g, '');
 
     const feeAsset = profile.mode === 'BASE' ? base : quote;
-    const feeBasis = profile.mode === 'BASE' ? qty : total;
+    const feeBasis = profile.mode === 'BASE' ? qty : effectiveTotal;
     const feeAmount = percentOfFixed(feeBasis, profile.ratePercent);
     feeEl.value = feeAsset ? `${formatFixed(feeAmount, 18).replace(/,/g, '')} ${feeAsset}` : '';
   } catch {
@@ -1112,6 +1259,9 @@ function setManualMode(tx = null) {
   const form = $('manualForm');
   form.reset();
   setManualStatus('');
+  $('receiptTextWrap').hidden = true;
+  $('receiptTextInput').value = '';
+  $('receiptImageInput').value = '';
   editingRecordKey = tx?._recordKey || null;
   $('manualEyebrow').textContent = 'TRANSACTION';
   $('manualTitle').textContent = tx ? 'Edit transaction' : 'Add transaction';
@@ -1131,6 +1281,8 @@ function setManualMode(tx = null) {
   form.elements.side.value = tx.side;
   form.elements.price.value = tx.price;
   form.elements.executed.value = tx.executed;
+  form.elements.notes.value = tx.notes || '';
+  form.elements.reportedTotal.value = '';
   updateManualCalculations(form);
   form.elements.feeOverride.value = `${tx.feeAmount || '0'} ${tx.feeAsset || tx.quote}`.trim();
   setManualStatus(`Editing ${tx.source === 'csv' ? 'an imported' : 'a manual'} transaction. Saving replaces only this encrypted local record.`, 'info');
@@ -1178,9 +1330,95 @@ function manualFormToTransaction(form) {
     side: data.get('side'),
     price: data.get('price'),
     executed: data.get('executed'),
-    total: data.get('total'),
-    fee: feeOverride || data.get('fee')
+    total: String(data.get('reportedTotal') || '').trim() || data.get('total'),
+    fee: feeOverride || data.get('fee'),
+    notes: data.get('notes')
   }, 'manual');
+}
+
+function cleanOcrNumber(value) {
+  const text = String(value || '').trim().replace(/,/g, '').replace(/\s+/g, '');
+  return /^\.\d+$/.test(text) ? `0${text}` : text;
+}
+
+function parseOrderScreenshotText(rawText) {
+  const text = String(rawText || '').replace(/\r/g, '\n');
+  const flat = text.replace(/[\t ]+/g, ' ').replace(/\n+/g, '\n');
+  const result = {};
+
+  const pair = flat.match(/\b([A-Z0-9]{2,12})\s*\/\s*([A-Z0-9]{2,12})\b/i);
+  if (pair) result.pair = `${pair[1].toUpperCase()}/${pair[2].toUpperCase()}`;
+
+  const side = flat.match(/\b(BUY|SELL)\b/i);
+  if (side) result.side = side[1].toUpperCase();
+
+  const price = flat.match(/(?:^|\n)\s*Price\s+(?:[A-Z]{2,12}\s+)?([0-9][0-9,]*(?:\.\d+)?|\.\d+)/i);
+  if (price) result.price = cleanOcrNumber(price[1]);
+
+  const executed = flat.match(/Executed\s+(?:Amount|Quantity)?\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
+  if (executed) {
+    result.executed = cleanOcrNumber(executed[1]);
+    result.executedAsset = executed[2]?.toUpperCase() || '';
+  }
+
+  const fee = flat.match(/(?:Trading\s+)?Fee\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
+  if (fee) result.fee = `${cleanOcrNumber(fee[1])}${fee[2] ? ` ${fee[2].toUpperCase()}` : ''}`;
+
+  const total = flat.match(/Total\s+(?:Amount|Value)?\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
+  if (total) result.total = cleanOcrNumber(total[1]);
+
+  const orderId = flat.match(/Order\s*ID\s*([A-Z0-9-]{6,})/i);
+  if (orderId) result.id = orderId[1];
+
+  const date = flat.match(/\b(20\d{2}[-\/]\d{1,2}[-\/]\d{1,2})\s+(\d{1,2}:\d{2}(?::\d{2})?)\b/);
+  if (date) result.date = `${date[1].replace(/\//g, '-')} ${date[2].length === 5 ? `${date[2]}:00` : date[2]}`;
+
+  const type = flat.match(/\b(LIMIT|MARKET)\b/i);
+  if (type) result.type = type[1].toUpperCase();
+  return result;
+}
+
+function applyParsedOrderToManualForm(parsed, sourceLabel = 'text') {
+  const form = $('manualForm');
+  const found = [];
+  if (parsed.date) { form.elements.date.value = dateToInputValue(parsed.date); found.push('date'); }
+  if (parsed.id) { form.elements.id.value = parsed.id; found.push('ID'); }
+  if (parsed.pair) { form.elements.pair.value = parsed.pair; found.push('pair'); }
+  if (parsed.type && ['LIMIT', 'MARKET', 'OTHER'].includes(parsed.type)) { form.elements.type.value = parsed.type; found.push('type'); }
+  if (parsed.side && ['BUY', 'SELL'].includes(parsed.side)) { form.elements.side.value = parsed.side; found.push('side'); }
+  if (parsed.price) { form.elements.price.value = parsed.price; found.push('price'); }
+  if (parsed.executed) { form.elements.executed.value = parsed.executed; found.push('quantity'); }
+  if (parsed.fee) { form.elements.feeOverride.value = parsed.fee; found.push('fee'); }
+  form.elements.reportedTotal.value = parsed.total || '';
+  if (parsed.total) found.push('reported total');
+  updateManualCalculations(form);
+  if (!found.length) throw new Error('No supported transaction fields were found. Try pasting the full order detail text.');
+  setManualStatus(`Filled ${found.join(', ')} from ${sourceLabel}. Review everything before saving.`, 'info');
+}
+
+async function extractLocalTextFromImage(file) {
+  if (!('TextDetector' in window) || !('createImageBitmap' in window)) {
+    throw new Error('This browser does not expose local screenshot text recognition. Use “Paste extracted text” instead.');
+  }
+  const bitmap = await createImageBitmap(file);
+  try {
+    const detector = new TextDetector();
+    const blocks = await detector.detect(bitmap);
+    const sorted = [...blocks].sort((a, b) => {
+      const ay = a.boundingBox?.y ?? 0, by = b.boundingBox?.y ?? 0;
+      if (Math.abs(ay - by) > 8) return ay - by;
+      return (a.boundingBox?.x ?? 0) - (b.boundingBox?.x ?? 0);
+    });
+    return sorted.map(block => block.rawValue || '').filter(Boolean).join('\n');
+  } finally {
+    bitmap.close?.();
+  }
+}
+
+function autocorrectLeadingDecimalInput(input) {
+  if (!input) return;
+  const value = input.value;
+  if (/^\./.test(value)) input.value = `0${value}`;
 }
 
 function setupInstallFlow() {
@@ -1208,7 +1446,7 @@ function setupInstallFlow() {
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Service worker registration failed:', error));
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(error => console.warn('Service worker registration failed:', error));
   }
 }
 
@@ -1228,23 +1466,38 @@ async function init() {
   db = await openDb();
   await loadGeneralSettings();
   const exists = await vaultExists();
+  pinConfigured = Boolean(await idbGet('meta', 'pin'));
   $('createVaultPanel').hidden = exists;
   $('unlockVaultPanel').hidden = !exists;
+  $('startupStatus').hidden = true;
+  if (exists) showUnlockMethod(pinConfigured ? 'pin' : 'passphrase');
+  const nativeScreenshotOcr = 'TextDetector' in window && 'createImageBitmap' in window;
+  $('scanImageLabel').hidden = !nativeScreenshotOcr;
+  $('scanSupportText').textContent = nativeScreenshotOcr
+    ? 'Local only · image is read in memory and is not saved or uploaded'
+    : 'Direct screenshot OCR is not available in this browser. Use device text extraction (for example iOS Live Text) and paste it below.';
   setupInstallFlow();
   registerServiceWorker();
   $('themeToggleBtn').addEventListener('click', toggleTheme);
   $('gateThemeBtn').addEventListener('click', toggleTheme);
+  for (const id of ['newPin', 'confirmPin']) {
+    $(id).addEventListener('input', event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 4); });
+  }
   $('settingsBtn').addEventListener('click', () => { populateSettingsForm(); $('settingsDialog').showModal(); });
   $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
   $('cancelSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
+  $('settingsForm').addEventListener('input', event => {
+    if (event.target.matches('input[name="buyFeePercent"], input[name="sellFeePercent"]')) autocorrectLeadingDecimalInput(event.target);
+    if (event.target.matches('input[name="newPin"], input[name="confirmPin"]')) event.target.value = event.target.value.replace(/\D/g, '').slice(0, 4);
+  });
   $('settingsForm').addEventListener('submit', async event => {
     event.preventDefault();
     const button = $('saveSettingsBtn');
     try {
       setBusy(button, true, 'Saving…');
-      await saveGeneralSettings(event.currentTarget);
+      const result = await saveGeneralSettings(event.currentTarget);
       $('settingsDialog').close();
-      toast('General settings saved. New transactions will use the updated fees.');
+      toast(result.pinChanged ? 'Settings saved and local PIN updated.' : 'General settings saved.');
     } catch (error) {
       console.error(error);
       toast(error.message || 'Could not save settings.');
@@ -1258,7 +1511,7 @@ async function init() {
     if (document.hidden) {
       hiddenAt = Date.now();
       stopMarketData({ clearPrices: false, resetStatus: true });
-    } else if (vaultKey && hiddenAt && Date.now() - hiddenAt > 60_000) {
+    } else if (vaultKey && hiddenAt && Date.now() - hiddenAt > autoLockMinutes * 60 * 1000) {
       lockVault();
       toast('Vault locked after being backgrounded.');
     } else if (vaultKey) {
@@ -1281,29 +1534,80 @@ async function init() {
     const btn = $('createVaultBtn');
     const pass = $('newPassphrase').value;
     const confirmPass = $('confirmPassphrase').value;
+    const pin = $('newPin').value;
+    const confirmPin = $('confirmPin').value;
     if (pass.length < 16) return toast('Use at least 16 characters for the vault passphrase.');
     if (pass !== confirmPass) return toast('Passphrases do not match.');
+    try { validatePin(pin); } catch (error) { return toast(error.message); }
+    if (pin !== confirmPin) return toast('PINs do not match.');
     try {
       setBusy(btn, true, 'Creating vault…');
-      await createVault(pass);
+      await createVault(pass, pin);
       $('newPassphrase').value = '';
       $('confirmPassphrase').value = '';
+      $('newPin').value = '';
+      $('confirmPin').value = '';
       toast('Encrypted vault created.');
     } catch (error) { console.error(error); toast(error.message || 'Could not create vault.'); }
     finally { setBusy(btn, false); }
   });
 
-  $('unlockVaultBtn').addEventListener('click', async () => {
-    const btn = $('unlockVaultBtn');
+  const setUnlockStatus = (message = '', kind = '') => {
+    $('unlockStatus').textContent = message;
+    $('unlockStatus').className = `gate-status${kind ? ` ${kind}` : ''}`;
+  };
+  const attemptPassphraseUnlock = async () => {
+    const input = $('unlockPassphrase');
+    const value = input.value;
+    if (unlockInFlight || value.length < 16) return;
+    unlockInFlight = true;
+    input.disabled = true;
+    setUnlockStatus('Unlocking…');
     try {
-      setBusy(btn, true, 'Unlocking…');
-      await unlockVault($('unlockPassphrase').value);
-      $('unlockPassphrase').value = '';
-    } catch (error) { console.error(error); toast(error.message === 'The operation failed for an operation-specific reason' ? 'Incorrect passphrase.' : (error.message || 'Could not unlock vault.')); }
-    finally { setBusy(btn, false); }
+      await unlockVault(value);
+      input.value = '';
+    } catch (error) {
+      console.error(error);
+      setUnlockStatus(error.message || 'Could not unlock vault.', 'error');
+    } finally {
+      input.disabled = false;
+      unlockInFlight = false;
+    }
+  };
+  const schedulePassphraseUnlock = () => {
+    clearTimeout(unlockDebounceTimer);
+    setUnlockStatus('');
+    if ($('unlockPassphrase').value.length < 16) return;
+    unlockDebounceTimer = setTimeout(attemptPassphraseUnlock, 850);
+  };
+  $('unlockPassphrase').addEventListener('input', schedulePassphraseUnlock);
+  $('unlockPassphrase').addEventListener('change', schedulePassphraseUnlock);
+  $('unlockPassphrase').addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); clearTimeout(unlockDebounceTimer); attemptPassphraseUnlock(); }
   });
-
-  $('unlockPassphrase').addEventListener('keydown', event => { if (event.key === 'Enter') $('unlockVaultBtn').click(); });
+  $('unlockPin').addEventListener('input', async event => {
+    const input = event.currentTarget;
+    input.value = input.value.replace(/\D/g, '').slice(0, 4);
+    setUnlockStatus('');
+    if (input.value.length !== 4 || unlockInFlight) return;
+    unlockInFlight = true;
+    input.disabled = true;
+    setUnlockStatus('Unlocking…');
+    try {
+      await unlockVaultWithPin(input.value);
+      input.value = '';
+    } catch (error) {
+      console.error(error);
+      input.value = '';
+      setUnlockStatus(error.message || 'Could not unlock vault.', 'error');
+      setTimeout(() => input.focus(), 0);
+    } finally {
+      input.disabled = false;
+      unlockInFlight = false;
+    }
+  });
+  $('usePassphraseBtn').addEventListener('click', () => showUnlockMethod('passphrase'));
+  $('usePinBtn').addEventListener('click', () => showUnlockMethod('pin'));
   $('lockBtn').addEventListener('click', lockVault);
 
   document.querySelectorAll('[data-view-target]').forEach(button => button.addEventListener('click', () => setView(button.dataset.viewTarget)));
@@ -1416,11 +1720,48 @@ async function init() {
   $('openManualBtn').addEventListener('click', openManual);
   $('closeManualBtn').addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
   $('cancelManualBtn').addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
+  $('showTextImportBtn').addEventListener('click', () => {
+    $('receiptTextWrap').hidden = !$('receiptTextWrap').hidden;
+    if (!$('receiptTextWrap').hidden) $('receiptTextInput').focus();
+  });
+  $('parseReceiptTextBtn').addEventListener('click', () => {
+    try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
+    catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
+  });
+  $('receiptTextInput').addEventListener('paste', () => {
+    setTimeout(() => {
+      try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
+      catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
+    }, 0);
+  });
+  $('receiptImageInput').addEventListener('change', async event => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    setManualStatus('Reading screenshot locally…', 'info');
+    try {
+      const text = await extractLocalTextFromImage(file);
+      $('receiptTextInput').value = text;
+      applyParsedOrderToManualForm(parseOrderScreenshotText(text), 'screenshot');
+    } catch (error) {
+      $('receiptTextWrap').hidden = false;
+      setManualStatus(error.message || 'Could not read screenshot locally.', 'error');
+    } finally {
+      event.currentTarget.value = '';
+    }
+  });
   $('manualForm').addEventListener('input', event => {
+    if (event.target.matches('input[name="price"], input[name="executed"]')) {
+      autocorrectLeadingDecimalInput(event.target);
+      event.currentTarget.elements.reportedTotal.value = '';
+    }
+    if (event.target.matches('input[name="pair"], select[name="side"]')) event.currentTarget.elements.reportedTotal.value = '';
     setManualStatus('');
     updateManualCalculations(event.currentTarget);
   });
   $('manualForm').addEventListener('change', event => {
+    if (event.target.matches('input[name="price"], input[name="executed"], input[name="pair"], select[name="side"]')) {
+      event.currentTarget.elements.reportedTotal.value = '';
+    }
     setManualStatus('');
     updateManualCalculations(event.currentTarget);
   });
@@ -1479,6 +1820,8 @@ async function init() {
     await idbClear('records');
     await idbClear('meta');
     feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
+    autoLockMinutes = DEFAULT_AUTO_LOCK_MINUTES;
+    pinConfigured = false;
     stopMarketData({ clearPrices: true });
     selectedRecordKeys.clear();
     vaultKey = null;
@@ -1493,5 +1836,10 @@ async function init() {
 
 init().catch(error => {
   console.error(error);
-  alert(`Trade Vault could not start: ${error.message}`);
+  const status = $('startupStatus');
+  if (status) {
+    status.hidden = false;
+    status.className = 'fine startup-status error';
+    status.textContent = `Could not open the local vault: ${error.message}`;
+  }
 });
