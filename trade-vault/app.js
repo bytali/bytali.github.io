@@ -23,7 +23,7 @@ const MARKET_MAX_RECONNECT_MS = 60000;
 const MARKET_RENDER_THROTTLE_MS = 400;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.11.2';
+const APP_BUILD = '2026.09.11.3';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -1261,9 +1261,7 @@ function setManualMode(tx = null) {
   const form = $('manualForm');
   form.reset();
   setManualStatus('');
-  $('receiptTextWrap').hidden = true;
-  $('receiptTextInput').value = '';
-  $('receiptImageInput').value = '';
+  if ($('receiptTextInput')) $('receiptTextInput').value = '';
   editingRecordKey = tx?._recordKey || null;
   $('manualEyebrow').textContent = 'TRANSACTION';
   $('manualTitle').textContent = tx ? 'Edit transaction' : 'Add transaction';
@@ -1338,49 +1336,183 @@ function manualFormToTransaction(form) {
   }, 'manual');
 }
 
-function cleanOcrNumber(value) {
+function cleanImportedNumber(value) {
   const text = String(value || '').trim().replace(/,/g, '').replace(/\s+/g, '');
   return /^\.\d+$/.test(text) ? `0${text}` : text;
 }
 
-function parseOrderScreenshotText(rawText) {
-  const text = String(rawText || '').replace(/\r/g, '\n');
-  const flat = text.replace(/[\t ]+/g, ' ').replace(/\n+/g, '\n');
-  const result = {};
-
-  const pair = flat.match(/\b([A-Z0-9]{2,12})\s*\/\s*([A-Z0-9]{2,12})\b/i);
-  if (pair) result.pair = `${pair[1].toUpperCase()}/${pair[2].toUpperCase()}`;
-
-  const side = flat.match(/\b(BUY|SELL)\b/i);
-  if (side) result.side = side[1].toUpperCase();
-
-  const price = flat.match(/(?:^|\n)\s*Price\s+(?:[A-Z]{2,12}\s+)?([0-9][0-9,]*(?:\.\d+)?|\.\d+)/i);
-  if (price) result.price = cleanOcrNumber(price[1]);
-
-  const executed = flat.match(/Executed\s+(?:Amount|Quantity)?\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
-  if (executed) {
-    result.executed = cleanOcrNumber(executed[1]);
-    result.executedAsset = executed[2]?.toUpperCase() || '';
+function parseImportedDateTime(value) {
+  const text = String(value || '').trim();
+  let match = text.match(/\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+  if (match) {
+    const [, year, month, day, hour, minute, second = '00'] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute}:${second}`;
   }
 
-  const fee = flat.match(/(?:Trading\s+)?Fee\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
-  if (fee) result.fee = `${cleanOcrNumber(fee[1])}${fee[2] ? ` ${fee[2].toUpperCase()}` : ''}`;
+  // Coins.ph / Google Lens commonly returns MM/DD/YYYY.
+  match = text.match(/\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+  if (match) {
+    const [, month, day, year, hour, minute, second = '00'] = match;
+    const monthNumber = Number(month), dayNumber = Number(day);
+    if (monthNumber >= 1 && monthNumber <= 12 && dayNumber >= 1 && dayNumber <= 31) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute}:${second}`;
+    }
+  }
+  return '';
+}
 
-  const total = flat.match(/Total\s+(?:Amount|Value)?\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z0-9._-]{2,12})?/i);
-  if (total) result.total = cleanOcrNumber(total[1]);
+function parseNumberAsset(value) {
+  const match = String(value || '').match(/([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z][A-Z0-9._-]{1,11})?/i);
+  if (!match) return null;
+  return { number: cleanImportedNumber(match[1]), asset: (match[2] || '').toUpperCase() };
+}
 
-  const orderId = flat.match(/Order\s*ID\s*([A-Z0-9-]{6,})/i);
+function parseOrderText(rawText) {
+  const lines = String(rawText || '')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .map(line => line.replace(/[\t ]+/g, ' ').trim())
+    .filter(Boolean);
+  if (!lines.length) return {};
+
+  const result = {};
+  const joined = lines.join('\n');
+  let baseAsset = '';
+  let quoteAsset = '';
+
+  const valueAfterLabel = (labelPattern, lookahead = 2) => {
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      if (!labelPattern.test(line)) continue;
+      labelPattern.lastIndex = 0;
+      const remainder = line.replace(labelPattern, '').replace(/^\s*[:.-]?\s*/, '').trim();
+      if (remainder) return remainder;
+      for (let offset = 1; offset <= lookahead && index + offset < lines.length; offset += 1) {
+        const candidate = lines[index + offset].trim();
+        if (candidate) return candidate;
+      }
+    }
+    return '';
+  };
+
+  const nonAssetWords = new Set(['FILLED', 'AMOUNT', 'PRICE', 'DATE', 'TOTAL', 'FEE', 'STATUS', 'TYPE', 'REMARKS', 'AVERAGE', 'PERCENT']);
+  for (const pair of joined.matchAll(/\b([A-Z0-9]{2,12})\s*\/\s*([A-Z0-9]{2,12})\b/gi)) {
+    const candidateBase = pair[1].toUpperCase();
+    const candidateQuote = pair[2].toUpperCase();
+    if (!/[A-Z]/.test(candidateBase) || !/[A-Z]/.test(candidateQuote)) continue;
+    if (nonAssetWords.has(candidateBase) || nonAssetWords.has(candidateQuote)) continue;
+    baseAsset = candidateBase;
+    quoteAsset = candidateQuote;
+    result.pair = `${baseAsset}/${quoteAsset}`;
+    break;
+  }
+
+  const typeValue = valueAfterLabel(/^Type\b/i, 2) || lines.find(line => /\b(?:LIMIT|MARKET)\b.*\b(?:BUY|SELL)\b/i.test(line)) || '';
+  const type = typeValue.match(/\b(LIMIT|MARKET)\b/i) || joined.match(/\b(LIMIT|MARKET)\b/i);
+  if (type) result.type = type[1].toUpperCase();
+  const side = typeValue.match(/\b(BUY|SELL)\b/i) || joined.match(/\b(BUY|SELL)\b/i);
+  if (side) result.side = side[1].toUpperCase();
+
+  const averagePriceValue = valueAfterLabel(/^Average\s+price\.?/i, 2);
+  const averagePrice = parseNumberAsset(averagePriceValue);
+  if (averagePrice) {
+    result.price = averagePrice.number;
+    if (averagePrice.asset) quoteAsset = averagePrice.asset;
+  }
+
+  if (!result.price) {
+    for (let index = 0; index < lines.length; index += 1) {
+      if (!/^Price\b/i.test(lines[index])) continue;
+      let candidate = lines[index].replace(/^Price\b/i, '').replace(/^\s*[:.-]?\s*/, '').trim();
+      if (!candidate && index + 1 < lines.length && !/^[A-Za-z ]+$/.test(lines[index + 1])) candidate = lines[index + 1];
+      const currencyFirst = candidate.match(/^([A-Z][A-Z0-9._-]{1,11})\s+([0-9][0-9,]*(?:\.\d+)?|\.\d+)$/i);
+      if (currencyFirst) {
+        quoteAsset = currencyFirst[1].toUpperCase();
+        result.price = cleanImportedNumber(currencyFirst[2]);
+        break;
+      }
+      const parsedPrice = parseNumberAsset(candidate);
+      if (parsedPrice) {
+        result.price = parsedPrice.number;
+        if (parsedPrice.asset) quoteAsset = parsedPrice.asset;
+        break;
+      }
+    }
+  }
+
+  const filledValue = valueAfterLabel(/^Filled\s*\/\s*Amount\b/i, 2);
+  const filledMatch = filledValue.match(/([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*\/\s*([0-9][0-9,]*(?:\.\d+)?|\.\d+)\s*([A-Z][A-Z0-9._-]{1,11})?/i);
+  if (filledMatch) {
+    result.executed = cleanImportedNumber(filledMatch[1]);
+    if (filledMatch[3]) baseAsset = filledMatch[3].toUpperCase();
+  } else {
+    const executedValue = valueAfterLabel(/^Executed(?:\s+(?:Amount|Quantity))?\b/i, 2);
+    const executed = parseNumberAsset(executedValue);
+    if (executed) {
+      result.executed = executed.number;
+      if (executed.asset) baseAsset = executed.asset;
+    }
+  }
+
+  const feeValue = valueAfterLabel(/^(?:Trading\s+)?Fee\b/i, 2);
+  const fee = parseNumberAsset(feeValue);
+  if (fee) {
+    result.fee = `${fee.number}${fee.asset ? ` ${fee.asset}` : ''}`;
+    if (!baseAsset && fee.asset) baseAsset = fee.asset;
+  }
+
+  const totalValue = valueAfterLabel(/^Total(?:\s+(?:Amount|Value))?\b/i, 2);
+  const total = parseNumberAsset(totalValue);
+  if (total) {
+    result.total = total.number;
+    if (total.asset) quoteAsset = total.asset;
+  }
+
+  const orderIdValue = valueAfterLabel(/^Order\s*ID\b/i, 2);
+  const orderId = orderIdValue.match(/\b([A-Z0-9-]{6,})\b/i);
   if (orderId) result.id = orderId[1];
 
-  const date = flat.match(/\b(20\d{2}[-\/]\d{1,2}[-\/]\d{1,2})\s+(\d{1,2}:\d{2}(?::\d{2})?)\b/);
-  if (date) result.date = `${date[1].replace(/\//g, '-')} ${date[2].length === 5 ? `${date[2]}:00` : date[2]}`;
+  for (const line of lines) {
+    const parsedDate = parseImportedDateTime(line);
+    if (parsedDate) {
+      result.date = parsedDate;
+      break;
+    }
+  }
 
-  const type = flat.match(/\b(LIMIT|MARKET)\b/i);
-  if (type) result.type = type[1].toUpperCase();
+  // Google Lens may output the Date / Price / Amount table as three headers,
+  // followed by the date row, price, and amount on separate lines. Use that
+  // table only as a fallback so Average price / Filled Amount always win.
+  const dateHeaderIndex = lines.findIndex(line => /^Date$/i.test(line));
+  if (dateHeaderIndex >= 0) {
+    let rowDateIndex = -1;
+    for (let index = dateHeaderIndex + 1; index < Math.min(lines.length, dateHeaderIndex + 8); index += 1) {
+      if (parseImportedDateTime(lines[index])) {
+        rowDateIndex = index;
+        if (!result.date) result.date = parseImportedDateTime(lines[index]);
+        break;
+      }
+    }
+    if (rowDateIndex >= 0) {
+      if (!result.price) {
+        const tablePrice = parseNumberAsset(lines[rowDateIndex + 1] || '');
+        if (tablePrice) result.price = tablePrice.number;
+      }
+      if (!result.executed) {
+        const tableAmount = parseNumberAsset(lines[rowDateIndex + 2] || '');
+        if (tableAmount) result.executed = tableAmount.number;
+      }
+    }
+  }
+
+  if (!result.pair && baseAsset && quoteAsset && baseAsset !== quoteAsset) {
+    result.pair = `${baseAsset}/${quoteAsset}`;
+  }
+
   return result;
 }
 
-function applyParsedOrderToManualForm(parsed, sourceLabel = 'text') {
+function applyParsedOrderToManualForm(parsed, sourceLabel = 'copied text') {
   const form = $('manualForm');
   const found = [];
   if (parsed.date) { form.elements.date.value = dateToInputValue(parsed.date); found.push('date'); }
@@ -1394,27 +1526,8 @@ function applyParsedOrderToManualForm(parsed, sourceLabel = 'text') {
   form.elements.reportedTotal.value = parsed.total || '';
   if (parsed.total) found.push('reported total');
   updateManualCalculations(form);
-  if (!found.length) throw new Error('No supported transaction fields were found. Try pasting the full order detail text.');
+  if (!found.length) throw new Error('No supported transaction fields were found. Paste the full copied trade details and try again.');
   setManualStatus(`Filled ${found.join(', ')} from ${sourceLabel}. Review everything before saving.`, 'info');
-}
-
-async function extractLocalTextFromImage(file) {
-  if (!('TextDetector' in window) || !('createImageBitmap' in window)) {
-    throw new Error('This browser does not expose local screenshot text recognition. Use “Paste extracted text” instead.');
-  }
-  const bitmap = await createImageBitmap(file);
-  try {
-    const detector = new TextDetector();
-    const blocks = await detector.detect(bitmap);
-    const sorted = [...blocks].sort((a, b) => {
-      const ay = a.boundingBox?.y ?? 0, by = b.boundingBox?.y ?? 0;
-      if (Math.abs(ay - by) > 8) return ay - by;
-      return (a.boundingBox?.x ?? 0) - (b.boundingBox?.x ?? 0);
-    });
-    return sorted.map(block => block.rawValue || '').filter(Boolean).join('\n');
-  } finally {
-    bitmap.close?.();
-  }
 }
 
 function autocorrectLeadingDecimalInput(input) {
@@ -1529,15 +1642,6 @@ async function init() {
   $('unlockVaultPanel').hidden = !exists;
   $('startupStatus').hidden = true;
   if (exists) showUnlockMethod(pinConfigured ? 'pin' : 'passphrase');
-  const nativeScreenshotOcr = 'TextDetector' in window && 'createImageBitmap' in window;
-  const scanImageLabel = $('scanImageLabel');
-  if (scanImageLabel) scanImageLabel.hidden = !nativeScreenshotOcr;
-  const scanSupportText = $('scanSupportText');
-  if (scanSupportText) {
-    scanSupportText.textContent = nativeScreenshotOcr
-      ? 'Local only · image is read in memory and is not saved or uploaded'
-      : 'Direct screenshot OCR is not available in this browser. Use device text extraction (for example iOS Live Text) and paste it below.';
-  }
   setupInstallFlow();
   registerServiceWorker();
   $('themeToggleBtn')?.addEventListener('click', toggleTheme);
@@ -1782,34 +1886,19 @@ async function init() {
   $('openManualBtn')?.addEventListener('click', openManual);
   $('closeManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
   $('cancelManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
-  $('showTextImportBtn')?.addEventListener('click', () => {
-    $('receiptTextWrap').hidden = !$('receiptTextWrap').hidden;
-    if (!$('receiptTextWrap').hidden) $('receiptTextInput').focus();
-  });
   $('parseReceiptTextBtn')?.addEventListener('click', () => {
-    try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
-    catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
+    try { applyParsedOrderToManualForm(parseOrderText($('receiptTextInput')?.value || ''), 'copied text'); }
+    catch (error) { setManualStatus(error.message || 'Could not parse copied trade text.', 'error'); }
+  });
+  $('clearReceiptTextBtn')?.addEventListener('click', () => {
+    const input = $('receiptTextInput');
+    if (!input) return;
+    input.value = '';
+    setManualStatus('');
+    input.focus();
   });
   $('receiptTextInput')?.addEventListener('paste', () => {
-    setTimeout(() => {
-      try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
-      catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
-    }, 0);
-  });
-  $('receiptImageInput')?.addEventListener('change', async event => {
-    const file = event.currentTarget.files?.[0];
-    if (!file) return;
-    setManualStatus('Reading screenshot locally…', 'info');
-    try {
-      const text = await extractLocalTextFromImage(file);
-      $('receiptTextInput').value = text;
-      applyParsedOrderToManualForm(parseOrderScreenshotText(text), 'screenshot');
-    } catch (error) {
-      $('receiptTextWrap').hidden = false;
-      setManualStatus(error.message || 'Could not read screenshot locally.', 'error');
-    } finally {
-      event.currentTarget.value = '';
-    }
+    setTimeout(() => setManualStatus('Text pasted. Tap “Fill fields from text” when ready.', 'info'), 0);
   });
   $('manualForm')?.addEventListener('input', event => {
     if (event.target.matches('input[name="price"], input[name="executed"]')) {

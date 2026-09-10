@@ -251,7 +251,7 @@ tbody tr:hover { background: var(--row-hover); }
 .scan-button { display: inline-flex; width: auto; min-height: 38px; align-items: center; justify-content: center; gap: 7px; margin: 0; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--control-bg); color: var(--text); font-size: 11px; font-weight: 800; }
 .scan-button svg { width: 16px; height: 16px; }
 #receiptTextWrap { margin-top: 9px; }
-.parse-text-button { margin-top: 7px; }
+.parse-text-button { margin-top: 0; }
 dialog { width: min(680px, calc(100% - 22px)); max-height: min(760px, calc(100dvh - 28px)); overflow: auto; padding: 0; border: 1px solid var(--line); border-radius: 21px; background: var(--dialog-bg); color: var(--text); box-shadow: var(--shadow); }
 dialog::backdrop { background: var(--dialog-backdrop); backdrop-filter: blur(5px); }
 dialog form { padding: 21px; }

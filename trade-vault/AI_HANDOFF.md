@@ -143,9 +143,9 @@ Do not add authenticated Coins.ph endpoints or API keys without an explicit prod
 
 This is deliberately not multiple HTML files: a full navigation would destroy the in-memory vault key and force an unlock on every page change.
 
-## Screenshot-assisted entry
+## Copied-text assisted entry
 
-Manual entry can optionally read order-detail screenshots using the browser's native `TextDetector` API when exposed. The app performs no image upload or network request and discards the chosen file after parsing. Because native text recognition is not broadly available across browsers, the UI also supports pasting text extracted by the operating system (for example, iOS Live Text). No OCR library/model is bundled.
+Manual entry can parse copied order-detail text. Users may obtain the text with Google Lens, iOS Live Text, or another device feature, then paste it into Trade Vault and explicitly tap **Fill fields from text**. Trade Vault itself does not accept/upload screenshots and bundles no OCR library/model. Parsing happens locally in JavaScript. A **Clear text** button clears only the pasted-text box.
 
 ## Transaction management
 
@@ -191,7 +191,7 @@ The service worker must never cache user transaction exports/backups or market r
 - test setting/changing PIN on an existing vault and passphrase fallback
 - test configurable auto-lock at a short interval and after backgrounding
 - test manual live total/fee calculation, leading-decimal autocorrection, notes, and save
-- test screenshot-text parsing with a representative order detail; test native `TextDetector` only on a browser that exposes it
+- test copied-text parsing with representative Google Lens / Live Text output; verify paste alone does not modify fields and **Clear text** empties only the copied-text box
 - test CSV import and duplicate handling
 - test edit/delete/bulk-delete
 - test encrypted backup/restore

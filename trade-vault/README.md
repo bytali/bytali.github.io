@@ -12,7 +12,7 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 - Stores transaction records (including notes) encrypted in IndexedDB using AES-256-GCM.
 - Supports automatic passphrase unlock after typing and an optional 4-digit local PIN convenience unlock.
 - Supports configurable 1–120 minute auto-lock.
-- Can parse supported order-detail screenshot text locally when the browser exposes `TextDetector`; otherwise users can paste device-extracted text (for example iOS Live Text) with no upload.
+- Can fill transaction fields from copied order-detail text. Users can copy text with Google Lens, iOS Live Text, or another device feature, then paste it into Trade Vault. Trade Vault does not upload or store the source image and parses only the pasted text locally.
 - Keeps the derived vault key in memory only while unlocked.
 - Works as a GitHub Pages site and can be installed as a PWA, with text-free iOS/Android install artwork.
 - Includes persistent light/dark UI themes; first launch follows the device preference.
