@@ -204,3 +204,5 @@ The service worker must never cache user transaction exports/backups or market r
 ## Known environment limitation during the latest handoff
 
 Static syntax/structure checks can run in the current sandbox, but its Chromium policy blocks localhost navigation (`ERR_BLOCKED_BY_ADMINISTRATOR`). Run the end-to-end browser checklist in a normal local browser or the deployed GitHub Pages origin before treating a release as production-ready.
+
+- 2026-09-11 hotfix: hardened event bindings against stale/mixed PWA shells and changed navigation caching to network-first with build-versioned assets. This does not alter IndexedDB vault data or encrypted backup compatibility.

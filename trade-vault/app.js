@@ -23,6 +23,8 @@ const MARKET_MAX_RECONNECT_MS = 60000;
 const MARKET_RENDER_THROTTLE_MS = 400;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
+const APP_BUILD = '2026.09.11.2';
+const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
 let vaultKey = null;
@@ -1431,7 +1433,7 @@ function setupInstallFlow() {
   const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   if (ios && !standalone) $('installBtn').hidden = false;
 
-  $('installBtn').addEventListener('click', async () => {
+  $('installBtn')?.addEventListener('click', async () => {
     if (deferredInstallPrompt) {
       deferredInstallPrompt.prompt();
       await deferredInstallPrompt.userChoice;
@@ -1444,6 +1446,61 @@ function setupInstallFlow() {
   });
 }
 
+async function ensureCurrentAppShell() {
+  const marker = document.querySelector('meta[name="trade-vault-build"]')?.getAttribute('content') || '';
+  if (marker === APP_BUILD) {
+    try { sessionStorage.removeItem(BUILD_RELOAD_KEY); } catch {}
+    return true;
+  }
+
+  const status = $('startupStatus');
+  const message = 'Finishing an app update…';
+  if (status) {
+    status.hidden = false;
+    status.className = 'fine startup-status';
+    status.textContent = message;
+  }
+
+  // A stale HTML shell can briefly be paired with a newer app.js after a PWA update.
+  // Clear only Trade Vault shell caches/service worker registration; IndexedDB vault data is untouched.
+  if (location.protocol === 'file:' || !navigator.onLine) {
+    if (status) {
+      status.className = 'fine startup-status error';
+      status.textContent = 'The app files are out of sync. Reopen the updated Trade Vault files while online once; your encrypted vault data is not affected.';
+    }
+    return false;
+  }
+
+  try {
+    if (sessionStorage.getItem(BUILD_RELOAD_KEY) === '1') {
+      if (status) {
+        status.className = 'fine startup-status error';
+        status.textContent = 'The app update did not finish cleanly. Close this Trade Vault window/app completely, then open it again.';
+      }
+      return false;
+    }
+    sessionStorage.setItem(BUILD_RELOAD_KEY, '1');
+  } catch {}
+
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(key => key.startsWith('trade-vault-shell-')).map(key => caches.delete(key)));
+    }
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration('./');
+      await registration?.unregister();
+    }
+  } catch (error) {
+    console.warn('Could not fully clear the stale app shell:', error);
+  }
+
+  const url = new URL(location.href);
+  url.searchParams.set('tvbuild', APP_BUILD);
+  location.replace(url.href);
+  return false;
+}
+
 function registerServiceWorker() {
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(error => console.warn('Service worker registration failed:', error));
@@ -1451,6 +1508,7 @@ function registerServiceWorker() {
 }
 
 async function init() {
+  if (!await ensureCurrentAppShell()) return;
   if (window.top !== window.self) {
     document.body.textContent = 'Trade Vault cannot run inside an embedded frame.';
     return;
@@ -1472,25 +1530,29 @@ async function init() {
   $('startupStatus').hidden = true;
   if (exists) showUnlockMethod(pinConfigured ? 'pin' : 'passphrase');
   const nativeScreenshotOcr = 'TextDetector' in window && 'createImageBitmap' in window;
-  $('scanImageLabel').hidden = !nativeScreenshotOcr;
-  $('scanSupportText').textContent = nativeScreenshotOcr
-    ? 'Local only · image is read in memory and is not saved or uploaded'
-    : 'Direct screenshot OCR is not available in this browser. Use device text extraction (for example iOS Live Text) and paste it below.';
+  const scanImageLabel = $('scanImageLabel');
+  if (scanImageLabel) scanImageLabel.hidden = !nativeScreenshotOcr;
+  const scanSupportText = $('scanSupportText');
+  if (scanSupportText) {
+    scanSupportText.textContent = nativeScreenshotOcr
+      ? 'Local only · image is read in memory and is not saved or uploaded'
+      : 'Direct screenshot OCR is not available in this browser. Use device text extraction (for example iOS Live Text) and paste it below.';
+  }
   setupInstallFlow();
   registerServiceWorker();
-  $('themeToggleBtn').addEventListener('click', toggleTheme);
-  $('gateThemeBtn').addEventListener('click', toggleTheme);
+  $('themeToggleBtn')?.addEventListener('click', toggleTheme);
+  $('gateThemeBtn')?.addEventListener('click', toggleTheme);
   for (const id of ['newPin', 'confirmPin']) {
-    $(id).addEventListener('input', event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 4); });
+    $(id)?.addEventListener('input', event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 4); });
   }
-  $('settingsBtn').addEventListener('click', () => { populateSettingsForm(); $('settingsDialog').showModal(); });
-  $('closeSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
-  $('cancelSettingsBtn').addEventListener('click', () => $('settingsDialog').close());
-  $('settingsForm').addEventListener('input', event => {
+  $('settingsBtn')?.addEventListener('click', () => { populateSettingsForm(); $('settingsDialog').showModal(); });
+  $('closeSettingsBtn')?.addEventListener('click', () => $('settingsDialog').close());
+  $('cancelSettingsBtn')?.addEventListener('click', () => $('settingsDialog').close());
+  $('settingsForm')?.addEventListener('input', event => {
     if (event.target.matches('input[name="buyFeePercent"], input[name="sellFeePercent"]')) autocorrectLeadingDecimalInput(event.target);
     if (event.target.matches('input[name="newPin"], input[name="confirmPin"]')) event.target.value = event.target.value.replace(/\D/g, '').slice(0, 4);
   });
-  $('settingsForm').addEventListener('submit', async event => {
+  $('settingsForm')?.addEventListener('submit', async event => {
     event.preventDefault();
     const button = $('saveSettingsBtn');
     try {
@@ -1530,7 +1592,7 @@ async function init() {
   window.addEventListener('pagehide', () => { stopMarketData({ clearPrices: true }); vaultKey = null; transactions = []; analyticsCache = null; clearSensitiveUi(); });
   window.addEventListener('pageshow', () => { if (!vaultKey && !$('appShell').hidden) lockVault(); });
 
-  $('createVaultBtn').addEventListener('click', async () => {
+  $('createVaultBtn')?.addEventListener('click', async () => {
     const btn = $('createVaultBtn');
     const pass = $('newPassphrase').value;
     const confirmPass = $('confirmPassphrase').value;
@@ -1580,12 +1642,12 @@ async function init() {
     if ($('unlockPassphrase').value.length < 16) return;
     unlockDebounceTimer = setTimeout(attemptPassphraseUnlock, 850);
   };
-  $('unlockPassphrase').addEventListener('input', schedulePassphraseUnlock);
-  $('unlockPassphrase').addEventListener('change', schedulePassphraseUnlock);
-  $('unlockPassphrase').addEventListener('keydown', event => {
+  $('unlockPassphrase')?.addEventListener('input', schedulePassphraseUnlock);
+  $('unlockPassphrase')?.addEventListener('change', schedulePassphraseUnlock);
+  $('unlockPassphrase')?.addEventListener('keydown', event => {
     if (event.key === 'Enter') { event.preventDefault(); clearTimeout(unlockDebounceTimer); attemptPassphraseUnlock(); }
   });
-  $('unlockPin').addEventListener('input', async event => {
+  $('unlockPin')?.addEventListener('input', async event => {
     const input = event.currentTarget;
     input.value = input.value.replace(/\D/g, '').slice(0, 4);
     setUnlockStatus('');
@@ -1606,16 +1668,16 @@ async function init() {
       unlockInFlight = false;
     }
   });
-  $('usePassphraseBtn').addEventListener('click', () => showUnlockMethod('passphrase'));
-  $('usePinBtn').addEventListener('click', () => showUnlockMethod('pin'));
-  $('lockBtn').addEventListener('click', lockVault);
+  $('usePassphraseBtn')?.addEventListener('click', () => showUnlockMethod('passphrase'));
+  $('usePinBtn')?.addEventListener('click', () => showUnlockMethod('pin'));
+  $('lockBtn')?.addEventListener('click', lockVault);
 
   document.querySelectorAll('[data-view-target]').forEach(button => button.addEventListener('click', () => setView(button.dataset.viewTarget)));
   window.addEventListener('hashchange', () => { if (vaultKey) setView(currentViewFromHash(), false); });
   window.addEventListener('popstate', () => { if (vaultKey) setView(currentViewFromHash(), false); });
   const openManual = () => { setManualMode(null); $('manualDialog').showModal(); };
-  $('ledgerAddBtn').addEventListener('click', openManual);
-  $('floatingAddBtn').addEventListener('click', openManual);
+  $('ledgerAddBtn')?.addEventListener('click', openManual);
+  $('floatingAddBtn')?.addEventListener('click', openManual);
 
   const handleCsvInput = async event => {
     const file = event.target.files?.[0];
@@ -1625,13 +1687,13 @@ async function init() {
     finally { event.target.value = ''; }
   };
 
-  $('csvInput').addEventListener('change', handleCsvInput);
-  $('ledgerCsvInput').addEventListener('change', handleCsvInput);
+  $('csvInput')?.addEventListener('change', handleCsvInput);
+  $('ledgerCsvInput')?.addEventListener('change', handleCsvInput);
 
 
-  $('searchInput').addEventListener('input', renderTransactions);
-  $('sideFilter').addEventListener('change', renderTransactions);
-  $('selectAllVisible').addEventListener('change', event => {
+  $('searchInput')?.addEventListener('input', renderTransactions);
+  $('sideFilter')?.addEventListener('change', renderTransactions);
+  $('selectAllVisible')?.addEventListener('change', event => {
     const visible = filteredTransactions();
     for (const tx of visible) {
       if (event.currentTarget.checked) selectedRecordKeys.add(tx._recordKey);
@@ -1639,7 +1701,7 @@ async function init() {
     }
     renderTransactions();
   });
-  $('selectVisibleBtn').addEventListener('click', () => {
+  $('selectVisibleBtn')?.addEventListener('click', () => {
     const visible = filteredTransactions();
     const allSelected = visible.length > 0 && visible.every(tx => selectedRecordKeys.has(tx._recordKey));
     for (const tx of visible) {
@@ -1648,7 +1710,7 @@ async function init() {
     }
     renderTransactions();
   });
-  $('deleteSelectedBtn').addEventListener('click', async () => {
+  $('deleteSelectedBtn')?.addEventListener('click', async () => {
     const keys = [...selectedRecordKeys].filter(key => transactions.some(tx => tx._recordKey === key));
     if (!keys.length) return;
     if (!confirm(`Delete ${keys.length} selected transaction${keys.length === 1 ? '' : 's'}?\n\nThis removes the encrypted local records and recalculates analytics.`)) return;
@@ -1673,9 +1735,9 @@ async function init() {
     else selectedRecordKeys.delete(checkbox.dataset.selectKey);
     renderTransactions();
   };
-  $('transactionsBody').addEventListener('change', handleSelectionChange);
-  $('transactionsCards').addEventListener('change', handleSelectionChange);
-  $('marketToggleBtn').addEventListener('click', () => {
+  $('transactionsBody')?.addEventListener('change', handleSelectionChange);
+  $('transactionsCards')?.addEventListener('change', handleSelectionChange);
+  $('marketToggleBtn')?.addEventListener('click', () => {
     livePricingEnabled = !livePricingEnabled;
     const toggle = $('marketToggleBtn');
     toggle.setAttribute('aria-pressed', String(livePricingEnabled));
@@ -1685,7 +1747,7 @@ async function init() {
     if (livePricingEnabled) syncMarketData(true);
     else { stopMarketData({ clearPrices: true, resetStatus: false }); updateMarketStatus('Live pricing off'); renderHoldings(); }
   });
-  $('marketRefreshBtn').addEventListener('click', () => {
+  $('marketRefreshBtn')?.addEventListener('click', () => {
     if (!livePricingEnabled) return toast('Turn live pricing on first.');
     syncMarketData(true);
   });
@@ -1715,26 +1777,26 @@ async function init() {
       }
     }
   };
-  $('transactionsBody').addEventListener('click', handleTransactionAction);
-  $('transactionsCards').addEventListener('click', handleTransactionAction);
-  $('openManualBtn').addEventListener('click', openManual);
-  $('closeManualBtn').addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
-  $('cancelManualBtn').addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
-  $('showTextImportBtn').addEventListener('click', () => {
+  $('transactionsBody')?.addEventListener('click', handleTransactionAction);
+  $('transactionsCards')?.addEventListener('click', handleTransactionAction);
+  $('openManualBtn')?.addEventListener('click', openManual);
+  $('closeManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
+  $('cancelManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
+  $('showTextImportBtn')?.addEventListener('click', () => {
     $('receiptTextWrap').hidden = !$('receiptTextWrap').hidden;
     if (!$('receiptTextWrap').hidden) $('receiptTextInput').focus();
   });
-  $('parseReceiptTextBtn').addEventListener('click', () => {
+  $('parseReceiptTextBtn')?.addEventListener('click', () => {
     try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
     catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
   });
-  $('receiptTextInput').addEventListener('paste', () => {
+  $('receiptTextInput')?.addEventListener('paste', () => {
     setTimeout(() => {
       try { applyParsedOrderToManualForm(parseOrderScreenshotText($('receiptTextInput').value), 'pasted text'); }
       catch (error) { setManualStatus(error.message || 'Could not parse order text.', 'error'); }
     }, 0);
   });
-  $('receiptImageInput').addEventListener('change', async event => {
+  $('receiptImageInput')?.addEventListener('change', async event => {
     const file = event.currentTarget.files?.[0];
     if (!file) return;
     setManualStatus('Reading screenshot locally…', 'info');
@@ -1749,7 +1811,7 @@ async function init() {
       event.currentTarget.value = '';
     }
   });
-  $('manualForm').addEventListener('input', event => {
+  $('manualForm')?.addEventListener('input', event => {
     if (event.target.matches('input[name="price"], input[name="executed"]')) {
       autocorrectLeadingDecimalInput(event.target);
       event.currentTarget.elements.reportedTotal.value = '';
@@ -1758,14 +1820,14 @@ async function init() {
     setManualStatus('');
     updateManualCalculations(event.currentTarget);
   });
-  $('manualForm').addEventListener('change', event => {
+  $('manualForm')?.addEventListener('change', event => {
     if (event.target.matches('input[name="price"], input[name="executed"], input[name="pair"], select[name="side"]')) {
       event.currentTarget.elements.reportedTotal.value = '';
     }
     setManualStatus('');
     updateManualCalculations(event.currentTarget);
   });
-  $('manualForm').addEventListener('submit', async event => {
+  $('manualForm')?.addEventListener('submit', async event => {
     event.preventDefault();
     const form = event.currentTarget;
     const button = $('saveManualBtn');
@@ -1805,8 +1867,8 @@ async function init() {
     }
   });
 
-  $('exportBtn').addEventListener('click', () => exportEncryptedBackup().catch(error => toast(error.message)));
-  $('restoreInput').addEventListener('change', async event => {
+  $('exportBtn')?.addEventListener('click', () => exportEncryptedBackup().catch(error => toast(error.message)));
+  $('restoreInput')?.addEventListener('change', async event => {
     const file = event.target.files?.[0];
     if (!file) return;
     try { await restoreEncryptedBackup(file); }
@@ -1814,7 +1876,7 @@ async function init() {
     finally { event.target.value = ''; }
   });
 
-  $('clearBtn').addEventListener('click', async () => {
+  $('clearBtn')?.addEventListener('click', async () => {
     const answer = prompt('This permanently removes the local vault and all encrypted transactions from this browser. Type CLEAR to continue.');
     if (answer !== 'CLEAR') return;
     await idbClear('records');

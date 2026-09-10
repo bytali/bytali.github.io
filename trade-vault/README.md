@@ -84,3 +84,5 @@ Open `http://127.0.0.1:8080`.
 ## Data note
 
 The included sample is synthetic and regenerated for development/demo use. It is not based on the user's uploaded trading history.
+
+- 2026-09-11 hotfix: hardened event bindings against stale/mixed PWA shells and changed navigation caching to network-first with build-versioned assets. This does not alter IndexedDB vault data or encrypted backup compatibility.
