@@ -10,7 +10,7 @@ There is no application backend and no user account system.
 
 The app has three client-side pages implemented as hash-routed views inside `index.html`:
 
-- `#overview`: transaction count, buy volume, known PHP fees, realized P&L, cost-basis allocation.
+- `#overview`: purpose-specific analytics with Trading / Long-term tabs. Trading emphasizes matched-exit performance (realized P&L, win rate, profit factor, max drawdown, expectancy, average win/loss, open live value/unrealized P&L, cumulative realized P&L, and open cost-basis allocation). Long-term emphasizes current live value, open cost basis, unrealized P&L/return, purchase accumulation, concentration, fees, and allocation.
 - `#holdings`: open inventory, quantity, average cost, cost basis, live Coins.ph best bid, current PHP value, unrealized P&L.
 - `#ledger`: search/filter, select/bulk-delete, edit/delete, CSV import, encrypted backup/restore, vault clearing.
 
@@ -76,17 +76,18 @@ Normalized transaction fields include:
 - `feeInferred`
 - `source`
 - `notes` (optional, encrypted with the record)
+- `purpose` (`TRADE` / `HOLD`; older records without it are treated as `TRADE`)
 - `addedAt`
 
 Decimal trade arithmetic uses fixed-point `BigInt` with 18 decimal places. Do not replace accounting arithmetic with JavaScript `Number` unless only formatting/chart ratios are involved.
 
 ## CSV contract
 
-Expected headers:
+Expected required headers:
 
 `Date,ID,Pair,Type,Side,Executed Price,Executed,Total,Fee`
 
-The parser preserves IDs as text and validates numeric fields.
+An optional `Purpose` column accepts Trading/Trade or Long-term/Hold values. If it is missing, imported rows default to Trading. The parser preserves IDs as text and validates numeric fields.
 
 Fee behavior:
 
@@ -102,7 +103,7 @@ Fee behavior:
 
 `analyzeTransactions()` processes transactions chronologically and maintains inventory state per pair/asset.
 
-Current method: weighted-average cost.
+Current method: weighted-average cost. Trading and Long-term transactions are matched in separate inventory pools, so a sale in one purpose bucket does not consume cost basis from the other.
 
 Important behavior:
 
@@ -112,6 +113,17 @@ Important behavior:
 - Quote-asset SELL fees reduce proceeds.
 - Sells without enough earlier inventory are flagged and excluded from reliable realized P&L.
 - Price × quantity vs exported total mismatches are flagged rather than silently rewritten.
+
+
+## Overview analytics
+
+The Overview has separate `Trading` and `Long-term` tabs. The selected tab is UI-only memory state and is not persisted.
+
+Trading analytics intentionally use only PHP-denominated SELL events that can be matched to earlier inventory under the existing weighted-average cost method. A matched sell can be a partial exit, so the UI calls these **matched exits / matched sells** rather than claiming each is a complete round-trip trade. Metrics include realized P&L, win rate, profit factor, expectancy per directional matched exit, average win/loss, peak-to-trough realized drawdown, open live value/unrealized P&L, cumulative realized P&L, fees, and open cost basis.
+
+Long-term analytics emphasize portfolio health rather than win/loss statistics: live best-bid market value when enabled, open cost basis, unrealized P&L and return on live-valued positions, gross/average purchases, realized P&L for any long-term disposals, largest cost-basis concentration, live-price coverage, cumulative purchase activity, and cost-basis allocation.
+
+Overview live valuation uses the same opt-in Coins.ph public WebSocket as Holdings. Both views share the same in-memory market-price map and on/off state. No new network endpoint, API key, telemetry, or persisted price data was added.
 
 ## Live Coins.ph valuation
 
@@ -151,6 +163,8 @@ Manual entry can parse copied order-detail text. Users may obtain the text with 
 
 The ledger supports:
 
+- compact expandable mobile transaction rows plus Expand/Collapse all
+- per-transaction net-acquired amount with a local copy action
 - search
 - BUY/SELL filter
 - select visible / clear visible selection
@@ -206,3 +220,7 @@ The service worker must never cache user transaction exports/backups or market r
 Static syntax/structure checks can run in the current sandbox, but its Chromium policy blocks localhost navigation (`ERR_BLOCKED_BY_ADMINISTRATOR`). Run the end-to-end browser checklist in a normal local browser or the deployed GitHub Pages origin before treating a release as production-ready.
 
 - 2026-09-11 hotfix: hardened event bindings against stale/mixed PWA shells and changed navigation caching to network-first with build-versioned assets. This does not alter IndexedDB vault data or encrypted backup compatibility.
+
+- 2026-09-11 history/holdings update: mobile history is a compact expandable list; net acquired is calculated as the acquired asset after any fee charged in that same asset; holdings are split into Trading and Long-term purpose pools; backup format stays version 1 compatible.
+
+- 2026-09-11 overview analytics update: added separate Trading / Long-term Overview dashboards, matched-exit trading diagnostics, long-term accumulation/valuation analytics, purpose-specific allocation, and shared opt-in live pricing controls. Backup format and encrypted record schema are unchanged.

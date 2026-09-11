@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#080b12">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="trade-vault-build" content="2026.09.11.3">
+  <meta name="trade-vault-build" content="2026.09.11.5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Trade Vault">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' wss://wsapi.pro.coins.ph; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'">
   <title>Trade Vault</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260911.3">
+  <link rel="manifest" href="manifest.webmanifest?v=20260911.5">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-  <link rel="stylesheet" href="styles.css?v=20260911.3">
+  <link rel="stylesheet" href="styles.css?v=20260911.5">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true" focusable="false">
@@ -41,6 +41,8 @@
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.4A8.5 8.5 0 0 1 9.6 3.5 8.5 8.5 0 1 0 20.5 14.4z"/></symbol>
     <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10h.2v4H21a1.7 1.7 0 0 0-1.6 1z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   </svg>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -103,19 +105,43 @@
           </div>
         </div>
 
+        <div class="overview-toolbar">
+          <div class="holding-purpose-tabs overview-purpose-tabs" role="tablist" aria-label="Overview purpose">
+            <button class="purpose-tab active" type="button" data-overview-purpose="TRADE" role="tab" aria-selected="true">Trading</button>
+            <button class="purpose-tab" type="button" data-overview-purpose="HOLD" role="tab" aria-selected="false">Long-term</button>
+          </div>
+          <div class="overview-market-controls">
+            <span id="overviewMarketStatus" class="market-status">Live pricing off</span>
+            <button id="overviewMarketToggleBtn" class="icon-button icon-only" type="button" aria-pressed="false" aria-label="Turn live pricing on" title="Live pricing off"><svg><use href="#i-bolt"/></svg></button>
+            <button id="overviewMarketRefreshBtn" class="icon-button icon-only" type="button" aria-label="Reconnect live pricing" title="Reconnect live pricing"><svg><use href="#i-refresh"/></svg></button>
+          </div>
+        </div>
+
         <section id="warningBanner" class="warning" hidden></section>
 
-        <section class="metrics" aria-label="Portfolio summary">
-          <article class="metric"><span>Transactions</span><strong id="metricTransactions">0</strong><small id="metricDateRange">No data</small></article>
-          <article class="metric"><span>Buy volume</span><strong id="metricBuyVolume">₱0.00</strong><small>Gross</small></article>
-          <article class="metric"><span>PHP fees</span><strong id="metricFees">₱0.00</strong><small>Known</small></article>
-          <article class="metric"><span>Realized P&amp;L</span><strong id="metricPnl">—</strong><small id="metricPnlNote">No matched sells</small></article>
+        <section class="metrics" aria-label="Purpose analytics summary">
+          <article class="metric"><span id="metricTransactionsLabel">Realized P&amp;L</span><strong id="metricTransactions">—</strong><small id="metricDateRange">No matched exits</small></article>
+          <article class="metric"><span id="metricBuyVolumeLabel">Win rate</span><strong id="metricBuyVolume">—</strong><small id="metricBuyVolumeNote">Matched sells</small></article>
+          <article class="metric"><span id="metricFeesLabel">Profit factor</span><strong id="metricFees">—</strong><small id="metricFeesNote">Gross profit ÷ gross loss</small></article>
+          <article class="metric"><span id="metricPnlLabel">Max drawdown</span><strong id="metricPnl">—</strong><small id="metricPnlNote">Realized P&amp;L path</small></article>
         </section>
 
-        <article class="panel allocation-panel">
-          <div class="panel-head"><div><p class="eyebrow">EXPOSURE</p><h3>Cost basis</h3></div></div>
-          <div id="allocationChart" class="bar-chart empty-state">No holdings yet.</div>
+        <article class="panel analytics-panel">
+          <div class="panel-head analytics-panel-head"><div><p class="eyebrow" id="analyticsEyebrow">TRADING QUALITY</p><h3 id="analyticsTitle">Performance diagnostics</h3><p id="analyticsDescription" class="panel-copy">Focused on matched sell events so open holdings do not distort trading statistics.</p></div></div>
+          <div id="analyticsStats" class="analytics-stats"></div>
         </article>
+
+        <div class="overview-grid">
+          <article id="performancePanel" class="panel performance-panel">
+            <div class="panel-head"><div><p class="eyebrow" id="performanceEyebrow">REALIZED PERFORMANCE</p><h3 id="performanceTitle">Cumulative P&amp;L</h3></div></div>
+            <div id="performanceChart" class="performance-chart empty-state">No matched exits yet.</div>
+          </article>
+
+          <article class="panel allocation-panel">
+            <div class="panel-head"><div><p class="eyebrow">EXPOSURE</p><h3 id="allocationTitle">Trading cost-basis allocation</h3></div></div>
+            <div id="allocationChart" class="bar-chart empty-state">No holdings yet.</div>
+          </article>
+        </div>
       </section>
 
       <section id="holdingsPage" class="app-page" data-page="holdings" hidden>
@@ -125,6 +151,11 @@
             <button id="marketToggleBtn" class="icon-button icon-only" type="button" aria-pressed="false" aria-label="Turn live pricing on" title="Live pricing off"><svg><use href="#i-bolt"/></svg></button>
             <button id="marketRefreshBtn" class="icon-button icon-only" type="button" aria-label="Reconnect live pricing" title="Reconnect live pricing"><svg><use href="#i-refresh"/></svg></button>
           </div>
+        </div>
+
+        <div class="holding-purpose-tabs" role="tablist" aria-label="Holdings purpose">
+          <button class="purpose-tab active" type="button" data-holdings-purpose="TRADE" role="tab" aria-selected="true">Trading</button>
+          <button class="purpose-tab" type="button" data-holdings-purpose="HOLD" role="tab" aria-selected="false">Long-term</button>
         </div>
 
         <article class="panel data-panel">
@@ -159,11 +190,15 @@
           <span id="selectionCount" class="selection-count" hidden></span>
         </div>
 
+        <div class="ledger-detail-tools mobile-only-controls">
+          <button id="toggleLedgerDetailsBtn" class="detail-toggle-button" type="button" aria-pressed="false" aria-label="Expand all visible transaction details"><svg><use href="#i-chevron"/></svg><span>Expand all</span></button>
+        </div>
+
         <article class="panel data-panel">
           <div class="table-wrap desktop-table">
             <table class="ledger-table">
-              <thead><tr><th></th><th>Date</th><th>Pair</th><th>Side</th><th>Price</th><th>Qty</th><th>Total</th><th>Fee</th><th>Notes</th><th>Status</th><th></th></tr></thead>
-              <tbody id="transactionsBody"><tr><td colspan="11" class="empty-cell">No transactions yet.</td></tr></tbody>
+              <thead><tr><th></th><th>Date</th><th>Pair</th><th>Purpose</th><th>Side</th><th>Price</th><th>Qty</th><th>Total</th><th>Fee</th><th>Net acquired</th><th>Notes</th><th>Status</th><th></th></tr></thead>
+              <tbody id="transactionsBody"><tr><td colspan="13" class="empty-cell">No transactions yet.</td></tr></tbody>
             </table>
           </div>
           <div id="transactionsCards" class="mobile-list transaction-cards"><div class="empty-card">No transactions yet.</div></div>
@@ -231,6 +266,7 @@
         <label>Pair<input name="pair" required type="text" value="BTC/PHP" placeholder="BTC/PHP"></label>
         <label>Type<select name="type"><option>LIMIT</option><option>MARKET</option><option>OTHER</option></select></label>
         <label>Side<select name="side"><option>BUY</option><option>SELL</option></select></label>
+        <label>Purpose<select name="purpose"><option value="TRADE">Trading</option><option value="HOLD">Long-term</option></select></label>
         <label>Price<input name="price" required type="text" inputmode="decimal" placeholder="6250000"></label>
         <label>Quantity<input name="executed" required type="text" inputmode="decimal" placeholder="0.00015"></label>
         <label>Total <span class="auto-tag">AUTO</span><input name="total" readonly type="text" inputmode="decimal" placeholder="Calculated"></label>
@@ -248,6 +284,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20260911.3" defer></script>
+  <script src="app.js?v=20260911.5" defer></script>
 </body>
 </html>

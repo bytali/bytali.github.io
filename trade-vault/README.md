@@ -5,9 +5,9 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 ## What it does
 
 - Imports the exchange CSV format used by the app.
-- Supports manual add/edit/delete and bulk delete, with optional encrypted transaction notes.
+- Supports manual add/edit/delete and bulk delete, with optional encrypted transaction notes and a Trading / Long-term purpose bucket.
 - Provides separate general BUY and SELL fee percentages for newly created manual transactions (0.1% defaults); existing stored fees are left unchanged.
-- Calculates holdings and weighted-average realized P&L locally.
+- Calculates holdings and weighted-average realized P&L locally, with Trading and Long-term inventory accounted for separately.
 - Shows current PHP inventory value using the public Coins.ph `bookTicker` WebSocket when live pricing is toggled on; live pricing starts off on each app load.
 - Stores transaction records (including notes) encrypted in IndexedDB using AES-256-GCM.
 - Supports automatic passphrase unlock after typing and an optional 4-digit local PIN convenience unlock.
@@ -19,8 +19,8 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 
 ## Views
 
-- `#overview` — summary metrics and cost-basis allocation.
-- `#holdings` — open inventory, live bid, PHP value and unrealized P&L.
+- `#overview` — separate Trading / Long-term dashboards. Trading shows realized performance quality (win rate, profit factor, expectancy, drawdown, average win/loss, open live P&L and cumulative realized P&L); Long-term shows market value, cost basis, unrealized return, accumulation and allocation.
+- `#holdings` — open inventory split into Trading and Long-term sub-views, with live bid, PHP value and unrealized P&L.
 - `#ledger` — searchable/manageable transaction history.
 
 The views are client-side routes in one HTML page. This avoids reloading the document and losing the in-memory vault key when navigating.
@@ -86,3 +86,7 @@ Open `http://127.0.0.1:8080`.
 The included sample is synthetic and regenerated for development/demo use. It is not based on the user's uploaded trading history.
 
 - 2026-09-11 hotfix: hardened event bindings against stale/mixed PWA shells and changed navigation caching to network-first with build-versioned assets. This does not alter IndexedDB vault data or encrypted backup compatibility.
+
+- 2026-09-11 history/holdings update: compact expandable mobile history rows, Expand/Collapse all, net-acquired copy action, and separate Trading / Long-term holding pools. Existing records and CSVs without a Purpose field default to Trading; encrypted backup v1 remains compatible.
+
+- 2026-09-11 overview analytics update: the Overview now has Trading and Long-term tabs with purpose-specific performance/portfolio metrics. Live valuation reuses the existing opt-in Coins.ph public quote stream; no additional third-party service or persisted market data was added.

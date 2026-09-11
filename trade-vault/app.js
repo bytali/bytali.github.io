@@ -15,6 +15,7 @@ const MAX_AUTO_LOCK_MINUTES = 120;
 const PIN_ITERATIONS = 600000;
 const PIN_WRAP_AAD = new TextEncoder().encode('trade-vault-pin-wrap-v1');
 const MAX_NOTES_LENGTH = 2000;
+const PURPOSE_LABELS = { TRADE: 'Trading', HOLD: 'Long-term' };
 const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
 const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
 const MARKET_WS_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=';
@@ -23,7 +24,7 @@ const MARKET_MAX_RECONNECT_MS = 60000;
 const MARKET_RENDER_THROTTLE_MS = 400;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.11.3';
+const APP_BUILD = '2026.09.11.5';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -35,6 +36,9 @@ let idleTimer = null;
 let hiddenAt = 0;
 let editingRecordKey = null;
 let selectedRecordKeys = new Set();
+let expandedRecordKeys = new Set();
+let holdingsPurpose = 'TRADE';
+let overviewPurpose = 'TRADE';
 let feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
 let autoLockMinutes = DEFAULT_AUTO_LOCK_MINUTES;
 let pinConfigured = false;
@@ -99,7 +103,7 @@ function setView(view, updateHash = true) {
   if ($('pageTitle')) $('pageTitle').textContent = VIEW_TITLES[next];
   document.title = `Trade Vault · ${VIEW_TITLES[next]}`;
   if (updateHash && location.hash !== `#${next}`) history.pushState(null, '', `#${next}`);
-  if (next === 'holdings' && vaultKey) syncMarketData();
+  if ((next === 'holdings' || next === 'overview') && vaultKey) syncMarketData();
 }
 
 function currentViewFromHash() {
@@ -348,11 +352,13 @@ function clearSensitiveUi() {
   const txBody = $('transactionsBody');
   const holdingsBody = $('holdingsBody');
   const allocation = $('allocationChart');
-  if (txBody) txBody.innerHTML = '<tr><td colspan="11" class="empty-cell">Vault locked.</td></tr>';
+  if (txBody) txBody.innerHTML = '<tr><td colspan="13" class="empty-cell">Vault locked.</td></tr>';
   if (holdingsBody) holdingsBody.innerHTML = '<tr><td colspan="7" class="empty-cell">Vault locked.</td></tr>';
   if ($('transactionsCards')) $('transactionsCards').innerHTML = '<div class="empty-card">Vault locked.</div>';
   if ($('holdingsCards')) $('holdingsCards').innerHTML = '<div class="empty-card">Vault locked.</div>';
   if (allocation) { allocation.className = 'bar-chart empty-state'; allocation.textContent = 'Vault locked.'; }
+  if ($('performanceChart')) { $('performanceChart').className = 'performance-chart empty-state'; $('performanceChart').textContent = 'Vault locked.'; }
+  if ($('analyticsStats')) $('analyticsStats').innerHTML = '';
   if ($('warningBanner')) { $('warningBanner').hidden = true; $('warningBanner').textContent = ''; }
   if ($('searchInput')) $('searchInput').value = '';
   if ($('manualDialog')?.open) $('manualDialog').close();
@@ -360,6 +366,9 @@ function clearSensitiveUi() {
   if ($('manualForm')) $('manualForm').reset();
   editingRecordKey = null;
   selectedRecordKeys.clear();
+  expandedRecordKeys.clear();
+  holdingsPurpose = 'TRADE';
+  overviewPurpose = 'TRADE';
   if ($('selectAllVisible')) $('selectAllVisible').checked = false;
   if ($('selectionCount')) { $('selectionCount').hidden = true; $('selectionCount').textContent = ''; }
 }
@@ -398,6 +407,7 @@ async function loadTransactions() {
   for (const record of records) {
     try {
       const tx = await decryptRecord(record);
+      tx.purpose = transactionPurpose(tx);
       tx._recordKey = record.key;
       loaded.push(tx);
       if (record.version !== 2) legacy.push({ recordKey: record.key, tx });
@@ -539,6 +549,18 @@ function formatMoney(value) {
   return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 }
 
+function transactionPurpose(txOrValue) {
+  const raw = typeof txOrValue === 'object' && txOrValue !== null ? txOrValue.purpose : txOrValue;
+  const text = String(raw ?? '').trim().toUpperCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ');
+  if (!text || ['TRADE', 'TRADING', 'FOR TRADE'].includes(text)) return 'TRADE';
+  if (['HOLD', 'HOLDING', 'FOR HOLD', 'LONG TERM', 'LONGTERM', 'INVESTMENT'].includes(text)) return 'HOLD';
+  throw new Error('Purpose must be Trading or Long-term.');
+}
+
+function purposeLabel(value) {
+  return PURPOSE_LABELS[transactionPurpose(value)];
+}
+
 function parseFee(rawFee, side, base, quote) {
   const text = String(rawFee ?? '').trim();
   if (!text) return { amount: '0', asset: quote, inferred: false, raw: '' };
@@ -580,6 +602,7 @@ function normalizeTransaction(input, source = 'manual') {
     quote,
     type: String(input.type ?? 'OTHER').trim().toUpperCase() || 'OTHER',
     side,
+    purpose: transactionPurpose(input.purpose),
     price,
     executed,
     total,
@@ -632,6 +655,7 @@ function csvRowsToTransactions(text) {
         pair: r[index.Pair],
         type: r[index.Type],
         side: r[index.Side],
+        purpose: index.Purpose === undefined ? 'TRADE' : r[index.Purpose],
         price: r[index['Executed Price']],
         executed: r[index.Executed],
         total: r[index.Total],
@@ -667,23 +691,43 @@ function desiredMarketSymbols() {
   return [...new Set(analyticsCache.holdings.map(marketSymbolForHolding).filter(Boolean))].sort();
 }
 
+function updateMarketControls() {
+  for (const id of ['marketToggleBtn', 'overviewMarketToggleBtn']) {
+    const toggle = $(id);
+    if (!toggle) continue;
+    toggle.setAttribute('aria-pressed', String(livePricingEnabled));
+    toggle.classList.toggle('active', livePricingEnabled);
+    toggle.setAttribute('aria-label', livePricingEnabled ? 'Turn live pricing off' : 'Turn live pricing on');
+    toggle.title = livePricingEnabled ? 'Live pricing on' : 'Live pricing off';
+  }
+  for (const id of ['marketRefreshBtn', 'overviewMarketRefreshBtn']) {
+    const refresh = $(id);
+    if (refresh) refresh.disabled = !livePricingEnabled;
+  }
+}
+
 function updateMarketStatus(text = marketStatusText) {
   marketStatusText = text;
-  const el = $('marketStatus');
-  if (!el) return;
   let suffix = '';
   if (marketLastMessageAt) {
     const time = new Intl.DateTimeFormat('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(marketLastMessageAt));
     suffix = ` · ${time}`;
   }
-  el.textContent = `${text}${suffix}`;
+  for (const id of ['marketStatus', 'overviewMarketStatus']) {
+    const el = $(id);
+    if (el) el.textContent = `${text}${suffix}`;
+  }
+  updateMarketControls();
 }
 
 function scheduleMarketRender() {
   if (marketRenderTimer) return;
   marketRenderTimer = setTimeout(() => {
     marketRenderTimer = null;
-    if (vaultKey) renderHoldings();
+    if (vaultKey) {
+      renderHoldings();
+      renderOverview();
+    }
     updateMarketStatus();
   }, MARKET_RENDER_THROTTLE_MS);
 }
@@ -799,6 +843,7 @@ function analyzeTransactions(list) {
   const ordered = [...list].sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date));
   const states = new Map();
   const txStatus = new Map();
+  const realizedEvents = [];
   let buyVolumePhp = 0n;
   let feesPhp = 0n;
   let realizedPnlPhp = 0n;
@@ -807,7 +852,9 @@ function analyzeTransactions(list) {
   const warnings = [];
 
   for (const tx of ordered) {
-    const state = states.get(tx.pair) || { pair: tx.pair, base: tx.base, quote: tx.quote, netQty: 0n, knownQty: 0n, knownCost: 0n };
+    const purpose = transactionPurpose(tx);
+    const stateKey = `${purpose}:${tx.pair}`;
+    const state = states.get(stateKey) || { pair: tx.pair, base: tx.base, quote: tx.quote, purpose, netQty: 0n, knownQty: 0n, knownCost: 0n };
     const qty = parseFixed(tx.executed);
     const total = parseFixed(tx.total);
     const fee = parseFixed(tx.feeAmount || '0');
@@ -840,9 +887,13 @@ function analyzeTransactions(list) {
       if (state.knownQty > 0n && qtyRemoved <= state.knownQty) {
         const avgCost = divFixed(state.knownCost, state.knownQty);
         const removedCost = mulFixed(avgCost, qtyRemoved);
+        const pnl = proceeds - removedCost;
         state.knownQty -= qtyRemoved;
         state.knownCost = state.knownCost > removedCost ? state.knownCost - removedCost : 0n;
-        if (tx.quote === 'PHP') realizedPnlPhp += proceeds - removedCost;
+        if (tx.quote === 'PHP') {
+          realizedPnlPhp += pnl;
+          realizedEvents.push({ date: tx.date, pair: tx.pair, pnl, removedCost, proceeds, id: tx.id, recordKey: tx._recordKey || '' });
+        }
         matchedSells++;
         notes.push('Matched using weighted average cost');
       } else {
@@ -853,7 +904,7 @@ function analyzeTransactions(list) {
       }
     }
 
-    states.set(tx.pair, state);
+    states.set(stateKey, state);
     txStatus.set(tx.id, notes);
   }
 
@@ -864,56 +915,257 @@ function analyzeTransactions(list) {
   const mismatches = list.filter(t => t.totalMismatch).length;
   if (mismatches) warnings.push(`${mismatches} transaction${mismatches === 1 ? '' : 's'} have a noticeable Price × Quantity vs Total difference.`);
 
-  return { holdings, txStatus, buyVolumePhp, feesPhp, realizedPnlPhp, matchedSells, unmatchedSells, warnings };
+  return { holdings, txStatus, buyVolumePhp, feesPhp, realizedPnlPhp, realizedEvents, matchedSells, unmatchedSells, warnings };
+}
+
+function performanceSummary(events) {
+  const wins = events.filter(event => event.pnl > 0n);
+  const losses = events.filter(event => event.pnl < 0n);
+  const scratches = events.length - wins.length - losses.length;
+  const grossProfit = wins.reduce((sum, event) => sum + event.pnl, 0n);
+  const grossLoss = losses.reduce((sum, event) => sum + (-event.pnl), 0n);
+  const directional = wins.length + losses.length;
+  const winRate = directional ? (wins.length / directional) * 100 : null;
+  const profitFactor = grossLoss > 0n ? fixedToNumber(divFixed(grossProfit, grossLoss)) : grossProfit > 0n ? Infinity : null;
+  const avgWin = wins.length ? grossProfit / BigInt(wins.length) : null;
+  const avgLoss = losses.length ? -(grossLoss / BigInt(losses.length)) : null;
+  let expectancy = null;
+  if (directional) expectancy = (grossProfit - grossLoss) / BigInt(directional);
+
+  let cumulative = 0n;
+  let peak = 0n;
+  let maxDrawdown = 0n;
+  const curve = events.map(event => {
+    cumulative += event.pnl;
+    if (cumulative > peak) peak = cumulative;
+    const drawdown = peak - cumulative;
+    if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+    return { date: event.date, value: cumulative };
+  });
+
+  return { wins: wins.length, losses: losses.length, scratches, winRate, profitFactor, avgWin, avgLoss, expectancy, grossProfit, grossLoss, maxDrawdown, curve };
+}
+
+function valuationSummary(analysis) {
+  const open = analysis.holdings.filter(holding => holding.netQty > 0n && holding.quote === 'PHP');
+  let totalCostBasis = 0n;
+  let valuedCostBasis = 0n;
+  let marketValue = 0n;
+  let valuedPositions = 0;
+  for (const holding of open) {
+    totalCostBasis += holding.knownCost;
+    const symbol = marketSymbolForHolding(holding);
+    const market = symbol ? marketPrices.get(symbol) : null;
+    if (!market?.bidPrice) continue;
+    try {
+      marketValue += mulFixed(holding.netQty, parseFixed(market.bidPrice));
+      valuedCostBasis += holding.knownCost;
+      valuedPositions++;
+    } catch {}
+  }
+  const unrealized = valuedPositions ? marketValue - valuedCostBasis : null;
+  const unrealizedPct = unrealized != null && valuedCostBasis > 0n ? (fixedToNumber(unrealized) / fixedToNumber(valuedCostBasis)) * 100 : null;
+  return { openPositions: open.length, totalCostBasis, valuedCostBasis, marketValue: valuedPositions ? marketValue : null, unrealized, unrealizedPct, valuedPositions };
+}
+
+function formatPercent(value, digits = 1) {
+  if (value == null || !Number.isFinite(value)) return '—';
+  return `${value >= 0 ? '' : '-'}${Math.abs(value).toFixed(digits)}%`;
+}
+
+function dateRangeText(list) {
+  const times = list.map(tx => parseDateMs(tx.date)).filter(Boolean);
+  if (!times.length) return 'No data yet';
+  const min = Math.min(...times), max = Math.max(...times);
+  const fmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  return `${fmt.format(new Date(min))} – ${fmt.format(new Date(max))}`;
+}
+
+function overviewTransactions() {
+  return transactions.filter(tx => transactionPurpose(tx) === overviewPurpose);
+}
+
+function updateOverviewPurposeTabs() {
+  document.querySelectorAll('[data-overview-purpose]').forEach(button => {
+    const active = button.dataset.overviewPurpose === overviewPurpose;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
 }
 
 function renderAll() {
   analyticsCache = analyzeTransactions(transactions);
-  renderMetrics();
+  renderOverview();
   renderHoldings();
-  renderAllocation();
   renderTransactions();
-  renderWarnings();
   syncMarketData();
 }
 
-function renderMetrics() {
-  $('metricTransactions').textContent = String(transactions.length);
-  $('metricBuyVolume').textContent = formatMoney(analyticsCache.buyVolumePhp);
-  $('metricFees').textContent = formatMoney(analyticsCache.feesPhp);
-  if (analyticsCache.matchedSells > 0) {
-    $('metricPnl').textContent = formatMoney(analyticsCache.realizedPnlPhp);
-    $('metricPnlNote').textContent = analyticsCache.unmatchedSells ? 'Partial: unmatched sells excluded' : `${analyticsCache.matchedSells} matched sell${analyticsCache.matchedSells === 1 ? '' : 's'}`;
-  } else {
-    $('metricPnl').textContent = '—';
-    $('metricPnlNote').textContent = analyticsCache.unmatchedSells ? 'Missing earlier inventory' : 'Needs matched sells';
-  }
-
-  if (transactions.length) {
-    const times = transactions.map(t => parseDateMs(t.date)).filter(Boolean);
-    const min = Math.min(...times), max = Math.max(...times);
-    const fmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
-    $('metricDateRange').textContent = min && max ? `${fmt.format(new Date(min))} – ${fmt.format(new Date(max))}` : 'Imported ledger';
-  } else $('metricDateRange').textContent = 'No data yet';
+function renderOverview() {
+  updateOverviewPurposeTabs();
+  const list = overviewTransactions();
+  const analysis = analyzeTransactions(list);
+  const performance = performanceSummary(analysis.realizedEvents);
+  const valuation = valuationSummary(analysis);
+  renderMetrics(list, analysis, performance, valuation);
+  renderAnalyticsStats(list, analysis, performance, valuation);
+  renderPerformanceChart(list, analysis, performance);
+  renderAllocation(analysis);
+  renderWarnings(analysis);
 }
 
-function renderWarnings() {
+function setMetric(labelId, valueId, noteId, label, value, note) {
+  if ($(labelId)) $(labelId).textContent = label;
+  if ($(valueId)) $(valueId).textContent = value;
+  if ($(noteId)) $(noteId).textContent = note;
+}
+
+function renderMetrics(list, analysis, performance, valuation) {
+  if (overviewPurpose === 'TRADE') {
+    const exitCount = analysis.realizedEvents.length;
+    setMetric('metricTransactionsLabel', 'metricTransactions', 'metricDateRange', 'Realized P&L', exitCount ? formatMoney(analysis.realizedPnlPhp) : '—', exitCount ? `${exitCount} matched PHP sell${exitCount === 1 ? '' : 's'}` : 'No matched PHP sells');
+    setMetric('metricBuyVolumeLabel', 'metricBuyVolume', 'metricBuyVolumeNote', 'Win rate', performance.winRate == null ? '—' : formatPercent(performance.winRate), performance.wins || performance.losses ? `${performance.wins} win${performance.wins === 1 ? '' : 's'} · ${performance.losses} loss${performance.losses === 1 ? '' : 'es'}` : 'Needs matched exits');
+    const factorText = performance.profitFactor === Infinity ? '∞' : performance.profitFactor == null ? '—' : performance.profitFactor.toFixed(2);
+    setMetric('metricFeesLabel', 'metricFees', 'metricFeesNote', 'Profit factor', factorText, performance.profitFactor == null ? 'Needs wins/losses' : 'Gross profit ÷ gross loss');
+    setMetric('metricPnlLabel', 'metricPnl', 'metricPnlNote', 'Max drawdown', analysis.realizedEvents.length ? formatMoney(-performance.maxDrawdown) : '—', analysis.realizedEvents.length ? 'Peak-to-trough realized P&L' : 'Needs matched exits');
+  } else {
+    const coverage = valuation.openPositions ? `${valuation.valuedPositions}/${valuation.openPositions} positions valued` : 'No open positions';
+    setMetric('metricTransactionsLabel', 'metricTransactions', 'metricDateRange', 'Current value', valuation.marketValue == null ? '—' : formatMoney(valuation.marketValue), livePricingEnabled ? coverage : 'Turn on live pricing');
+    setMetric('metricBuyVolumeLabel', 'metricBuyVolume', 'metricBuyVolumeNote', 'Cost basis', formatMoney(valuation.totalCostBasis), `${valuation.openPositions} open position${valuation.openPositions === 1 ? '' : 's'}`);
+    const unrealizedClass = valuation.unrealized == null ? '' : valuation.unrealized > 0n ? 'positive' : valuation.unrealized < 0n ? 'negative' : '';
+    setMetric('metricFeesLabel', 'metricFees', 'metricFeesNote', 'Unrealized P&L', valuation.unrealized == null ? '—' : formatMoney(valuation.unrealized), valuation.unrealized == null ? (livePricingEnabled ? 'Waiting for live bids' : 'Turn on live pricing') : 'On live-valued positions');
+    $('metricFees').className = unrealizedClass;
+    setMetric('metricPnlLabel', 'metricPnl', 'metricPnlNote', 'Unrealized return', valuation.unrealizedPct == null ? '—' : formatPercent(valuation.unrealizedPct), valuation.unrealizedPct == null ? (livePricingEnabled ? 'Waiting for live bids' : 'Turn on live pricing') : 'Market value vs cost basis');
+    $('metricPnl').className = unrealizedClass;
+  }
+  if (overviewPurpose === 'TRADE') {
+    $('metricFees').className = '';
+    $('metricPnl').className = performance.maxDrawdown > 0n ? 'negative' : '';
+  }
+}
+
+function analyticsStat(label, value, note = '') {
+  return `<div class="analytics-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${note ? `<small>${escapeHtml(note)}</small>` : ''}</div>`;
+}
+
+function renderAnalyticsStats(list, analysis, performance, valuation) {
+  const el = $('analyticsStats');
+  if (!el) return;
+  if (overviewPurpose === 'TRADE') {
+    $('analyticsEyebrow').textContent = 'TRADING QUALITY';
+    $('analyticsTitle').textContent = 'Performance diagnostics';
+    $('analyticsDescription').textContent = 'Matched sell events use weighted-average cost. This is a performance lens, not a claim that each sell is a complete round-trip trade.';
+    const openCost = analysis.holdings.filter(h => h.quote === 'PHP' && h.netQty > 0n).reduce((sum, h) => sum + h.knownCost, 0n);
+    const liveCoverage = valuation.openPositions ? `${valuation.valuedPositions}/${valuation.openPositions} live-valued` : 'No open PHP positions';
+    el.innerHTML = [
+      analyticsStat('Matched exits', String(analysis.realizedEvents.length), `${list.length} trading transaction${list.length === 1 ? '' : 's'} · ${dateRangeText(list)}`),
+      analyticsStat('Expectancy / exit', performance.expectancy == null ? '—' : formatMoney(performance.expectancy), 'Expected realized P&L per directional matched sell'),
+      analyticsStat('Average win', performance.avgWin == null ? '—' : formatMoney(performance.avgWin), `${performance.wins} winning exit${performance.wins === 1 ? '' : 's'}`),
+      analyticsStat('Average loss', performance.avgLoss == null ? '—' : formatMoney(performance.avgLoss), `${performance.losses} losing exit${performance.losses === 1 ? '' : 's'}`),
+      analyticsStat('Open value', valuation.marketValue == null ? '—' : formatMoney(valuation.marketValue), livePricingEnabled ? liveCoverage : 'Turn on live pricing'),
+      analyticsStat('Open unrealized', valuation.unrealized == null ? '—' : formatMoney(valuation.unrealized), valuation.unrealizedPct == null ? liveCoverage : formatPercent(valuation.unrealizedPct)),
+      analyticsStat('PHP fees', formatMoney(analysis.feesPhp), 'Known PHP-denominated fees'),
+      analyticsStat('Open cost basis', formatMoney(openCost), `${valuation.openPositions} open PHP position${valuation.openPositions === 1 ? '' : 's'}`)
+    ].join('');
+  } else {
+    $('analyticsEyebrow').textContent = 'LONG-TERM HEALTH';
+    $('analyticsTitle').textContent = 'Accumulation snapshot';
+    $('analyticsDescription').textContent = 'Long-term analytics emphasize capital deployed, open cost basis, concentration, and live unrealized return instead of short-term win/loss statistics.';
+    const buys = list.filter(tx => tx.side === 'BUY' && tx.quote === 'PHP');
+    const sells = list.filter(tx => tx.side === 'SELL' && tx.quote === 'PHP');
+    const avgBuy = buys.length ? analysis.buyVolumePhp / BigInt(buys.length) : null;
+    const allocationRows = analysis.holdings.filter(h => h.quote === 'PHP' && h.knownCost > 0n);
+    const totalCost = allocationRows.reduce((sum, h) => sum + h.knownCost, 0n);
+    const largest = allocationRows.reduce((best, h) => !best || h.knownCost > best.knownCost ? h : best, null);
+    const concentration = largest && totalCost > 0n ? (fixedToNumber(largest.knownCost) / fixedToNumber(totalCost)) * 100 : null;
+    el.innerHTML = [
+      analyticsStat('Transactions', String(list.length), dateRangeText(list)),
+      analyticsStat('Gross purchases', formatMoney(analysis.buyVolumePhp), `${buys.length} PHP buy${buys.length === 1 ? '' : 's'}`),
+      analyticsStat('Average purchase', avgBuy == null ? '—' : formatMoney(avgBuy), 'Average PHP buy size'),
+      analyticsStat('Realized P&L', analysis.realizedEvents.length ? formatMoney(analysis.realizedPnlPhp) : '—', `${sells.length} PHP sell${sells.length === 1 ? '' : 's'}`),
+      analyticsStat('Largest allocation', largest ? `${largest.base} ${formatPercent(concentration)}` : '—', 'Share of open cost basis'),
+      analyticsStat('Open positions', String(valuation.openPositions), formatMoney(valuation.totalCostBasis)),
+      analyticsStat('PHP fees', formatMoney(analysis.feesPhp), 'Known PHP-denominated fees'),
+      analyticsStat('Live coverage', valuation.openPositions ? `${valuation.valuedPositions}/${valuation.openPositions}` : '—', livePricingEnabled ? 'Open PHP positions with live bids' : 'Live pricing is off')
+    ].join('');
+  }
+}
+
+function renderLineChart(el, points, { emptyText, footerLeft, footerRight } = {}) {
+  if (!points.length) {
+    el.className = 'performance-chart empty-state';
+    el.textContent = emptyText || 'No data yet.';
+    return;
+  }
+  const width = 640, height = 180, padX = 18, padY = 18;
+  const values = points.map(point => fixedToNumber(point.value));
+  let min = Math.min(0, ...values), max = Math.max(0, ...values);
+  if (min === max) { min -= 1; max += 1; }
+  const span = max - min;
+  const x = index => points.length === 1 ? width / 2 : padX + (index / (points.length - 1)) * (width - padX * 2);
+  const y = value => padY + ((max - value) / span) * (height - padY * 2);
+  const polyline = points.map((point, index) => `${x(index).toFixed(1)},${y(fixedToNumber(point.value)).toFixed(1)}`).join(' ');
+  const zeroY = y(0).toFixed(1);
+  el.className = 'performance-chart';
+  el.innerHTML = `<svg class="performance-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Performance line chart"><line class="chart-zero" x1="${padX}" y1="${zeroY}" x2="${width - padX}" y2="${zeroY}"/><polyline class="chart-line" points="${polyline}" vector-effect="non-scaling-stroke"/>${points.map((point, index) => `<circle class="chart-point" cx="${x(index).toFixed(1)}" cy="${y(fixedToNumber(point.value)).toFixed(1)}" r="3"/>`).join('')}</svg><div class="chart-footer"><span>${escapeHtml(footerLeft || '')}</span><strong>${escapeHtml(footerRight || '')}</strong></div>`;
+}
+
+function renderPerformanceChart(list, analysis, performance) {
+  const el = $('performanceChart');
+  if (!el) return;
+  if (overviewPurpose === 'TRADE') {
+    $('performanceEyebrow').textContent = 'REALIZED PERFORMANCE';
+    $('performanceTitle').textContent = 'Cumulative P&L';
+    renderLineChart(el, performance.curve, {
+      emptyText: 'No matched PHP sell events yet. Add prior buys and matched sells to unlock trading analytics.',
+      footerLeft: performance.curve.length ? shortDate(performance.curve[0].date) : '',
+      footerRight: performance.curve.length ? `Latest ${formatMoney(performance.curve[performance.curve.length - 1].value)}` : ''
+    });
+    return;
+  }
+
+  $('performanceEyebrow').textContent = 'ACCUMULATION';
+  $('performanceTitle').textContent = 'Cumulative purchases';
+  let cumulative = 0n;
+  const points = list
+    .filter(tx => tx.side === 'BUY' && tx.quote === 'PHP')
+    .sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date))
+    .map(tx => ({ date: tx.date, value: (cumulative += parseFixed(tx.total)) }));
+  renderLineChart(el, points, {
+    emptyText: 'No long-term PHP purchases yet.',
+    footerLeft: points.length ? shortDate(points[0].date) : '',
+    footerRight: points.length ? `Gross purchases ${formatMoney(points[points.length - 1].value)}` : ''
+  });
+}
+
+function renderWarnings(analysis = analyticsCache) {
   const el = $('warningBanner');
-  if (!analyticsCache.warnings.length) { el.hidden = true; el.textContent = ''; return; }
+  if (!analysis?.warnings?.length) { el.hidden = true; el.textContent = ''; return; }
   el.hidden = false;
-  el.textContent = analyticsCache.warnings.join(' ');
+  el.textContent = analysis.warnings.join(' ');
+}
+
+function updateHoldingsPurposeTabs() {
+  document.querySelectorAll('[data-holdings-purpose]').forEach(button => {
+    const active = button.dataset.holdingsPurpose === holdingsPurpose;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  });
 }
 
 function renderHoldings() {
   const body = $('holdingsBody');
   const cards = $('holdingsCards');
-  if (!analyticsCache.holdings.length) {
-    body.innerHTML = '<tr><td colspan="7" class="empty-cell">No holdings yet.</td></tr>';
-    if (cards) cards.innerHTML = '<div class="empty-card">No holdings yet.</div>';
+  updateHoldingsPurposeTabs();
+  const visibleHoldings = analyticsCache.holdings.filter(h => transactionPurpose(h) === holdingsPurpose);
+  if (!visibleHoldings.length) {
+    const label = purposeLabel(holdingsPurpose).toLowerCase();
+    body.innerHTML = `<tr><td colspan="7" class="empty-cell">No ${label} holdings yet.</td></tr>`;
+    if (cards) cards.innerHTML = `<div class="empty-card">No ${label} holdings yet.</div>`;
     return;
   }
 
-  const rows = analyticsCache.holdings.map(h => {
+  const rows = visibleHoldings.map(h => {
     const avg = h.knownQty > 0n ? divFixed(h.knownCost, h.knownQty) : null;
     const quantity = formatFixed(h.netQty, 10);
     const symbol = marketSymbolForHolding(h);
@@ -947,7 +1199,7 @@ function renderHoldings() {
 
   if (cards) cards.innerHTML = rows.map(({ h, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<article class="holding-card">
     <div class="holding-card-head">
-      <div><div class="asset-name">${escapeHtml(h.base)}</div><div class="card-sub">${escapeHtml(h.base)}/${escapeHtml(h.quote)}</div></div>
+      <div><div class="asset-name">${escapeHtml(h.base)}</div><div class="card-sub">${escapeHtml(h.base)}/${escapeHtml(h.quote)} · ${escapeHtml(purposeLabel(h))}</div></div>
       <div class="asset-value">${valueText}</div>
     </div>
     <div class="value-grid">
@@ -959,22 +1211,31 @@ function renderHoldings() {
     </div>
   </article>`).join('');
 }
-function renderAllocation() {
+function renderAllocation(analysis = analyticsCache) {
   const el = $('allocationChart');
-  const rows = analyticsCache.holdings.filter(h => h.quote === 'PHP' && h.knownCost > 0n);
+  const title = $('allocationTitle');
+  if (title) title.textContent = `${purposeLabel(overviewPurpose)} cost-basis allocation`;
+  const grouped = new Map();
+  for (const h of (analysis?.holdings || []).filter(h => h.quote === 'PHP' && h.knownCost > 0n)) {
+    const key = `${h.base}/${h.quote}`;
+    const row = grouped.get(key) || { base: h.base, quote: h.quote, knownCost: 0n };
+    row.knownCost += h.knownCost;
+    grouped.set(key, row);
+  }
+  const rows = [...grouped.values()].sort((a, b) => Number(b.knownCost - a.knownCost));
   if (!rows.length) {
     el.className = 'bar-chart empty-state';
-    el.textContent = 'Import buy transactions to see cost-basis allocation.';
+    el.textContent = `No ${purposeLabel(overviewPurpose).toLowerCase()} open cost basis yet.`;
     return;
   }
   el.className = 'bar-chart';
-  const max = rows.reduce((m, r) => r.knownCost > m ? r.knownCost : m, 0n);
+  const total = rows.reduce((sum, row) => sum + row.knownCost, 0n);
   el.innerHTML = rows.slice(0, 8).map(r => {
-    const pct = max > 0n ? Math.max(2, (fixedToNumber(r.knownCost) / fixedToNumber(max)) * 100) : 0;
+    const pct = total > 0n ? (fixedToNumber(r.knownCost) / fixedToNumber(total)) * 100 : 0;
     return `<div class="bar-row">
       <div class="bar-label">${escapeHtml(r.base)}</div>
-      <progress class="bar-progress" max="100" value="${pct.toFixed(2)}" aria-label="${escapeHtml(r.base)} allocation"></progress>
-      <div class="bar-value">${formatMoney(r.knownCost)}</div>
+      <progress class="bar-progress" max="100" value="${pct.toFixed(2)}" aria-label="${escapeHtml(r.base)} ${pct.toFixed(1)} percent allocation"></progress>
+      <div class="bar-value"><strong>${pct.toFixed(1)}%</strong><span>${formatMoney(r.knownCost)}</span></div>
     </div>`;
   }).join('');
 }
@@ -984,8 +1245,53 @@ function filteredTransactions() {
   const side = $('sideFilter')?.value || '';
   return transactions.filter(tx => {
     if (side && tx.side !== side) return false;
-    return !q || [tx.id, tx.pair, tx.side, tx.type, tx.feeAsset, tx.source, tx.notes].some(v => String(v ?? '').toLowerCase().includes(q));
+    return !q || [tx.id, tx.pair, tx.side, tx.type, purposeLabel(tx), tx.feeAsset, tx.source, tx.notes].some(v => String(v ?? '').toLowerCase().includes(q));
   });
+}
+
+function netAcquiredForTransaction(tx) {
+  const acquiredAsset = tx.side === 'BUY' ? tx.base : tx.quote;
+  let amount = tx.side === 'BUY' ? parseFixed(tx.executed) : parseFixed(tx.total);
+  const fee = parseFixed(tx.feeAmount || '0');
+  if (tx.feeAsset === acquiredAsset && fee > 0n) amount = amount > fee ? amount - fee : 0n;
+  return { amount, asset: acquiredAsset };
+}
+
+function fixedCopyValue(value) {
+  return formatFixed(value, 18).replace(/,/g, '');
+}
+
+async function copyText(text) {
+  const value = String(text ?? '');
+  if (navigator.clipboard?.writeText) {
+    try { await navigator.clipboard.writeText(value); return; } catch {}
+  }
+  const input = document.createElement('textarea');
+  input.value = value;
+  input.setAttribute('readonly', '');
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand?.('copy');
+  input.remove();
+  if (!copied) throw new Error('Copy is not available in this browser.');
+}
+
+function updateLedgerDetailsToggle(filtered = filteredTransactions()) {
+  for (const key of [...expandedRecordKeys]) {
+    if (!transactions.some(tx => tx._recordKey === key)) expandedRecordKeys.delete(key);
+  }
+  const visibleKeys = filtered.map(tx => tx._recordKey);
+  const allExpanded = visibleKeys.length > 0 && visibleKeys.every(key => expandedRecordKeys.has(key));
+  const button = $('toggleLedgerDetailsBtn');
+  if (!button) return;
+  button.disabled = visibleKeys.length === 0;
+  button.setAttribute('aria-pressed', String(allExpanded));
+  button.setAttribute('aria-label', allExpanded ? 'Collapse all visible transaction details' : 'Expand all visible transaction details');
+  const label = button.querySelector('span');
+  if (label) label.textContent = allExpanded ? 'Collapse all' : 'Expand all';
+  button.classList.toggle('expanded', allExpanded);
 }
 
 function updateSelectionUi(filtered = filteredTransactions()) {
@@ -1026,9 +1332,10 @@ function renderTransactions() {
   const filtered = filteredTransactions();
   if (!filtered.length) {
     const message = transactions.length ? 'No matches.' : 'No transactions yet.';
-    body.innerHTML = `<tr><td colspan="11" class="empty-cell">${message}</td></tr>`;
+    body.innerHTML = `<tr><td colspan="13" class="empty-cell">${message}</td></tr>`;
     if (cards) cards.innerHTML = `<div class="empty-card">${message}</div>`;
     updateSelectionUi(filtered);
+    updateLedgerDetailsToggle(filtered);
     return;
   }
 
@@ -1037,43 +1344,62 @@ function renderTransactions() {
     const warn = notes.some(n => n.includes('Missing') || n.includes('differs') || n.includes('inferred'));
     const feeText = `${formatFixed(parseFixed(tx.feeAmount || '0'), 12)} ${escapeHtml(tx.feeAsset || '')}`.trim();
     const checked = selectedRecordKeys.has(tx._recordKey);
-    const totalText = tx.quote === 'PHP' ? formatMoney(parseFixed(tx.total)) : formatFixed(parseFixed(tx.total), 8);
-    const priceText = tx.quote === 'PHP' ? formatMoney(parseFixed(tx.price)) : formatFixed(parseFixed(tx.price), 8);
-    return { tx, notes, warn, feeText, checked, totalText, priceText };
+    const expanded = expandedRecordKeys.has(tx._recordKey);
+    const totalText = tx.quote === 'PHP' ? formatMoney(parseFixed(tx.total)) : `${formatFixed(parseFixed(tx.total), 8)} ${escapeHtml(tx.quote)}`;
+    const priceText = tx.quote === 'PHP' ? formatMoney(parseFixed(tx.price)) : `${formatFixed(parseFixed(tx.price), 8)} ${escapeHtml(tx.quote)}`;
+    const net = netAcquiredForTransaction(tx);
+    const netCopy = fixedCopyValue(net.amount);
+    const netText = `${formatFixed(net.amount, 12)} ${escapeHtml(net.asset)}`;
+    const purpose = purposeLabel(tx);
+    return { tx, notes, warn, feeText, checked, expanded, totalText, priceText, netCopy, netText, purpose };
   });
 
-  body.innerHTML = rows.map(({ tx, notes, warn, feeText, checked, totalText, priceText }) => `<tr>
+  body.innerHTML = rows.map(({ tx, notes, warn, feeText, checked, totalText, priceText, netCopy, netText, purpose }) => `<tr>
     <td class="select-cell"><input type="checkbox" data-select-key="${escapeHtml(tx._recordKey)}" aria-label="Select ${escapeHtml(tx.pair)} transaction"${checked ? ' checked' : ''}></td>
     <td title="${escapeHtml(tx.date)}">${escapeHtml(shortDate(tx.date))}</td>
     <td title="ID ${escapeHtml(tx.id)}"><strong>${escapeHtml(tx.pair)}</strong></td>
+    <td><span class="purpose-badge ${transactionPurpose(tx).toLowerCase()}">${escapeHtml(purpose)}</span></td>
     <td><span class="side ${tx.side.toLowerCase()}">${escapeHtml(tx.side)}</span></td>
     <td>${priceText}</td>
     <td>${formatFixed(parseFixed(tx.executed), 10)}</td>
     <td><strong>${totalText}</strong></td>
     <td>${feeText}</td>
+    <td><div class="net-copy-cell"><strong>${netText}</strong><button type="button" class="inline-copy icon-only" data-action="copy-net" data-key="${escapeHtml(tx._recordKey)}" aria-label="Copy net acquired amount ${escapeHtml(netCopy)}" title="Copy net acquired amount">${icon('copy')}</button></div></td>
     <td class="note-cell" title="${escapeHtml(tx.notes || '')}">${tx.notes ? escapeHtml(tx.notes) : '—'}</td>
     <td class="status ${warn ? 'warn' : ''}" title="${escapeHtml(notes.join(' · '))}">${notes.length ? escapeHtml(notes[0]) : 'OK'}</td>
     <td><div class="row-actions"><button type="button" class="table-action icon-only" data-action="edit" data-key="${escapeHtml(tx._recordKey)}" aria-label="Edit transaction" title="Edit">${icon('edit')}</button><button type="button" class="table-action danger icon-only" data-action="delete" data-key="${escapeHtml(tx._recordKey)}" aria-label="Delete transaction" title="Delete">${icon('trash')}</button></div></td>
   </tr>`).join('');
 
-  if (cards) cards.innerHTML = rows.map(({ tx, notes, warn, feeText, checked, totalText, priceText }) => `<article class="transaction-card${checked ? ' selected' : ''}" data-card-key="${escapeHtml(tx._recordKey)}">
-    <div class="transaction-card-head">
-      <div class="transaction-card-main">
-        <input type="checkbox" data-select-key="${escapeHtml(tx._recordKey)}" aria-label="Select ${escapeHtml(tx.pair)} transaction"${checked ? ' checked' : ''}>
-        <div><div class="pair-name">${escapeHtml(tx.pair)}</div><div class="card-sub">${escapeHtml(shortDate(tx.date))} · ${escapeHtml(tx.type)}</div></div>
+  if (cards) cards.innerHTML = rows.map(({ tx, notes, warn, feeText, checked, expanded, totalText, priceText, netCopy, netText, purpose }) => `<article class="transaction-card${checked ? ' selected' : ''}${expanded ? ' expanded' : ''}" data-card-key="${escapeHtml(tx._recordKey)}">
+    <div class="transaction-summary">
+      <input type="checkbox" data-select-key="${escapeHtml(tx._recordKey)}" aria-label="Select ${escapeHtml(tx.pair)} transaction"${checked ? ' checked' : ''}>
+      <div class="transaction-summary-main">
+        <div class="transaction-summary-top"><strong class="pair-name">${escapeHtml(tx.pair)}</strong><span class="side ${tx.side.toLowerCase()}">${escapeHtml(tx.side)}</span></div>
+        <div class="card-sub">${escapeHtml(shortDate(tx.date))} · ${escapeHtml(purpose)}</div>
       </div>
+      <div class="transaction-net-summary">
+        <span>Net acquired</span>
+        <div><strong>${netText}</strong><button type="button" class="inline-copy icon-only" data-action="copy-net" data-key="${escapeHtml(tx._recordKey)}" aria-label="Copy net acquired amount ${escapeHtml(netCopy)}" title="Copy net acquired amount">${icon('copy')}</button></div>
+      </div>
+      <button type="button" class="detail-toggle icon-only" data-action="toggle-details" data-key="${escapeHtml(tx._recordKey)}" aria-expanded="${expanded}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${escapeHtml(tx.pair)} transaction details" title="${expanded ? 'Collapse details' : 'Expand details'}">${icon('chevron')}</button>
+    </div>
+    <div class="transaction-detail-panel"${expanded ? '' : ' hidden'}>
+      <div class="tx-detail-grid">
+        <div class="value-cell"><span>Type</span><strong>${escapeHtml(tx.type)}</strong></div>
+        <div class="value-cell"><span>Purpose</span><strong>${escapeHtml(purpose)}</strong></div>
+        <div class="value-cell"><span>Price</span><strong>${priceText}</strong></div>
+        <div class="value-cell"><span>Executed</span><strong>${formatFixed(parseFixed(tx.executed), 12)} ${escapeHtml(tx.base)}</strong></div>
+        <div class="value-cell"><span>Total</span><strong>${totalText}</strong></div>
+        <div class="value-cell"><span>Fee</span><strong>${feeText}</strong></div>
+        <div class="value-cell span-detail"><span>ID</span><strong class="break-value">${escapeHtml(tx.id)}</strong></div>
+        <div class="tx-status ${warn ? 'warn' : ''}">${notes.length ? escapeHtml(notes[0]) : 'OK'}</div>
+      </div>
+      ${tx.notes ? `<div class="tx-notes">${escapeHtml(tx.notes)}</div>` : ''}
       <div class="transaction-card-actions"><button type="button" class="table-action icon-only" data-action="edit" data-key="${escapeHtml(tx._recordKey)}" aria-label="Edit transaction" title="Edit">${icon('edit')}</button><button type="button" class="table-action danger icon-only" data-action="delete" data-key="${escapeHtml(tx._recordKey)}" aria-label="Delete transaction" title="Delete">${icon('trash')}</button></div>
     </div>
-    <div class="tx-amount">${totalText}</div>
-    <div class="tx-meta"><span class="side ${tx.side.toLowerCase()}">${escapeHtml(tx.side)}</span><span>${formatFixed(parseFixed(tx.executed), 10)} ${escapeHtml(tx.base)}</span></div>
-    <div class="tx-detail-grid">
-      <div class="value-cell"><span>Price</span><strong>${priceText}</strong></div>
-      <div class="value-cell"><span>Fee</span><strong>${feeText}</strong></div>
-      <div class="tx-status ${warn ? 'warn' : ''}">${notes.length ? escapeHtml(notes[0]) : 'OK'}</div>
-    </div>
-    ${tx.notes ? `<div class="tx-notes">${escapeHtml(tx.notes)}</div>` : ''}
   </article>`).join('');
   updateSelectionUi(filtered);
+  updateLedgerDetailsToggle(filtered);
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
@@ -1279,6 +1605,7 @@ function setManualMode(tx = null) {
   form.elements.pair.value = tx.pair;
   form.elements.type.value = ['LIMIT', 'MARKET', 'OTHER'].includes(tx.type) ? tx.type : 'OTHER';
   form.elements.side.value = tx.side;
+  form.elements.purpose.value = transactionPurpose(tx);
   form.elements.price.value = tx.price;
   form.elements.executed.value = tx.executed;
   form.elements.notes.value = tx.notes || '';
@@ -1328,6 +1655,7 @@ function manualFormToTransaction(form) {
     pair: data.get('pair'),
     type: data.get('type'),
     side: data.get('side'),
+    purpose: data.get('purpose'),
     price: data.get('price'),
     executed: data.get('executed'),
     total: String(data.get('reportedTotal') || '').trim() || data.get('total'),
@@ -1841,26 +2169,68 @@ async function init() {
   };
   $('transactionsBody')?.addEventListener('change', handleSelectionChange);
   $('transactionsCards')?.addEventListener('change', handleSelectionChange);
-  $('marketToggleBtn')?.addEventListener('click', () => {
-    livePricingEnabled = !livePricingEnabled;
-    const toggle = $('marketToggleBtn');
-    toggle.setAttribute('aria-pressed', String(livePricingEnabled));
-    toggle.classList.toggle('active', livePricingEnabled);
-    toggle.setAttribute('aria-label', livePricingEnabled ? 'Turn live pricing off' : 'Turn live pricing on');
-    toggle.title = livePricingEnabled ? 'Live pricing on' : 'Live pricing off';
-    if (livePricingEnabled) syncMarketData(true);
-    else { stopMarketData({ clearPrices: true, resetStatus: false }); updateMarketStatus('Live pricing off'); renderHoldings(); }
+  document.querySelectorAll('[data-holdings-purpose]').forEach(button => button.addEventListener('click', () => {
+    holdingsPurpose = transactionPurpose(button.dataset.holdingsPurpose);
+    renderHoldings();
+  }));
+  document.querySelectorAll('[data-overview-purpose]').forEach(button => button.addEventListener('click', () => {
+    overviewPurpose = transactionPurpose(button.dataset.overviewPurpose);
+    renderOverview();
+  }));
+  $('toggleLedgerDetailsBtn')?.addEventListener('click', () => {
+    const visibleKeys = filteredTransactions().map(tx => tx._recordKey);
+    const allExpanded = visibleKeys.length > 0 && visibleKeys.every(key => expandedRecordKeys.has(key));
+    for (const key of visibleKeys) {
+      if (allExpanded) expandedRecordKeys.delete(key);
+      else expandedRecordKeys.add(key);
+    }
+    renderTransactions();
   });
-  $('marketRefreshBtn')?.addEventListener('click', () => {
+  const toggleMarketPricing = () => {
+    livePricingEnabled = !livePricingEnabled;
+    updateMarketControls();
+    if (livePricingEnabled) {
+      updateMarketStatus('Coins.ph connecting…');
+      syncMarketData(true);
+    } else {
+      stopMarketData({ clearPrices: true, resetStatus: false });
+      updateMarketStatus('Live pricing off');
+      renderHoldings();
+      renderOverview();
+    }
+  };
+  const refreshMarketPricing = () => {
     if (!livePricingEnabled) return toast('Turn live pricing on first.');
     syncMarketData(true);
-  });
+  };
+  $('marketToggleBtn')?.addEventListener('click', toggleMarketPricing);
+  $('overviewMarketToggleBtn')?.addEventListener('click', toggleMarketPricing);
+  $('marketRefreshBtn')?.addEventListener('click', refreshMarketPricing);
+  $('overviewMarketRefreshBtn')?.addEventListener('click', refreshMarketPricing);
+  updateMarketControls();
   const handleTransactionAction = async event => {
     const button = event.target.closest('button[data-action][data-key]');
     if (!button) return;
     const recordKey = button.dataset.key;
     const tx = transactions.find(item => item._recordKey === recordKey);
     if (!tx) return toast('Transaction was not found.');
+
+    if (button.dataset.action === 'toggle-details') {
+      if (expandedRecordKeys.has(recordKey)) expandedRecordKeys.delete(recordKey);
+      else expandedRecordKeys.add(recordKey);
+      renderTransactions();
+      return;
+    }
+
+    if (button.dataset.action === 'copy-net') {
+      try {
+        await copyText(fixedCopyValue(netAcquiredForTransaction(tx).amount));
+        toast('Net acquired amount copied.');
+      } catch (error) {
+        toast(error.message || 'Could not copy amount.');
+      }
+      return;
+    }
 
     if (button.dataset.action === 'edit') {
       openEditTransaction(recordKey);
@@ -1975,6 +2345,9 @@ async function init() {
     pinConfigured = false;
     stopMarketData({ clearPrices: true });
     selectedRecordKeys.clear();
+    expandedRecordKeys.clear();
+    holdingsPurpose = 'TRADE';
+    overviewPurpose = 'TRADE';
     vaultKey = null;
     transactions = [];
     $('appShell').hidden = true;
