@@ -19,12 +19,15 @@ const PURPOSE_LABELS = { TRADE: 'Trading', HOLD: 'Long-term' };
 const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
 const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
 const MARKET_WS_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=';
+const MARKET_REST_BOOK_TICKER = 'https://api.pro.coins.ph/openapi/quote/v1/ticker/bookTicker';
 const MARKET_RECONNECT_BASE_MS = 4000;
 const MARKET_MAX_RECONNECT_MS = 60000;
 const MARKET_RENDER_THROTTLE_MS = 400;
+const MARKET_FALLBACK_REFRESH_MS = 30000;
+const MARKET_FETCH_TIMEOUT_MS = 8000;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.11.5';
+const APP_BUILD = '2026.09.12.1';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -50,6 +53,7 @@ let marketPrices = new Map();
 let marketStreamsKey = '';
 let marketReconnectTimer = null;
 let marketPingTimer = null;
+let marketFallbackTimer = null;
 let marketRenderTimer = null;
 let marketReconnectAttempt = 0;
 let marketLastMessageAt = 0;
@@ -732,15 +736,87 @@ function scheduleMarketRender() {
   }, MARKET_RENDER_THROTTLE_MS);
 }
 
+function pruneMarketPrices(symbols) {
+  const keep = new Set(symbols);
+  for (const symbol of marketPrices.keys()) {
+    if (!keep.has(symbol)) marketPrices.delete(symbol);
+  }
+}
+
+function applyMarketTickerPayload(payload, symbols) {
+  const wanted = new Set(symbols);
+  let rows = payload?.data ?? payload;
+  if (!Array.isArray(rows)) rows = rows ? [rows] : [];
+  let applied = 0;
+  const now = Date.now();
+  for (const row of rows) {
+    const symbol = String(row?.s ?? row?.symbol ?? '').toUpperCase();
+    if (!symbol || !wanted.has(symbol)) continue;
+    const rawBid = row?.b ?? row?.bidPrice;
+    if (rawBid == null || String(rawBid).trim() === '') continue;
+    try {
+      const bidPrice = normalizeDecimal(rawBid);
+      if (parseFixed(bidPrice) <= 0n) continue;
+      const rawAsk = row?.a ?? row?.askPrice;
+      const askPrice = rawAsk == null || String(rawAsk).trim() === '' ? '' : normalizeDecimal(rawAsk);
+      marketPrices.set(symbol, { bidPrice, askPrice, updatedAt: now });
+      applied++;
+    } catch {}
+  }
+  if (applied) marketLastMessageAt = now;
+  return applied;
+}
+
+async function fetchMarketSnapshot(symbols, { quiet = false } = {}) {
+  if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length || !navigator.onLine) return 0;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MARKET_FETCH_TIMEOUT_MS);
+  try {
+    const url = new URL(MARKET_REST_BOOK_TICKER);
+    if (symbols.length === 1) url.searchParams.set('symbol', symbols[0]);
+    else url.searchParams.set('symbols', JSON.stringify(symbols));
+    const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    const applied = applyMarketTickerPayload(payload, symbols);
+    if (applied) {
+      const socketLive = marketSocket?.readyState === WebSocket.OPEN;
+      updateMarketStatus(socketLive ? `Coins.ph live · ${applied}/${symbols.length} priced` : `Coins.ph best bid · ${applied}/${symbols.length} priced`);
+      scheduleMarketRender();
+    } else if (!quiet && !marketPrices.size) {
+      updateMarketStatus('Coins.ph returned no matching bids');
+    }
+    return applied;
+  } catch (error) {
+    if (!quiet && !marketPrices.size && marketSocket?.readyState !== WebSocket.OPEN) {
+      updateMarketStatus(error?.name === 'AbortError' ? 'Coins.ph pricing timed out' : 'Coins.ph pricing unavailable');
+    }
+    return 0;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function startMarketFallbackRefresh(symbols) {
+  clearInterval(marketFallbackTimer);
+  marketFallbackTimer = null;
+  if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length) return;
+  marketFallbackTimer = setInterval(() => {
+    if (vaultKey && livePricingEnabled && !document.hidden) fetchMarketSnapshot(desiredMarketSymbols(), { quiet: true });
+  }, MARKET_FALLBACK_REFRESH_MS);
+}
+
 function stopMarketData({ clearPrices = true, resetStatus = true } = {}) {
   clearTimeout(marketReconnectTimer);
   clearInterval(marketPingTimer);
+  clearInterval(marketFallbackTimer);
   clearTimeout(marketRenderTimer);
   marketReconnectTimer = null;
   marketPingTimer = null;
+  marketFallbackTimer = null;
   marketRenderTimer = null;
   marketStreamsKey = '';
-  marketReconnectAttempt = 0;
+  if (clearPrices) marketReconnectAttempt = 0;
   if (marketSocket) {
     const socket = marketSocket;
     marketSocket = null;
@@ -758,7 +834,7 @@ function scheduleMarketReconnect() {
   if (!vaultKey || !livePricingEnabled || document.hidden || marketReconnectTimer) return;
   const delay = Math.min(MARKET_MAX_RECONNECT_MS, MARKET_RECONNECT_BASE_MS * (2 ** marketReconnectAttempt));
   marketReconnectAttempt = Math.min(marketReconnectAttempt + 1, 4);
-  updateMarketStatus(`Coins.ph reconnecting in ${Math.round(delay / 1000)}s`);
+  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · reconnecting in ${Math.round(delay / 1000)}s` : `Coins.ph reconnecting in ${Math.round(delay / 1000)}s`);
   marketReconnectTimer = setTimeout(() => {
     marketReconnectTimer = null;
     syncMarketData(true);
@@ -767,7 +843,7 @@ function scheduleMarketReconnect() {
 
 function syncMarketData(force = false) {
   if (!vaultKey || !livePricingEnabled || document.hidden) {
-    if (marketSocket) stopMarketData({ clearPrices: false, resetStatus: true });
+    if (marketSocket || marketFallbackTimer) stopMarketData({ clearPrices: false, resetStatus: true });
     return;
   }
 
@@ -778,13 +854,24 @@ function syncMarketData(force = false) {
     return;
   }
 
+  pruneMarketPrices(symbols);
+  startMarketFallbackRefresh(symbols);
+
+  // Seed the UI immediately. Book-ticker WebSocket events only arrive when the
+  // best bid/ask changes, so relying on the socket alone can leave "Waiting…"
+  // on a quiet market after launch/reconnect.
+  if (force || symbols.some(symbol => !marketPrices.has(symbol))) fetchMarketSnapshot(symbols, { quiet: false });
+
   const streams = symbols.map(symbol => `${symbol.toLowerCase()}@bookTicker`);
   const streamsKey = streams.join('/');
   if (!force && marketSocket && marketStreamsKey === streamsKey && [WebSocket.OPEN, WebSocket.CONNECTING].includes(marketSocket.readyState)) return;
 
-  stopMarketData({ clearPrices: force, resetStatus: false });
+  // Preserve the last in-memory snapshot while reconnecting instead of
+  // blanking a valid bid until the next WebSocket event arrives.
+  stopMarketData({ clearPrices: false, resetStatus: false });
   marketStreamsKey = streamsKey;
-  updateMarketStatus(`Connecting to Coins.ph · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`);
+  startMarketFallbackRefresh(symbols);
+  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · connecting live` : `Connecting to Coins.ph · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`);
 
   try {
     const socket = new WebSocket(`${MARKET_WS_BASE}${streamsKey}`);
@@ -806,14 +893,9 @@ function syncMarketData(force = false) {
       if (socket !== marketSocket) return;
       try {
         const message = JSON.parse(event.data);
-        if (message?.pong) return;
-        const data = message?.data || message;
-        const symbol = String(data?.s || '').toUpperCase();
-        if (!symbol || !data?.b) return;
-        const bidPrice = normalizeDecimal(data.b);
-        const askPrice = data.a ? normalizeDecimal(data.a) : '';
-        marketLastMessageAt = Date.now();
-        marketPrices.set(symbol, { bidPrice, askPrice, updatedAt: marketLastMessageAt });
+        if (message?.pong || message?.result === null) return;
+        const applied = applyMarketTickerPayload(message, symbols);
+        if (!applied) return;
         marketStatusText = `Coins.ph live · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`;
         scheduleMarketRender();
       } catch (error) {
@@ -822,7 +904,9 @@ function syncMarketData(force = false) {
     };
 
     socket.onerror = () => {
-      if (socket === marketSocket) updateMarketStatus('Coins.ph live pricing unavailable');
+      if (socket !== marketSocket) return;
+      updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live stream unavailable · trying snapshot');
+      fetchMarketSnapshot(symbols, { quiet: true });
     };
 
     socket.onclose = () => {
@@ -830,11 +914,15 @@ function syncMarketData(force = false) {
       marketSocket = null;
       clearInterval(marketPingTimer);
       marketPingTimer = null;
-      if (vaultKey && livePricingEnabled && !document.hidden) scheduleMarketReconnect();
+      if (vaultKey && livePricingEnabled && !document.hidden) {
+        fetchMarketSnapshot(symbols, { quiet: true });
+        scheduleMarketReconnect();
+      }
     };
   } catch (error) {
     console.warn('Could not open Coins.ph market socket', error);
-    updateMarketStatus('Coins.ph live pricing unavailable');
+    updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live pricing unavailable');
+    fetchMarketSnapshot(symbols, { quiet: true });
     scheduleMarketReconnect();
   }
 }

@@ -123,15 +123,15 @@ Trading analytics intentionally use only PHP-denominated SELL events that can be
 
 Long-term analytics emphasize portfolio health rather than win/loss statistics: live best-bid market value when enabled, open cost basis, unrealized P&L and return on live-valued positions, gross/average purchases, realized P&L for any long-term disposals, largest cost-basis concentration, live-price coverage, cumulative purchase activity, and cost-basis allocation.
 
-Overview live valuation uses the same opt-in Coins.ph public WebSocket as Holdings. Both views share the same in-memory market-price map and on/off state. No new network endpoint, API key, telemetry, or persisted price data was added.
+Overview live valuation uses the same opt-in Coins.ph public market data as Holdings. On enable/reconnect the app first requests the public `bookTicker` best-bid snapshot from `https://api.pro.coins.ph`, then keeps the existing Coins.ph WebSocket for real-time `bookTicker` updates. A 30-second Coins.ph-only snapshot refresh is retained as a fallback when the socket is quiet/unavailable. Both views share the same in-memory market-price map and on/off state. No API key, telemetry, or persisted price data is used.
 
 ## Live Coins.ph valuation
 
-`MARKET_WS_BASE` points to the public Coins.ph quote WebSocket:
+Live pricing uses the public Coins.ph `bookTicker` REST snapshot plus quote WebSocket. `MARKET_WS_BASE` points to:
 
 `wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=`
 
-Live pricing starts OFF on every app load. The user can explicitly toggle it on from Holdings.
+Live pricing starts OFF on every app load. The user can explicitly toggle it on from Holdings or Overview. Enabling it requests an immediate best-bid snapshot so the UI does not wait for the first WebSocket book change.
 
 When enabled, the app subscribes only to open `*/PHP` holdings using `<symbol>@bookTicker` streams.
 
@@ -181,7 +181,7 @@ Desktop and mobile renderers share the same event delegation and record keys. Wh
 
 1. Do not persist plaintext transactions, passphrases, derived keys, or live prices.
 2. Do not add third-party JS/CDN dependencies casually; deployed JavaScript executes inside the unlocked vault origin.
-3. Keep CSP network access narrow. Current external allowance is only the Coins.ph public WebSocket.
+3. Keep CSP network access narrow. Current external allowance is only Coins.ph public market-data endpoints (HTTPS best-bid snapshot plus WebSocket updates).
 4. Do not add telemetry that can reveal portfolio assets or usage.
 5. Any change to record encryption needs backward migration support.
 6. Keep sensitive UI state cleared on lock/pagehide.
