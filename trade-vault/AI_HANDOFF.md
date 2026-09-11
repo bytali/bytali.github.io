@@ -224,3 +224,8 @@ Static syntax/structure checks can run in the current sandbox, but its Chromium 
 - 2026-09-11 history/holdings update: mobile history is a compact expandable list; net acquired is calculated as the acquired asset after any fee charged in that same asset; holdings are split into Trading and Long-term purpose pools; backup format stays version 1 compatible.
 
 - 2026-09-11 overview analytics update: added separate Trading / Long-term Overview dashboards, matched-exit trading diagnostics, long-term accumulation/valuation analytics, purpose-specific allocation, and shared opt-in live pricing controls. Backup format and encrypted record schema are unchanged.
+
+- Ledger compact BUY summaries now show **Total spent** (quote currency) directly under **Net acquired**.
+
+### Build consistency hotfix (2026-09-12)
+The app shell is now build `2026.09.12.3`. The HTML build marker, JavaScript `APP_BUILD`, versioned asset URLs, and service-worker cache were synchronized to prevent a false “app update did not finish cleanly” startup error.

@@ -354,6 +354,9 @@ dialog form { padding: 21px; }
   .transaction-net-summary > span { display: block; margin-bottom: 1px; color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
   .transaction-net-summary > div { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
   .transaction-net-summary strong { overflow: hidden; max-width: 145px; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .transaction-spend-summary { display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; margin-top: 2px; color: var(--muted); white-space: nowrap; }
+  .transaction-spend-summary span { font-size: 7px; font-weight: 800; letter-spacing: .035em; text-transform: uppercase; }
+  .transaction-spend-summary strong { max-width: 112px; color: var(--soft-text); font-size: 9px; font-weight: 800; }
   .detail-toggle { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 9px; background: transparent; color: var(--muted); }
   .detail-toggle svg { width: 16px; height: 16px; transition: transform .16s ease; }
   .transaction-card.expanded .detail-toggle svg { transform: rotate(180deg); }

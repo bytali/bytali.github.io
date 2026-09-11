@@ -27,7 +27,7 @@ const MARKET_FALLBACK_REFRESH_MS = 30000;
 const MARKET_FETCH_TIMEOUT_MS = 8000;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.12.1';
+const APP_BUILD = '2026.09.12.4';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -1468,6 +1468,7 @@ function renderTransactions() {
       <div class="transaction-net-summary">
         <span>Net acquired</span>
         <div><strong>${netText}</strong><button type="button" class="inline-copy icon-only" data-action="copy-net" data-key="${escapeHtml(tx._recordKey)}" aria-label="Copy net acquired amount ${escapeHtml(netCopy)}" title="Copy net acquired amount">${icon('copy')}</button></div>
+        ${tx.side === 'BUY' ? `<div class="transaction-spend-summary"><span>Total spent</span><strong>${totalText}</strong></div>` : ''}
       </div>
       <button type="button" class="detail-toggle icon-only" data-action="toggle-details" data-key="${escapeHtml(tx._recordKey)}" aria-expanded="${expanded}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${escapeHtml(tx.pair)} transaction details" title="${expanded ? 'Collapse details' : 'Expand details'}">${icon('chevron')}</button>
     </div>
@@ -2344,10 +2345,16 @@ async function init() {
   $('openManualBtn')?.addEventListener('click', openManual);
   $('closeManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
   $('cancelManualBtn')?.addEventListener('click', () => { editingRecordKey = null; $('manualDialog').close(); });
-  $('parseReceiptTextBtn')?.addEventListener('click', () => {
-    try { applyParsedOrderToManualForm(parseOrderText($('receiptTextInput')?.value || ''), 'copied text'); }
-    catch (error) { setManualStatus(error.message || 'Could not parse copied trade text.', 'error'); }
-  });
+  const fillManualFormFromReceiptText = (sourceLabel = 'copied text') => {
+    const input = $('receiptTextInput');
+    if (!input || !input.value.trim()) return;
+    try {
+      applyParsedOrderToManualForm(parseOrderText(input.value), sourceLabel);
+    } catch (error) {
+      setManualStatus(error.message || 'Could not parse copied trade text.', 'error');
+    }
+  };
+  $('parseReceiptTextBtn')?.addEventListener('click', () => fillManualFormFromReceiptText('copied text'));
   $('clearReceiptTextBtn')?.addEventListener('click', () => {
     const input = $('receiptTextInput');
     if (!input) return;
@@ -2356,7 +2363,9 @@ async function init() {
     input.focus();
   });
   $('receiptTextInput')?.addEventListener('paste', () => {
-    setTimeout(() => setManualStatus('Text pasted. Tap “Fill fields from text” when ready.', 'info'), 0);
+    // The textarea value is updated after the paste event itself. Waiting one
+    // task lets us parse the final pasted text instead of the previous value.
+    setTimeout(() => fillManualFormFromReceiptText('pasted text'), 0);
   });
   $('manualForm')?.addEventListener('input', event => {
     if (event.target.matches('input[name="price"], input[name="executed"]')) {

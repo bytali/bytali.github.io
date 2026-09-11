@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#080b12">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="trade-vault-build" content="2026.09.12.1">
+  <meta name="trade-vault-build" content="2026.09.12.4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Trade Vault">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.pro.coins.ph wss://wsapi.pro.coins.ph; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'">
   <title>Trade Vault</title>
-  <link rel="manifest" href="manifest.webmanifest?v=20260912.1">
+  <link rel="manifest" href="manifest.webmanifest?v=20260912.4">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-  <link rel="stylesheet" href="styles.css?v=20260912.1">
+  <link rel="stylesheet" href="styles.css?v=20260912.4">
 </head>
 <body>
   <svg class="icon-sprite" aria-hidden="true" focusable="false">
@@ -252,11 +252,11 @@
       </div>
       <div class="form-grid">
         <div id="scanImport" class="scan-import span-2">
-          <div class="scan-import-head"><div><strong>Fill from copied trade text</strong><span>Use Google Lens, iOS Live Text, or another device text-copy feature, then paste below. Trade Vault parses the text locally.</span></div></div>
+          <div class="scan-import-head"><div><strong>Fill from copied trade text</strong><span>Use Google Lens, iOS Live Text, or another device text-copy feature, then paste below. Trade Vault fills the fields automatically and parses everything locally.</span></div></div>
           <div id="receiptTextWrap">
             <textarea id="receiptTextInput" rows="7" placeholder="Paste copied trade details here…"></textarea>
             <div class="scan-actions">
-              <button id="parseReceiptTextBtn" class="scan-button parse-text-button" type="button">Fill fields from text</button>
+              <button id="parseReceiptTextBtn" class="scan-button parse-text-button" type="button">Re-fill fields</button>
               <button id="clearReceiptTextBtn" class="scan-button" type="button">Clear text</button>
             </div>
           </div>
@@ -284,6 +284,6 @@
     </form>
   </dialog>
 
-  <script src="app.js?v=20260912.1" defer></script>
+  <script src="app.js?v=20260912.4" defer></script>
 </body>
 </html>

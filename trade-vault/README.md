@@ -92,3 +92,8 @@ The included sample is synthetic and regenerated for development/demo use. It is
 - 2026-09-11 overview analytics update: the Overview now has Trading and Long-term tabs with purpose-specific performance/portfolio metrics. Live valuation reuses the existing opt-in Coins.ph public quote stream; no additional third-party service or persisted market data was added.
 
 - 2026-09-12 live-bid fix: live pricing now seeds each open PHP holding from Coins.ph public `bookTicker` HTTPS data, then uses the existing WebSocket for real-time updates with a 30-second Coins.ph-only snapshot fallback. Reconnects preserve the last in-memory bid instead of blanking it. No API key or persisted market data was added; encrypted backup v1 remains unchanged.
+
+- Ledger compact BUY summaries now show **Total spent** (quote currency) directly under **Net acquired**.
+
+### Build consistency hotfix (2026-09-12)
+The app shell is now build `2026.09.12.3`. The HTML build marker, JavaScript `APP_BUILD`, versioned asset URLs, and service-worker cache were synchronized to prevent a false “app update did not finish cleanly” startup error.
