@@ -326,7 +326,19 @@ dialog form { padding: 21px; }
   .data-panel { overflow: visible; border: 0; background: transparent; box-shadow: none; }
   .holding-card, .empty-card { min-width: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--mobile-card-bg); }
   .empty-card { padding: 30px 16px; color: var(--muted); text-align: center; }
-  .holding-card { padding: 15px; }
+  .holding-card { padding: 0; overflow: hidden; }
+  .holding-summary { display: grid; grid-template-columns: minmax(0,1fr) minmax(100px,auto) 30px; gap: 8px; align-items: center; min-height: 58px; padding: 9px 9px 9px 12px; }
+  .holding-summary-main { min-width: 0; }
+  .holding-summary-value { min-width: 0; text-align: right; }
+  .holding-summary-value .asset-value { max-width: none; font-size: 14px; }
+  .holding-summary-pnl { margin-top: 2px; overflow: hidden; color: var(--muted); font-size: 8px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+  .holding-summary-pnl.positive { color: var(--accent); }
+  .holding-summary-pnl.negative { color: var(--danger-text); }
+  .holding-detail-toggle { flex: 0 0 auto; }
+  .holding-card.expanded .holding-detail-toggle svg { transform: rotate(180deg); }
+  .holding-detail-panel { padding: 0 12px 13px; }
+  .holding-detail-panel[hidden] { display: none; }
+  .holding-detail-panel .value-grid { margin-top: 0; }
   .holding-card-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
   .asset-name { font-size: 17px; font-weight: 900; letter-spacing: -.025em; }
   .pair-name { font-size: 13px; font-weight: 900; letter-spacing: -.015em; }
@@ -337,7 +349,7 @@ dialog form { padding: 21px; }
   .value-cell span { display: block; margin-bottom: 3px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
   .value-cell strong { display: block; overflow-wrap: anywhere; font-size: 12px; font-weight: 780; font-variant-numeric: tabular-nums; }
   .mobile-only-controls { display: flex; }
-  .ledger-detail-tools { justify-content: flex-end; margin: -2px 0 8px; }
+  .ledger-detail-tools, .holdings-detail-tools { justify-content: flex-end; margin: -2px 0 8px; }
   .detail-toggle-button { display: inline-flex; align-items: center; gap: 6px; width: auto; min-height: 34px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--control-bg); color: var(--soft-text); font-size: 10px; font-weight: 850; }
   .detail-toggle-button svg { width: 14px; height: 14px; transition: transform .16s ease; }
   .detail-toggle-button.expanded svg { transform: rotate(180deg); }

@@ -27,7 +27,7 @@ const MARKET_FALLBACK_REFRESH_MS = 30000;
 const MARKET_FETCH_TIMEOUT_MS = 8000;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.12.4';
+const APP_BUILD = '2026.09.13.1';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -40,6 +40,7 @@ let hiddenAt = 0;
 let editingRecordKey = null;
 let selectedRecordKeys = new Set();
 let expandedRecordKeys = new Set();
+let expandedHoldingKeys = new Set();
 let holdingsPurpose = 'TRADE';
 let overviewPurpose = 'TRADE';
 let feeRatePercentBySide = { BUY: DEFAULT_BUY_FEE_RATE_PERCENT_TEXT, SELL: DEFAULT_SELL_FEE_RATE_PERCENT_TEXT };
@@ -50,7 +51,9 @@ let unlockInFlight = false;
 let livePricingEnabled = false;
 let marketSocket = null;
 let marketPrices = new Map();
+let marketRejectedSymbols = new Set();
 let marketStreamsKey = '';
+let marketSyncGeneration = 0;
 let marketReconnectTimer = null;
 let marketPingTimer = null;
 let marketFallbackTimer = null;
@@ -371,6 +374,7 @@ function clearSensitiveUi() {
   editingRecordKey = null;
   selectedRecordKeys.clear();
   expandedRecordKeys.clear();
+  expandedHoldingKeys.clear();
   holdingsPurpose = 'TRADE';
   overviewPurpose = 'TRADE';
   if ($('selectAllVisible')) $('selectAllVisible').checked = false;
@@ -741,6 +745,9 @@ function pruneMarketPrices(symbols) {
   for (const symbol of marketPrices.keys()) {
     if (!keep.has(symbol)) marketPrices.delete(symbol);
   }
+  for (const symbol of marketRejectedSymbols) {
+    if (!keep.has(symbol)) marketRejectedSymbols.delete(symbol);
+  }
 }
 
 function applyMarketTickerPayload(payload, symbols) {
@@ -760,6 +767,7 @@ function applyMarketTickerPayload(payload, symbols) {
       const rawAsk = row?.a ?? row?.askPrice;
       const askPrice = rawAsk == null || String(rawAsk).trim() === '' ? '' : normalizeDecimal(rawAsk);
       marketPrices.set(symbol, { bidPrice, askPrice, updatedAt: now });
+      marketRejectedSymbols.delete(symbol);
       applied++;
     } catch {}
   }
@@ -767,27 +775,57 @@ function applyMarketTickerPayload(payload, symbols) {
   return applied;
 }
 
-async function fetchMarketSnapshot(symbols, { quiet = false } = {}) {
-  if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length || !navigator.onLine) return 0;
+async function requestMarketSnapshot(symbols, signal) {
+  const url = new URL(MARKET_REST_BOOK_TICKER);
+  if (symbols.length === 1) url.searchParams.set('symbol', symbols[0]);
+  else url.searchParams.set('symbols', JSON.stringify(symbols));
+  const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', signal });
+  if (!response.ok) {
+    const error = new Error(`HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  return response.json();
+}
+
+async function fetchMarketSnapshot(symbols, { quiet = false, allowIndividualFallback = true } = {}) {
+  if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length) return 0;
+  const requested = [...new Set(symbols.filter(symbol => !marketRejectedSymbols.has(symbol)))];
+  if (!requested.length) return 0;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), MARKET_FETCH_TIMEOUT_MS);
   try {
-    const url = new URL(MARKET_REST_BOOK_TICKER);
-    if (symbols.length === 1) url.searchParams.set('symbol', symbols[0]);
-    else url.searchParams.set('symbols', JSON.stringify(symbols));
-    const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    const applied = applyMarketTickerPayload(payload, symbols);
+    const payload = await requestMarketSnapshot(requested, controller.signal);
+    const applied = applyMarketTickerPayload(payload, requested);
     if (applied) {
+      const streamCount = desiredMarketSymbols().filter(symbol => !marketRejectedSymbols.has(symbol)).length;
       const socketLive = marketSocket?.readyState === WebSocket.OPEN;
-      updateMarketStatus(socketLive ? `Coins.ph live · ${applied}/${symbols.length} priced` : `Coins.ph best bid · ${applied}/${symbols.length} priced`);
+      updateMarketStatus(socketLive ? `Coins.ph live · ${marketPrices.size}/${streamCount || requested.length} priced` : `Coins.ph best bid · ${marketPrices.size}/${streamCount || requested.length} priced`);
       scheduleMarketRender();
     } else if (!quiet && !marketPrices.size) {
       updateMarketStatus('Coins.ph returned no matching bids');
     }
     return applied;
   } catch (error) {
+    clearTimeout(timeout);
+    // A single unsupported symbol can make a multi-symbol request fail. Retry
+    // each pair independently so one delisted/unsupported asset cannot block
+    // live bids for every other holding.
+    if (allowIndividualFallback && requested.length > 1 && error?.status >= 400 && error?.status < 500 && error.status !== 429) {
+      const results = await Promise.all(requested.map(symbol => fetchMarketSnapshot([symbol], { quiet: true, allowIndividualFallback: false })));
+      const applied = results.reduce((sum, count) => sum + count, 0);
+      if (applied) {
+        const validCount = requested.filter(symbol => !marketRejectedSymbols.has(symbol)).length;
+        updateMarketStatus(`Coins.ph best bid · ${marketPrices.size}/${Math.max(1, validCount)} priced`);
+        scheduleMarketRender();
+      } else if (!quiet && !marketPrices.size) {
+        updateMarketStatus('Coins.ph pricing unavailable');
+      }
+      return applied;
+    }
+    if (requested.length === 1 && error?.status >= 400 && error?.status < 500 && error.status !== 429) {
+      marketRejectedSymbols.add(requested[0]);
+    }
     if (!quiet && !marketPrices.size && marketSocket?.readyState !== WebSocket.OPEN) {
       updateMarketStatus(error?.name === 'AbortError' ? 'Coins.ph pricing timed out' : 'Coins.ph pricing unavailable');
     }
@@ -825,6 +863,7 @@ function stopMarketData({ clearPrices = true, resetStatus = true } = {}) {
   }
   if (clearPrices) {
     marketPrices.clear();
+    marketRejectedSymbols.clear();
     marketLastMessageAt = 0;
   }
   if (resetStatus) updateMarketStatus(livePricingEnabled ? 'Coins.ph live pricing idle' : 'Live pricing off');
@@ -841,7 +880,8 @@ function scheduleMarketReconnect() {
   }, delay);
 }
 
-function syncMarketData(force = false) {
+async function syncMarketData(force = false) {
+  const generation = ++marketSyncGeneration;
   if (!vaultKey || !livePricingEnabled || document.hidden) {
     if (marketSocket || marketFallbackTimer) stopMarketData({ clearPrices: false, resetStatus: true });
     return;
@@ -857,21 +897,30 @@ function syncMarketData(force = false) {
   pruneMarketPrices(symbols);
   startMarketFallbackRefresh(symbols);
 
-  // Seed the UI immediately. Book-ticker WebSocket events only arrive when the
-  // best bid/ask changes, so relying on the socket alone can leave "Waiting…"
-  // on a quiet market after launch/reconnect.
-  if (force || symbols.some(symbol => !marketPrices.has(symbol))) fetchMarketSnapshot(symbols, { quiet: false });
+  // Seed current bids before opening the stream. If a batch contains an
+  // unsupported Coins.ph pair, fetchMarketSnapshot isolates it and keeps the
+  // supported holdings working instead of failing the whole price feed.
+  if (force || symbols.some(symbol => !marketPrices.has(symbol))) {
+    await fetchMarketSnapshot(symbols, { quiet: false });
+  }
+  if (generation !== marketSyncGeneration || !vaultKey || !livePricingEnabled || document.hidden) return;
 
-  const streams = symbols.map(symbol => `${symbol.toLowerCase()}@bookTicker`);
+  const streamSymbols = symbols.filter(symbol => !marketRejectedSymbols.has(symbol));
+  if (!streamSymbols.length) {
+    stopMarketData({ clearPrices: false, resetStatus: false });
+    updateMarketStatus('No supported Coins.ph PHP pairs to stream');
+    return;
+  }
+
+  const streams = streamSymbols.map(symbol => `${symbol.toLowerCase()}@bookTicker`);
   const streamsKey = streams.join('/');
   if (!force && marketSocket && marketStreamsKey === streamsKey && [WebSocket.OPEN, WebSocket.CONNECTING].includes(marketSocket.readyState)) return;
 
-  // Preserve the last in-memory snapshot while reconnecting instead of
-  // blanking a valid bid until the next WebSocket event arrives.
   stopMarketData({ clearPrices: false, resetStatus: false });
   marketStreamsKey = streamsKey;
   startMarketFallbackRefresh(symbols);
-  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · connecting live` : `Connecting to Coins.ph · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`);
+  const coverage = marketPrices.size ? `${marketPrices.size}/${streamSymbols.length} priced` : `${streamSymbols.length} pair${streamSymbols.length === 1 ? '' : 's'}`;
+  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · connecting live · ${coverage}` : `Connecting to Coins.ph · ${coverage}`);
 
   try {
     const socket = new WebSocket(`${MARKET_WS_BASE}${streamsKey}`);
@@ -880,7 +929,7 @@ function syncMarketData(force = false) {
     socket.onopen = () => {
       if (socket !== marketSocket) return;
       marketReconnectAttempt = 0;
-      updateMarketStatus(`Coins.ph live · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`);
+      updateMarketStatus(`Coins.ph live · ${marketPrices.size}/${streamSymbols.length} priced`);
       clearInterval(marketPingTimer);
       marketPingTimer = setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -894,9 +943,14 @@ function syncMarketData(force = false) {
       try {
         const message = JSON.parse(event.data);
         if (message?.pong || message?.result === null) return;
-        const applied = applyMarketTickerPayload(message, symbols);
+        if (message?.code || message?.desc) {
+          console.warn('Coins.ph stream response', message);
+          fetchMarketSnapshot(streamSymbols, { quiet: true });
+          return;
+        }
+        const applied = applyMarketTickerPayload(message, streamSymbols);
         if (!applied) return;
-        marketStatusText = `Coins.ph live · ${symbols.length} pair${symbols.length === 1 ? '' : 's'}`;
+        marketStatusText = `Coins.ph live · ${marketPrices.size}/${streamSymbols.length} priced`;
         scheduleMarketRender();
       } catch (error) {
         console.warn('Ignored malformed Coins.ph market message', error);
@@ -906,7 +960,7 @@ function syncMarketData(force = false) {
     socket.onerror = () => {
       if (socket !== marketSocket) return;
       updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live stream unavailable · trying snapshot');
-      fetchMarketSnapshot(symbols, { quiet: true });
+      fetchMarketSnapshot(streamSymbols, { quiet: true });
     };
 
     socket.onclose = () => {
@@ -915,14 +969,14 @@ function syncMarketData(force = false) {
       clearInterval(marketPingTimer);
       marketPingTimer = null;
       if (vaultKey && livePricingEnabled && !document.hidden) {
-        fetchMarketSnapshot(symbols, { quiet: true });
+        fetchMarketSnapshot(streamSymbols, { quiet: true });
         scheduleMarketReconnect();
       }
     };
   } catch (error) {
     console.warn('Could not open Coins.ph market socket', error);
     updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live pricing unavailable');
-    fetchMarketSnapshot(symbols, { quiet: true });
+    fetchMarketSnapshot(streamSymbols, { quiet: true });
     scheduleMarketReconnect();
   }
 }
@@ -1233,6 +1287,23 @@ function renderWarnings(analysis = analyticsCache) {
   el.textContent = analysis.warnings.join(' ');
 }
 
+function holdingUiKey(holding) {
+  return `${transactionPurpose(holding)}:${holding.pair}`;
+}
+
+function updateHoldingsDetailToggle(visibleHoldings) {
+  const button = $('toggleHoldingsDetailsBtn');
+  if (!button) return;
+  const keys = visibleHoldings.map(holdingUiKey);
+  const allExpanded = keys.length > 0 && keys.every(key => expandedHoldingKeys.has(key));
+  button.disabled = keys.length === 0;
+  button.classList.toggle('expanded', allExpanded);
+  button.setAttribute('aria-pressed', String(allExpanded));
+  button.setAttribute('aria-label', allExpanded ? 'Collapse all holding details' : 'Expand all holding details');
+  const label = button.querySelector('span');
+  if (label) label.textContent = allExpanded ? 'Collapse all' : 'Expand all';
+}
+
 function updateHoldingsPurposeTabs() {
   document.querySelectorAll('[data-holdings-purpose]').forEach(button => {
     const active = button.dataset.holdingsPurpose === holdingsPurpose;
@@ -1245,7 +1316,8 @@ function renderHoldings() {
   const body = $('holdingsBody');
   const cards = $('holdingsCards');
   updateHoldingsPurposeTabs();
-  const visibleHoldings = analyticsCache.holdings.filter(h => transactionPurpose(h) === holdingsPurpose);
+  const visibleHoldings = analyticsCache.holdings.filter(h => transactionPurpose(h) === holdingsPurpose && h.netQty > 0n);
+  updateHoldingsDetailToggle(visibleHoldings);
   if (!visibleHoldings.length) {
     const label = purposeLabel(holdingsPurpose).toLowerCase();
     body.innerHTML = `<tr><td colspan="7" class="empty-cell">No ${label} holdings yet.</td></tr>`;
@@ -1266,13 +1338,15 @@ function renderHoldings() {
         if (h.quote === 'PHP' && h.knownCost >= 0n) unrealized = marketValue - h.knownCost;
       } catch { marketValue = null; }
     }
-    const liveBid = !livePricingEnabled ? 'Off' : market?.bidPrice ? formatMoney(parseFixed(market.bidPrice)) : (symbol ? 'Waiting…' : '—');
+    const liveBid = !livePricingEnabled ? 'Off' : market?.bidPrice ? formatMoney(parseFixed(market.bidPrice)) : (marketRejectedSymbols.has(symbol) ? 'Unsupported' : (symbol ? 'Waiting…' : '—'));
     const valueText = marketValue == null ? '—' : formatMoney(marketValue);
     const pnlText = unrealized == null ? '—' : formatMoney(unrealized);
     const pnlClass = unrealized == null ? '' : unrealized > 0n ? 'positive' : unrealized < 0n ? 'negative' : '';
     const avgText = avg == null ? '—' : `${escapeHtml(h.quote)} ${formatFixed(avg, 6)}`;
     const costText = h.quote === 'PHP' ? formatMoney(h.knownCost) : `${escapeHtml(h.quote)} ${formatFixed(h.knownCost, 4)}`;
-    return { h, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText };
+    const key = holdingUiKey(h);
+    const expanded = expandedHoldingKeys.has(key);
+    return { h, key, expanded, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText };
   });
 
   body.innerHTML = rows.map(({ h, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<tr>
@@ -1285,20 +1359,31 @@ function renderHoldings() {
     <td class="${pnlClass}">${pnlText}</td>
   </tr>`).join('');
 
-  if (cards) cards.innerHTML = rows.map(({ h, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<article class="holding-card">
-    <div class="holding-card-head">
-      <div><div class="asset-name">${escapeHtml(h.base)}</div><div class="card-sub">${escapeHtml(h.base)}/${escapeHtml(h.quote)} · ${escapeHtml(purposeLabel(h))}</div></div>
-      <div class="asset-value">${valueText}</div>
+  if (cards) cards.innerHTML = rows.map(({ h, key, expanded, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<article class="holding-card${expanded ? ' expanded' : ''}">
+    <div class="holding-summary">
+      <div class="holding-summary-main">
+        <div class="asset-name">${escapeHtml(h.base)}</div>
+        <div class="card-sub">${escapeHtml(h.base)}/${escapeHtml(h.quote)} · ${quantity}</div>
+      </div>
+      <div class="holding-summary-value">
+        <div class="asset-value">${valueText}</div>
+        <div class="holding-summary-pnl ${pnlClass}">${pnlText === '—' ? (livePricingEnabled ? 'Waiting for price' : 'Live pricing off') : `${pnlText} unrealized`}</div>
+      </div>
+      <button class="detail-toggle holding-detail-toggle" type="button" data-holding-action="toggle-details" data-holding-key="${escapeHtml(key)}" aria-expanded="${expanded}" aria-label="${expanded ? 'Collapse' : 'Expand'} ${escapeHtml(h.base)} holding details"><svg><use href="#i-chevron"/></svg></button>
     </div>
-    <div class="value-grid">
-      <div class="value-cell"><span>Quantity</span><strong>${quantity}</strong></div>
-      <div class="value-cell"><span>Live bid</span><strong>${liveBid}</strong></div>
-      <div class="value-cell"><span>Avg cost</span><strong>${avgText}</strong></div>
-      <div class="value-cell"><span>Cost basis</span><strong>${costText}</strong></div>
-      <div class="value-cell"><span>Unrealized</span><strong class="${pnlClass}">${pnlText}</strong></div>
+    <div class="holding-detail-panel"${expanded ? '' : ' hidden'}>
+      <div class="value-grid">
+        <div class="value-cell"><span>Quantity</span><strong>${quantity}</strong></div>
+        <div class="value-cell"><span>Live bid</span><strong>${liveBid}</strong></div>
+        <div class="value-cell"><span>Avg cost</span><strong>${avgText}</strong></div>
+        <div class="value-cell"><span>Cost basis</span><strong>${costText}</strong></div>
+        <div class="value-cell"><span>Unrealized</span><strong class="${pnlClass}">${pnlText}</strong></div>
+        <div class="value-cell"><span>Bucket</span><strong>${escapeHtml(purposeLabel(h))}</strong></div>
+      </div>
     </div>
   </article>`).join('');
 }
+
 function renderAllocation(analysis = analyticsCache) {
   const el = $('allocationChart');
   const title = $('allocationTitle');
@@ -2262,6 +2347,24 @@ async function init() {
     holdingsPurpose = transactionPurpose(button.dataset.holdingsPurpose);
     renderHoldings();
   }));
+  $('toggleHoldingsDetailsBtn')?.addEventListener('click', () => {
+    const visible = analyticsCache?.holdings?.filter(h => transactionPurpose(h) === holdingsPurpose && h.netQty > 0n) || [];
+    const keys = visible.map(holdingUiKey);
+    const allExpanded = keys.length > 0 && keys.every(key => expandedHoldingKeys.has(key));
+    for (const key of keys) {
+      if (allExpanded) expandedHoldingKeys.delete(key);
+      else expandedHoldingKeys.add(key);
+    }
+    renderHoldings();
+  });
+  $('holdingsCards')?.addEventListener('click', event => {
+    const button = event.target.closest('button[data-holding-action="toggle-details"][data-holding-key]');
+    if (!button) return;
+    const key = button.dataset.holdingKey;
+    if (expandedHoldingKeys.has(key)) expandedHoldingKeys.delete(key);
+    else expandedHoldingKeys.add(key);
+    renderHoldings();
+  });
   document.querySelectorAll('[data-overview-purpose]').forEach(button => button.addEventListener('click', () => {
     overviewPurpose = transactionPurpose(button.dataset.overviewPurpose);
     renderOverview();
@@ -2290,6 +2393,7 @@ async function init() {
   };
   const refreshMarketPricing = () => {
     if (!livePricingEnabled) return toast('Turn live pricing on first.');
+    marketRejectedSymbols.clear();
     syncMarketData(true);
   };
   $('marketToggleBtn')?.addEventListener('click', toggleMarketPricing);

@@ -97,3 +97,6 @@ The included sample is synthetic and regenerated for development/demo use. It is
 
 ### Build consistency hotfix (2026-09-12)
 The app shell is now build `2026.09.12.3`. The HTML build marker, JavaScript `APP_BUILD`, versioned asset URLs, and service-worker cache were synchronized to prevent a false “app update did not finish cleanly” startup error.
+
+
+- 2026-09-13 live-pricing/holdings update: Coins.ph batch snapshot failures now isolate unsupported symbols instead of blocking all bids; the live stream excludes rejected pairs and manual refresh revalidates them. Mobile Holdings cards are compact/collapsible with per-card and Expand all/Collapse all controls. Closed/zero holdings are omitted from the Holdings list.
