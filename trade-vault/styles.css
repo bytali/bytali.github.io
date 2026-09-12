@@ -405,3 +405,5 @@ dialog form { padding: 21px; }
   .transaction-net-summary strong { max-width: 118px; font-size: 10px; }
   .transaction-detail-panel { padding-left: 39px; }
 }
+
+.security-copy { max-width: 72ch; }

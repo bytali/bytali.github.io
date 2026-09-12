@@ -15,6 +15,13 @@ const MAX_AUTO_LOCK_MINUTES = 120;
 const PIN_ITERATIONS = 600000;
 const PIN_WRAP_AAD = new TextEncoder().encode('trade-vault-pin-wrap-v1');
 const MAX_NOTES_LENGTH = 2000;
+const MAX_CSV_BYTES = 5 * 1024 * 1024;
+const MAX_BACKUP_BYTES = 25 * 1024 * 1024;
+const MAX_BACKUP_RECORDS = 100000;
+const MAX_RECORD_CIPHER_BYTES = 256 * 1024;
+const MAX_RECEIPT_TEXT_LENGTH = 100000;
+const MIN_ACCEPTED_KDF_ITERATIONS = 1;
+const MAX_ACCEPTED_KDF_ITERATIONS = 2000000;
 const PURPOSE_LABELS = { TRADE: 'Trading', HOLD: 'Long-term' };
 const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
 const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
@@ -28,7 +35,7 @@ const MARKET_INITIAL_QUOTE_TIMEOUT_MS = 10000;
 const MARKET_PING_INTERVAL_MS = 4 * 60 * 1000;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.13.3';
+const APP_BUILD = '2026.09.13.4';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -201,6 +208,63 @@ function idbClear(storeName) {
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
+}
+
+function idbReplaceVault(vault, records) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['meta', 'records'], 'readwrite');
+    const meta = tx.objectStore('meta');
+    const recordStore = tx.objectStore('records');
+    meta.clear();
+    recordStore.clear();
+    meta.put(vault);
+    for (const record of records) recordStore.put(record);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Could not restore the local vault.'));
+    tx.onabort = () => reject(tx.error || new Error('Vault restore was cancelled by local storage.'));
+  });
+}
+
+function decodeB64Checked(value, label, { exactBytes = null, minBytes = 0, maxBytes = Infinity } = {}) {
+  const text = String(value ?? '');
+  if (!text || !/^[A-Za-z0-9+/]+={0,2}$/.test(text) || text.length % 4 !== 0) {
+    throw new Error(`${label} is not valid base64.`);
+  }
+  let bytes;
+  try { bytes = b64ToBytes(text); }
+  catch { throw new Error(`${label} is not valid base64.`); }
+  if (exactBytes !== null && bytes.length !== exactBytes) throw new Error(`${label} has an invalid length.`);
+  if (bytes.length < minBytes || bytes.length > maxBytes) throw new Error(`${label} has an invalid size.`);
+  return bytes;
+}
+
+function validateBackupPayload(backup) {
+  if (backup?.format !== 'trade-vault-backup' || backup?.version !== 1 || !backup.vault || !Array.isArray(backup.records)) {
+    throw new Error('This is not a valid Trade Vault backup.');
+  }
+  if (backup.records.length > MAX_BACKUP_RECORDS) throw new Error('Backup contains too many records.');
+
+  const vault = backup.vault;
+  if (vault.key !== 'vault' || (vault.version != null && vault.version !== 1) || (vault.kdf != null && vault.kdf !== 'PBKDF2-SHA-256')) throw new Error('Backup vault metadata is invalid.');
+  if (!Number.isInteger(vault.iterations) || vault.iterations < MIN_ACCEPTED_KDF_ITERATIONS || vault.iterations > MAX_ACCEPTED_KDF_ITERATIONS) {
+    throw new Error('Backup vault KDF settings are outside the supported safety range.');
+  }
+  decodeB64Checked(vault.salt, 'Backup salt', { exactBytes: 16 });
+  if (!vault.verifier || typeof vault.verifier !== 'object') throw new Error('Backup verifier is missing.');
+  decodeB64Checked(vault.verifier.iv, 'Backup verifier IV', { exactBytes: 12 });
+  decodeB64Checked(vault.verifier.cipher, 'Backup verifier ciphertext', { minBytes: 16, maxBytes: 4096 });
+
+  const seen = new Set();
+  for (const [index, record] of backup.records.entries()) {
+    if (!record || typeof record !== 'object') throw new Error(`Backup record ${index + 1} is invalid.`);
+    if (typeof record.key !== 'string' || !record.key || record.key.length > 256) throw new Error(`Backup record ${index + 1} has an invalid key.`);
+    if (seen.has(record.key)) throw new Error(`Backup contains duplicate record key ${record.key}.`);
+    seen.add(record.key);
+    if (record.version != null && ![1, 2].includes(record.version)) throw new Error(`Backup record ${index + 1} uses an unsupported format.`);
+    decodeB64Checked(record.iv, `Backup record ${index + 1} IV`, { exactBytes: 12 });
+    decodeB64Checked(record.cipher, `Backup record ${index + 1} ciphertext`, { minBytes: 16, maxBytes: MAX_RECORD_CIPHER_BYTES });
+  }
+  return backup;
 }
 
 async function deriveKeyBytes(secret, salt, iterations) {
@@ -468,7 +532,21 @@ async function requestPersistence() {
   }
 }
 
+function clearCredentialInputs() {
+  for (const id of ['newPassphrase', 'confirmPassphrase', 'newPin', 'confirmPin', 'unlockPassphrase', 'unlockPin']) {
+    const input = $(id);
+    if (input) input.value = '';
+  }
+  const settingsForm = $('settingsForm');
+  if (settingsForm) {
+    settingsForm.elements.pinPassphrase.value = '';
+    settingsForm.elements.newPin.value = '';
+    settingsForm.elements.confirmPin.value = '';
+  }
+}
+
 function showApp() {
+  clearCredentialInputs();
   $('vaultGate').hidden = true;
   $('appShell').hidden = false;
   setView(currentViewFromHash(), false);
@@ -578,13 +656,13 @@ function parseFee(rawFee, side, base, quote) {
 
 function normalizeTransaction(input, source = 'manual') {
   const date = String(input.date ?? '').trim();
-  if (!date) throw new Error('Date is required.');
+  if (!date || date.length > 64 || !parseDateMs(date)) throw new Error('Date is required and must be valid.');
   const id = String(input.id ?? '').trim();
-  if (!id) throw new Error('Transaction ID is required.');
+  if (!id || id.length > 256) throw new Error('Transaction ID is required and must be 256 characters or fewer.');
   const pair = String(input.pair ?? '').trim().toUpperCase();
-  const parts = pair.split('/');
-  if (parts.length !== 2 || !parts[0] || !parts[1]) throw new Error(`Invalid pair: ${pair}`);
-  const [base, quote] = parts;
+  const pairMatch = pair.match(/^([A-Z0-9._-]{1,20})\/([A-Z0-9._-]{1,20})$/);
+  if (!pairMatch) throw new Error(`Invalid pair: ${pair}`);
+  const [, base, quote] = pairMatch;
   const side = String(input.side ?? '').trim().toUpperCase();
   if (!['BUY', 'SELL'].includes(side)) throw new Error(`Invalid side: ${side}`);
   const price = normalizeDecimal(input.price);
@@ -604,7 +682,7 @@ function normalizeTransaction(input, source = 'manual') {
     pair,
     base,
     quote,
-    type: String(input.type ?? 'OTHER').trim().toUpperCase() || 'OTHER',
+    type: ['LIMIT', 'MARKET', 'OTHER'].includes(String(input.type ?? '').trim().toUpperCase()) ? String(input.type).trim().toUpperCase() : 'OTHER',
     side,
     purpose: transactionPurpose(input.purpose),
     price,
@@ -622,6 +700,7 @@ function normalizeTransaction(input, source = 'manual') {
 }
 
 function parseCsv(text) {
+  if (String(text ?? '').length > MAX_CSV_BYTES) throw new Error('CSV is too large. Maximum supported size is 5 MB.');
   const rows = [];
   let row = [];
   let field = '';
@@ -1635,6 +1714,7 @@ function escapeHtml(value) {
 }
 
 async function importCsvFile(file) {
+  if (file.size > MAX_CSV_BYTES) throw new Error('CSV is too large. Maximum supported size is 5 MB.');
   const text = await file.text();
   const imported = csvRowsToTransactions(text);
   const existingIds = new Set(transactions.map(t => t.id));
@@ -1668,18 +1748,17 @@ async function exportEncryptedBackup() {
 }
 
 async function restoreEncryptedBackup(file) {
-  const backup = JSON.parse(await file.text());
-  if (backup?.format !== 'trade-vault-backup' || backup?.version !== 1 || !backup.vault || !Array.isArray(backup.records)) throw new Error('This is not a valid Trade Vault backup.');
+  if (file.size > MAX_BACKUP_BYTES) throw new Error('Backup is too large. Maximum supported size is 25 MB.');
+  let parsed;
+  try { parsed = JSON.parse(await file.text()); }
+  catch { throw new Error('Backup is not valid JSON.'); }
+  const backup = validateBackupPayload(parsed);
   if (!confirm(`Restore ${backup.records.length} encrypted record(s)? This replaces the current local vault.`)) return;
-  await idbClear('records');
-  await idbClear('meta');
-  await idbPut('meta', backup.vault);
-  await idbDelete('meta', 'pin');
+  await idbReplaceVault(backup.vault, backup.records);
   pinConfigured = false;
-  for (const record of backup.records) await idbPut('records', record);
   await loadGeneralSettings();
   lockVault();
-  toast('Backup restored. Unlock with the backup passphrase, then set a new local PIN if wanted.');
+  toast('Backup restored atomically. Unlock with the backup passphrase, then set a new local PIN if wanted.');
 }
 
 function normalizeFeeRatePercent(value) {
@@ -1925,7 +2004,9 @@ function parseNumberAsset(value) {
 }
 
 function parseOrderText(rawText) {
-  const lines = String(rawText || '')
+  const sourceText = String(rawText || '');
+  if (sourceText.length > MAX_RECEIPT_TEXT_LENGTH) throw new Error('Copied trade text is too large.');
+  const lines = sourceText
     .replace(/\r/g, '\n')
     .split('\n')
     .map(line => line.replace(/[\t ]+/g, ' ').trim())
@@ -2207,8 +2288,8 @@ async function init() {
     $(id)?.addEventListener('input', event => { event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 4); });
   }
   $('settingsBtn')?.addEventListener('click', () => { populateSettingsForm(); $('settingsDialog').showModal(); });
-  $('closeSettingsBtn')?.addEventListener('click', () => $('settingsDialog').close());
-  $('cancelSettingsBtn')?.addEventListener('click', () => $('settingsDialog').close());
+  $('closeSettingsBtn')?.addEventListener('click', () => { clearCredentialInputs(); $('settingsDialog').close(); });
+  $('cancelSettingsBtn')?.addEventListener('click', () => { clearCredentialInputs(); $('settingsDialog').close(); });
   $('settingsForm')?.addEventListener('input', event => {
     if (event.target.matches('input[name="buyFeePercent"], input[name="sellFeePercent"]')) autocorrectLeadingDecimalInput(event.target);
     if (event.target.matches('input[name="newPin"], input[name="confirmPin"]')) event.target.value = event.target.value.replace(/\D/g, '').slice(0, 4);
@@ -2219,6 +2300,7 @@ async function init() {
     try {
       setBusy(button, true, 'Saving…');
       const result = await saveGeneralSettings(event.currentTarget);
+      clearCredentialInputs();
       $('settingsDialog').close();
       toast(result.pinChanged ? 'Settings saved and local PIN updated.' : 'General settings saved.');
     } catch (error) {
@@ -2250,7 +2332,7 @@ async function init() {
   window.addEventListener('online', () => {
     if (vaultKey && livePricingEnabled && !document.hidden) syncMarketData(true);
   });
-  window.addEventListener('pagehide', () => { stopMarketData({ clearPrices: true }); vaultKey = null; transactions = []; analyticsCache = null; clearSensitiveUi(); });
+  window.addEventListener('pagehide', () => { stopMarketData({ clearPrices: true }); vaultKey = null; transactions = []; analyticsCache = null; clearSensitiveUi(); clearCredentialInputs(); });
   window.addEventListener('pageshow', () => { if (!vaultKey && !$('appShell').hidden) lockVault(); });
 
   $('createVaultBtn')?.addEventListener('click', async () => {

@@ -1,17 +1,25 @@
-const CACHE = 'trade-vault-shell-v22';
+const CACHE = 'trade-vault-shell-v23';
 const SHELL = [
   './index.html',
-  './styles.css?v=20260913.3',
-  './app.js?v=20260913.3',
-  './manifest.webmanifest?v=20260913.3',
+  './styles.css?v=20260913.4',
+  './app.js?v=20260913.4',
+  './manifest.webmanifest?v=20260913.4',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    for (const path of SHELL) {
+      const request = new Request(path, { cache: 'reload' });
+      const response = await fetch(request);
+      if (!response.ok || response.type !== 'basic') throw new Error(`Could not cache app shell: ${path}`);
+      await cache.put(request, response);
+    }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', event => {
