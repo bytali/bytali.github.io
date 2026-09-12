@@ -1,9 +1,9 @@
-const CACHE = 'trade-vault-shell-v20';
+const CACHE = 'trade-vault-shell-v22';
 const SHELL = [
   './index.html',
-  './styles.css?v=20260913.1',
-  './app.js?v=20260913.1',
-  './manifest.webmanifest?v=20260913.1',
+  './styles.css?v=20260913.3',
+  './app.js?v=20260913.3',
+  './manifest.webmanifest?v=20260913.3',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png'

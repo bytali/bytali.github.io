@@ -8,7 +8,7 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 - Supports manual add/edit/delete and bulk delete, with optional encrypted transaction notes and a Trading / Long-term purpose bucket.
 - Provides separate general BUY and SELL fee percentages for newly created manual transactions (0.1% defaults); existing stored fees are left unchanged.
 - Calculates holdings and weighted-average realized P&L locally, with Trading and Long-term inventory accounted for separately.
-- Shows current PHP inventory value using the public Coins.ph `bookTicker` WebSocket when live pricing is toggled on; live pricing starts off on each app load.
+- Shows current PHP inventory value from the public Coins.ph `@ticker` WebSocket when live pricing is toggled on; the last traded price drives valuation while the current best sell bid remains visible in holding details.
 - Stores transaction records (including notes) encrypted in IndexedDB using AES-256-GCM.
 - Supports automatic passphrase unlock after typing and an optional 4-digit local PIN convenience unlock.
 - Supports configurable 1–120 minute auto-lock.
@@ -20,7 +20,7 @@ A lightweight, local-first crypto trade tracker built as a static PWA.
 ## Views
 
 - `#overview` — separate Trading / Long-term dashboards. Trading shows realized performance quality (win rate, profit factor, expectancy, drawdown, average win/loss, open live P&L and cumulative realized P&L); Long-term shows market value, cost basis, unrealized return, accumulation and allocation.
-- `#holdings` — open inventory split into Trading and Long-term sub-views, with live bid, PHP value and unrealized P&L.
+- `#holdings` — open inventory split into Trading and Long-term sub-views, with fresh market price, best sell bid, PHP value and unrealized P&L.
 - `#ledger` — searchable/manageable transaction history.
 
 The views are client-side routes in one HTML page. This avoids reloading the document and losing the in-memory vault key when navigating.
@@ -67,7 +67,7 @@ The vault is designed to reduce exposure, not make a compromised browser/device 
 - PBKDF2-HMAC-SHA-256 uses 600,000 iterations.
 - Each record uses a fresh AES-GCM IV and record-bound authenticated data.
 - Live prices are kept in memory only.
-- Network access is restricted by CSP to same-origin resources and the public Coins.ph WebSocket.
+- Network access is restricted by CSP to same-origin resources and the public Coins.ph WebSocket. No cross-origin REST market request is used.
 - No exchange API key, account endpoint, analytics SDK, CDN, external font or third-party JavaScript is used.
 - The vault automatically locks after inactivity and after extended backgrounding.
 
@@ -100,3 +100,9 @@ The app shell is now build `2026.09.12.3`. The HTML build marker, JavaScript `AP
 
 
 - 2026-09-13 live-pricing/holdings update: Coins.ph batch snapshot failures now isolate unsupported symbols instead of blocking all bids; the live stream excludes rejected pairs and manual refresh revalidates them. Mobile Holdings cards are compact/collapsible with per-card and Expand all/Collapse all controls. Closed/zero holdings are omitted from the Holdings list.
+
+- 2026-09-13 WebSocket-only pricing fix: removed browser REST snapshot/fallback calls that can fail CORS. Live pricing now uses Coins.ph `@ticker` streams only, values holdings from fresh last-trade price, shows best bid separately, and expires/reconnects stale quotes.
+
+## Build 2026.09.13.3 — raw WebSocket live pricing
+
+Live market pricing now follows the same browser-safe raw WebSocket pattern as the supplied working local price monitor. Each PHP holding opens its own public Coins.ph raw ticker stream at `wss://wsapi.pro.coins.ph/openapi/quote/ws/v3/<symbol>@ticker`; no market-data REST request is required. This avoids browser CORS failures on Coins.ph REST endpoints and isolates reconnects so a problem with one symbol does not interrupt the other holdings. Ticker payload `c` is used as the market/last traded price and `b` remains the sell bid. Connections send the documented JSON ping before the five-minute server timeout, reconnect independently with backoff, and quotes expire after 20 seconds without a ticker update. Market quotes remain memory-only and are never added to vault storage or backups.

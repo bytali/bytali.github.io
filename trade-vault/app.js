@@ -18,16 +18,17 @@ const MAX_NOTES_LENGTH = 2000;
 const PURPOSE_LABELS = { TRADE: 'Trading', HOLD: 'Long-term' };
 const DEFAULT_BUY_FEE_RATE_PERCENT_TEXT = '0.1';
 const DEFAULT_SELL_FEE_RATE_PERCENT_TEXT = '0.1';
-const MARKET_WS_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=';
-const MARKET_REST_BOOK_TICKER = 'https://api.pro.coins.ph/openapi/quote/v1/ticker/bookTicker';
-const MARKET_RECONNECT_BASE_MS = 4000;
-const MARKET_MAX_RECONNECT_MS = 60000;
-const MARKET_RENDER_THROTTLE_MS = 400;
-const MARKET_FALLBACK_REFRESH_MS = 30000;
-const MARKET_FETCH_TIMEOUT_MS = 8000;
+const MARKET_WS_RAW_BASE = 'wss://wsapi.pro.coins.ph/openapi/quote/ws/v3/';
+const MARKET_RECONNECT_BASE_MS = 1000;
+const MARKET_MAX_RECONNECT_MS = 30000;
+const MARKET_RENDER_THROTTLE_MS = 350;
+const MARKET_WATCHDOG_INTERVAL_MS = 5000;
+const MARKET_STALE_AFTER_MS = 20000;
+const MARKET_INITIAL_QUOTE_TIMEOUT_MS = 10000;
+const MARKET_PING_INTERVAL_MS = 4 * 60 * 1000;
 const THEME_STORAGE_KEY = 'trade-vault-theme';
 const THEME_COLORS = { dark: '#080b12', light: '#f5f7fa' };
-const APP_BUILD = '2026.09.13.1';
+const APP_BUILD = '2026.09.13.3';
 const BUILD_RELOAD_KEY = `trade-vault-build-reload:${APP_BUILD}`;
 
 let db;
@@ -49,16 +50,11 @@ let pinConfigured = false;
 let unlockDebounceTimer = null;
 let unlockInFlight = false;
 let livePricingEnabled = false;
-let marketSocket = null;
 let marketPrices = new Map();
-let marketRejectedSymbols = new Set();
-let marketStreamsKey = '';
+let marketConnections = new Map();
 let marketSyncGeneration = 0;
-let marketReconnectTimer = null;
-let marketPingTimer = null;
-let marketFallbackTimer = null;
+let marketWatchdogTimer = null;
 let marketRenderTimer = null;
-let marketReconnectAttempt = 0;
 let marketLastMessageAt = 0;
 let marketStatusText = 'Live pricing off';
 
@@ -745,9 +741,10 @@ function pruneMarketPrices(symbols) {
   for (const symbol of marketPrices.keys()) {
     if (!keep.has(symbol)) marketPrices.delete(symbol);
   }
-  for (const symbol of marketRejectedSymbols) {
-    if (!keep.has(symbol)) marketRejectedSymbols.delete(symbol);
-  }
+}
+
+function isFreshMarketQuote(market, now = Date.now()) {
+  return Boolean(market?.updatedAt && now - market.updatedAt <= MARKET_STALE_AFTER_MS);
 }
 
 function applyMarketTickerPayload(payload, symbols) {
@@ -759,15 +756,34 @@ function applyMarketTickerPayload(payload, symbols) {
   for (const row of rows) {
     const symbol = String(row?.s ?? row?.symbol ?? '').toUpperCase();
     if (!symbol || !wanted.has(symbol)) continue;
+    const rawLast = row?.c ?? row?.lastPrice;
     const rawBid = row?.b ?? row?.bidPrice;
-    if (rawBid == null || String(rawBid).trim() === '') continue;
+    if ((rawLast == null || String(rawLast).trim() === '') && (rawBid == null || String(rawBid).trim() === '')) continue;
     try {
-      const bidPrice = normalizeDecimal(rawBid);
-      if (parseFixed(bidPrice) <= 0n) continue;
+      let lastPrice = '';
+      let bidPrice = '';
+      let askPrice = '';
+      if (rawLast != null && String(rawLast).trim() !== '') {
+        lastPrice = normalizeDecimal(rawLast);
+        if (parseFixed(lastPrice) <= 0n) lastPrice = '';
+      }
+      if (rawBid != null && String(rawBid).trim() !== '') {
+        bidPrice = normalizeDecimal(rawBid);
+        if (parseFixed(bidPrice) <= 0n) bidPrice = '';
+      }
       const rawAsk = row?.a ?? row?.askPrice;
-      const askPrice = rawAsk == null || String(rawAsk).trim() === '' ? '' : normalizeDecimal(rawAsk);
-      marketPrices.set(symbol, { bidPrice, askPrice, updatedAt: now });
-      marketRejectedSymbols.delete(symbol);
+      if (rawAsk != null && String(rawAsk).trim() !== '') {
+        askPrice = normalizeDecimal(rawAsk);
+        if (parseFixed(askPrice) <= 0n) askPrice = '';
+      }
+      if (!lastPrice && !bidPrice) continue;
+      marketPrices.set(symbol, {
+        lastPrice: lastPrice || bidPrice,
+        bidPrice,
+        askPrice,
+        eventAt: Number.isFinite(Number(row?.E)) ? Number(row.E) : null,
+        updatedAt: now
+      });
       applied++;
     } catch {}
   }
@@ -775,115 +791,218 @@ function applyMarketTickerPayload(payload, symbols) {
   return applied;
 }
 
-async function requestMarketSnapshot(symbols, signal) {
-  const url = new URL(MARKET_REST_BOOK_TICKER);
-  if (symbols.length === 1) url.searchParams.set('symbol', symbols[0]);
-  else url.searchParams.set('symbols', JSON.stringify(symbols));
-  const response = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', signal });
-  if (!response.ok) {
-    const error = new Error(`HTTP ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
-  return response.json();
+function newMarketConnection(symbol) {
+  return {
+    symbol,
+    socket: null,
+    reconnectTimer: null,
+    pingTimer: null,
+    reconnectAttempt: 0,
+    openedAt: 0,
+    lastMessageAt: 0,
+    lastError: ''
+  };
 }
 
-async function fetchMarketSnapshot(symbols, { quiet = false, allowIndividualFallback = true } = {}) {
-  if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length) return 0;
-  const requested = [...new Set(symbols.filter(symbol => !marketRejectedSymbols.has(symbol)))];
-  if (!requested.length) return 0;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), MARKET_FETCH_TIMEOUT_MS);
+function marketConnection(symbol) {
+  let conn = marketConnections.get(symbol);
+  if (!conn) {
+    conn = newMarketConnection(symbol);
+    marketConnections.set(symbol, conn);
+  }
+  return conn;
+}
+
+function clearMarketConnectionTimers(conn) {
+  if (!conn) return;
+  clearTimeout(conn.reconnectTimer);
+  clearInterval(conn.pingTimer);
+  conn.reconnectTimer = null;
+  conn.pingTimer = null;
+}
+
+function closeMarketConnection(symbol, { remove = false } = {}) {
+  const conn = marketConnections.get(symbol);
+  if (!conn) return;
+  clearMarketConnectionTimers(conn);
+  if (conn.socket) {
+    const socket = conn.socket;
+    conn.socket = null;
+    socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
+    try { socket.close(1000, 'Trade Vault market resync'); } catch {}
+  }
+  conn.openedAt = 0;
+  if (remove) marketConnections.delete(symbol);
+}
+
+function pruneMarketConnections(symbols) {
+  const keep = new Set(symbols);
+  for (const symbol of [...marketConnections.keys()]) {
+    if (!keep.has(symbol)) closeMarketConnection(symbol, { remove: true });
+  }
+}
+
+function marketConnectionSummary(symbols, now = Date.now()) {
+  let fresh = 0;
+  let open = 0;
+  let connecting = 0;
+  let retrying = 0;
+  for (const symbol of symbols) {
+    if (isFreshMarketQuote(marketPrices.get(symbol), now)) fresh++;
+    const conn = marketConnections.get(symbol);
+    if (!conn) continue;
+    if (conn.socket?.readyState === WebSocket.OPEN) open++;
+    else if (conn.socket?.readyState === WebSocket.CONNECTING) connecting++;
+    if (conn.reconnectTimer) retrying++;
+  }
+  return { fresh, open, connecting, retrying, total: symbols.length };
+}
+
+function updateMarketConnectionStatus(symbols) {
+  if (!livePricingEnabled) return updateMarketStatus('Live pricing off');
+  if (!symbols.length) return updateMarketStatus('No open PHP inventory to price');
+  const { fresh, open, connecting, retrying, total } = marketConnectionSummary(symbols);
+  if (fresh === total) return updateMarketStatus(`Coins.ph live market · ${fresh}/${total} fresh`);
+  if (open || connecting || retrying) return updateMarketStatus(`Coins.ph market · ${fresh}/${total} fresh · connecting`);
+  updateMarketStatus(`Coins.ph market · ${fresh}/${total} fresh`);
+}
+
+function reconnectDelay(attempt) {
+  const base = Math.min(MARKET_MAX_RECONNECT_MS, MARKET_RECONNECT_BASE_MS * (2 ** Math.min(attempt, 5)));
+  return base + Math.floor(Math.random() * 750);
+}
+
+function scheduleMarketReconnect(symbol) {
+  if (!vaultKey || !livePricingEnabled || document.hidden) return;
+  const conn = marketConnection(symbol);
+  if (conn.reconnectTimer || conn.socket) return;
+  const delay = reconnectDelay(conn.reconnectAttempt);
+  conn.reconnectAttempt = Math.min(conn.reconnectAttempt + 1, 6);
+  conn.reconnectTimer = setTimeout(() => {
+    conn.reconnectTimer = null;
+    connectMarketSymbol(symbol);
+  }, delay);
+  updateMarketConnectionStatus(desiredMarketSymbols());
+}
+
+function connectMarketSymbol(symbol, { force = false } = {}) {
+  if (!vaultKey || !livePricingEnabled || document.hidden || !symbol) return;
+  const conn = marketConnection(symbol);
+  if (!force && conn.socket && [WebSocket.OPEN, WebSocket.CONNECTING].includes(conn.socket.readyState)) return;
+  if (force) closeMarketConnection(symbol);
+  clearTimeout(conn.reconnectTimer);
+  conn.reconnectTimer = null;
+  conn.lastError = '';
+
+  let socket;
   try {
-    const payload = await requestMarketSnapshot(requested, controller.signal);
-    const applied = applyMarketTickerPayload(payload, requested);
-    if (applied) {
-      const streamCount = desiredMarketSymbols().filter(symbol => !marketRejectedSymbols.has(symbol)).length;
-      const socketLive = marketSocket?.readyState === WebSocket.OPEN;
-      updateMarketStatus(socketLive ? `Coins.ph live · ${marketPrices.size}/${streamCount || requested.length} priced` : `Coins.ph best bid · ${marketPrices.size}/${streamCount || requested.length} priced`);
-      scheduleMarketRender();
-    } else if (!quiet && !marketPrices.size) {
-      updateMarketStatus('Coins.ph returned no matching bids');
-    }
-    return applied;
+    socket = new WebSocket(`${MARKET_WS_RAW_BASE}${symbol.toLowerCase()}@ticker`);
   } catch (error) {
-    clearTimeout(timeout);
-    // A single unsupported symbol can make a multi-symbol request fail. Retry
-    // each pair independently so one delisted/unsupported asset cannot block
-    // live bids for every other holding.
-    if (allowIndividualFallback && requested.length > 1 && error?.status >= 400 && error?.status < 500 && error.status !== 429) {
-      const results = await Promise.all(requested.map(symbol => fetchMarketSnapshot([symbol], { quiet: true, allowIndividualFallback: false })));
-      const applied = results.reduce((sum, count) => sum + count, 0);
-      if (applied) {
-        const validCount = requested.filter(symbol => !marketRejectedSymbols.has(symbol)).length;
-        updateMarketStatus(`Coins.ph best bid · ${marketPrices.size}/${Math.max(1, validCount)} priced`);
-        scheduleMarketRender();
-      } else if (!quiet && !marketPrices.size) {
-        updateMarketStatus('Coins.ph pricing unavailable');
-      }
-      return applied;
-    }
-    if (requested.length === 1 && error?.status >= 400 && error?.status < 500 && error.status !== 429) {
-      marketRejectedSymbols.add(requested[0]);
-    }
-    if (!quiet && !marketPrices.size && marketSocket?.readyState !== WebSocket.OPEN) {
-      updateMarketStatus(error?.name === 'AbortError' ? 'Coins.ph pricing timed out' : 'Coins.ph pricing unavailable');
-    }
-    return 0;
-  } finally {
-    clearTimeout(timeout);
+    conn.lastError = error?.message || 'Could not create WebSocket';
+    scheduleMarketReconnect(symbol);
+    return;
   }
+  conn.socket = socket;
+
+  socket.onopen = () => {
+    if (conn.socket !== socket) return;
+    conn.reconnectAttempt = 0;
+    conn.openedAt = Date.now();
+    conn.lastError = '';
+    clearInterval(conn.pingTimer);
+    conn.pingTimer = setInterval(() => {
+      if (conn.socket === socket && socket.readyState === WebSocket.OPEN) {
+        try { socket.send(JSON.stringify({ ping: Date.now() })); } catch {}
+      }
+    }, MARKET_PING_INTERVAL_MS);
+    updateMarketConnectionStatus(desiredMarketSymbols());
+  };
+
+  socket.onmessage = event => {
+    if (conn.socket !== socket) return;
+    try {
+      const message = JSON.parse(event.data);
+      if (message?.pong || message?.result === null) return;
+      if (message?.code != null || message?.desc) {
+        conn.lastError = String(message.desc || `Coins.ph stream error ${message.code}`);
+        console.warn(`Coins.ph ${symbol} stream response`, message);
+        return;
+      }
+      const applied = applyMarketTickerPayload(message, [symbol]);
+      if (!applied) return;
+      conn.lastMessageAt = Date.now();
+      conn.lastError = '';
+      updateMarketConnectionStatus(desiredMarketSymbols());
+      scheduleMarketRender();
+    } catch (error) {
+      console.warn(`Ignored malformed Coins.ph ${symbol} market message`, error);
+    }
+  };
+
+  socket.onerror = () => {
+    if (conn.socket !== socket) return;
+    conn.lastError = 'WebSocket error';
+    updateMarketConnectionStatus(desiredMarketSymbols());
+  };
+
+  socket.onclose = () => {
+    if (conn.socket !== socket) return;
+    conn.socket = null;
+    conn.openedAt = 0;
+    clearInterval(conn.pingTimer);
+    conn.pingTimer = null;
+    if (vaultKey && livePricingEnabled && !document.hidden && desiredMarketSymbols().includes(symbol)) {
+      scheduleMarketReconnect(symbol);
+    }
+  };
 }
 
-function startMarketFallbackRefresh(symbols) {
-  clearInterval(marketFallbackTimer);
-  marketFallbackTimer = null;
+function startMarketWatchdog(symbols) {
+  clearInterval(marketWatchdogTimer);
+  marketWatchdogTimer = null;
   if (!vaultKey || !livePricingEnabled || document.hidden || !symbols.length) return;
-  marketFallbackTimer = setInterval(() => {
-    if (vaultKey && livePricingEnabled && !document.hidden) fetchMarketSnapshot(desiredMarketSymbols(), { quiet: true });
-  }, MARKET_FALLBACK_REFRESH_MS);
+  marketWatchdogTimer = setInterval(() => {
+    if (!vaultKey || !livePricingEnabled || document.hidden) return;
+    const wanted = desiredMarketSymbols();
+    const now = Date.now();
+    for (const symbol of wanted) {
+      const conn = marketConnection(symbol);
+      const state = conn.socket?.readyState;
+      if (state === WebSocket.OPEN) {
+        const activityAt = conn.lastMessageAt || conn.openedAt;
+        const timeout = conn.lastMessageAt ? MARKET_STALE_AFTER_MS : MARKET_INITIAL_QUOTE_TIMEOUT_MS;
+        if (activityAt && now - activityAt > timeout) {
+          conn.lastError = 'Ticker stream stopped updating';
+          closeMarketConnection(symbol);
+          scheduleMarketReconnect(symbol);
+        }
+      } else if (state !== WebSocket.CONNECTING && !conn.reconnectTimer) {
+        scheduleMarketReconnect(symbol);
+      }
+    }
+    updateMarketConnectionStatus(wanted);
+    scheduleMarketRender();
+  }, MARKET_WATCHDOG_INTERVAL_MS);
 }
 
 function stopMarketData({ clearPrices = true, resetStatus = true } = {}) {
-  clearTimeout(marketReconnectTimer);
-  clearInterval(marketPingTimer);
-  clearInterval(marketFallbackTimer);
+  clearInterval(marketWatchdogTimer);
   clearTimeout(marketRenderTimer);
-  marketReconnectTimer = null;
-  marketPingTimer = null;
-  marketFallbackTimer = null;
+  marketWatchdogTimer = null;
   marketRenderTimer = null;
-  marketStreamsKey = '';
-  if (clearPrices) marketReconnectAttempt = 0;
-  if (marketSocket) {
-    const socket = marketSocket;
-    marketSocket = null;
-    socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
-    try { socket.close(1000, 'vault state changed'); } catch {}
-  }
+  for (const symbol of [...marketConnections.keys()]) closeMarketConnection(symbol, { remove: true });
+  marketConnections.clear();
   if (clearPrices) {
     marketPrices.clear();
-    marketRejectedSymbols.clear();
     marketLastMessageAt = 0;
   }
   if (resetStatus) updateMarketStatus(livePricingEnabled ? 'Coins.ph live pricing idle' : 'Live pricing off');
 }
 
-function scheduleMarketReconnect() {
-  if (!vaultKey || !livePricingEnabled || document.hidden || marketReconnectTimer) return;
-  const delay = Math.min(MARKET_MAX_RECONNECT_MS, MARKET_RECONNECT_BASE_MS * (2 ** marketReconnectAttempt));
-  marketReconnectAttempt = Math.min(marketReconnectAttempt + 1, 4);
-  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · reconnecting in ${Math.round(delay / 1000)}s` : `Coins.ph reconnecting in ${Math.round(delay / 1000)}s`);
-  marketReconnectTimer = setTimeout(() => {
-    marketReconnectTimer = null;
-    syncMarketData(true);
-  }, delay);
-}
-
-async function syncMarketData(force = false) {
-  const generation = ++marketSyncGeneration;
+function syncMarketData(force = false) {
+  marketSyncGeneration++;
   if (!vaultKey || !livePricingEnabled || document.hidden) {
-    if (marketSocket || marketFallbackTimer) stopMarketData({ clearPrices: false, resetStatus: true });
+    if (marketConnections.size || marketWatchdogTimer) stopMarketData({ clearPrices: false, resetStatus: true });
     return;
   }
 
@@ -895,90 +1014,21 @@ async function syncMarketData(force = false) {
   }
 
   pruneMarketPrices(symbols);
-  startMarketFallbackRefresh(symbols);
+  pruneMarketConnections(symbols);
 
-  // Seed current bids before opening the stream. If a batch contains an
-  // unsupported Coins.ph pair, fetchMarketSnapshot isolates it and keeps the
-  // supported holdings working instead of failing the whole price feed.
-  if (force || symbols.some(symbol => !marketPrices.has(symbol))) {
-    await fetchMarketSnapshot(symbols, { quiet: false });
-  }
-  if (generation !== marketSyncGeneration || !vaultKey || !livePricingEnabled || document.hidden) return;
-
-  const streamSymbols = symbols.filter(symbol => !marketRejectedSymbols.has(symbol));
-  if (!streamSymbols.length) {
-    stopMarketData({ clearPrices: false, resetStatus: false });
-    updateMarketStatus('No supported Coins.ph PHP pairs to stream');
-    return;
+  if (force) {
+    for (const symbol of symbols) {
+      const conn = marketConnection(symbol);
+      conn.reconnectAttempt = 0;
+      closeMarketConnection(symbol);
+      connectMarketSymbol(symbol);
+    }
+  } else {
+    for (const symbol of symbols) connectMarketSymbol(symbol);
   }
 
-  const streams = streamSymbols.map(symbol => `${symbol.toLowerCase()}@bookTicker`);
-  const streamsKey = streams.join('/');
-  if (!force && marketSocket && marketStreamsKey === streamsKey && [WebSocket.OPEN, WebSocket.CONNECTING].includes(marketSocket.readyState)) return;
-
-  stopMarketData({ clearPrices: false, resetStatus: false });
-  marketStreamsKey = streamsKey;
-  startMarketFallbackRefresh(symbols);
-  const coverage = marketPrices.size ? `${marketPrices.size}/${streamSymbols.length} priced` : `${streamSymbols.length} pair${streamSymbols.length === 1 ? '' : 's'}`;
-  updateMarketStatus(marketPrices.size ? `Coins.ph best bid · connecting live · ${coverage}` : `Connecting to Coins.ph · ${coverage}`);
-
-  try {
-    const socket = new WebSocket(`${MARKET_WS_BASE}${streamsKey}`);
-    marketSocket = socket;
-
-    socket.onopen = () => {
-      if (socket !== marketSocket) return;
-      marketReconnectAttempt = 0;
-      updateMarketStatus(`Coins.ph live · ${marketPrices.size}/${streamSymbols.length} priced`);
-      clearInterval(marketPingTimer);
-      marketPingTimer = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          try { socket.send(JSON.stringify({ ping: Date.now() })); } catch {}
-        }
-      }, 4 * 60 * 1000);
-    };
-
-    socket.onmessage = event => {
-      if (socket !== marketSocket) return;
-      try {
-        const message = JSON.parse(event.data);
-        if (message?.pong || message?.result === null) return;
-        if (message?.code || message?.desc) {
-          console.warn('Coins.ph stream response', message);
-          fetchMarketSnapshot(streamSymbols, { quiet: true });
-          return;
-        }
-        const applied = applyMarketTickerPayload(message, streamSymbols);
-        if (!applied) return;
-        marketStatusText = `Coins.ph live · ${marketPrices.size}/${streamSymbols.length} priced`;
-        scheduleMarketRender();
-      } catch (error) {
-        console.warn('Ignored malformed Coins.ph market message', error);
-      }
-    };
-
-    socket.onerror = () => {
-      if (socket !== marketSocket) return;
-      updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live stream unavailable · trying snapshot');
-      fetchMarketSnapshot(streamSymbols, { quiet: true });
-    };
-
-    socket.onclose = () => {
-      if (socket !== marketSocket) return;
-      marketSocket = null;
-      clearInterval(marketPingTimer);
-      marketPingTimer = null;
-      if (vaultKey && livePricingEnabled && !document.hidden) {
-        fetchMarketSnapshot(streamSymbols, { quiet: true });
-        scheduleMarketReconnect();
-      }
-    };
-  } catch (error) {
-    console.warn('Could not open Coins.ph market socket', error);
-    updateMarketStatus(marketPrices.size ? 'Coins.ph best bid · live stream unavailable' : 'Coins.ph live pricing unavailable');
-    fetchMarketSnapshot(streamSymbols, { quiet: true });
-    scheduleMarketReconnect();
-  }
+  startMarketWatchdog(symbols);
+  updateMarketConnectionStatus(symbols);
 }
 
 function analyzeTransactions(list) {
@@ -1098,9 +1148,9 @@ function valuationSummary(analysis) {
     totalCostBasis += holding.knownCost;
     const symbol = marketSymbolForHolding(holding);
     const market = symbol ? marketPrices.get(symbol) : null;
-    if (!market?.bidPrice) continue;
+    if (!isFreshMarketQuote(market) || !market?.lastPrice) continue;
     try {
-      marketValue += mulFixed(holding.netQty, parseFixed(market.bidPrice));
+      marketValue += mulFixed(holding.netQty, parseFixed(market.lastPrice));
       valuedCostBasis += holding.knownCost;
       valuedPositions++;
     } catch {}
@@ -1175,9 +1225,9 @@ function renderMetrics(list, analysis, performance, valuation) {
     setMetric('metricTransactionsLabel', 'metricTransactions', 'metricDateRange', 'Current value', valuation.marketValue == null ? '—' : formatMoney(valuation.marketValue), livePricingEnabled ? coverage : 'Turn on live pricing');
     setMetric('metricBuyVolumeLabel', 'metricBuyVolume', 'metricBuyVolumeNote', 'Cost basis', formatMoney(valuation.totalCostBasis), `${valuation.openPositions} open position${valuation.openPositions === 1 ? '' : 's'}`);
     const unrealizedClass = valuation.unrealized == null ? '' : valuation.unrealized > 0n ? 'positive' : valuation.unrealized < 0n ? 'negative' : '';
-    setMetric('metricFeesLabel', 'metricFees', 'metricFeesNote', 'Unrealized P&L', valuation.unrealized == null ? '—' : formatMoney(valuation.unrealized), valuation.unrealized == null ? (livePricingEnabled ? 'Waiting for live bids' : 'Turn on live pricing') : 'On live-valued positions');
+    setMetric('metricFeesLabel', 'metricFees', 'metricFeesNote', 'Unrealized P&L', valuation.unrealized == null ? '—' : formatMoney(valuation.unrealized), valuation.unrealized == null ? (livePricingEnabled ? 'Waiting for fresh market prices' : 'Turn on live pricing') : 'On live-valued positions');
     $('metricFees').className = unrealizedClass;
-    setMetric('metricPnlLabel', 'metricPnl', 'metricPnlNote', 'Unrealized return', valuation.unrealizedPct == null ? '—' : formatPercent(valuation.unrealizedPct), valuation.unrealizedPct == null ? (livePricingEnabled ? 'Waiting for live bids' : 'Turn on live pricing') : 'Market value vs cost basis');
+    setMetric('metricPnlLabel', 'metricPnl', 'metricPnlNote', 'Unrealized return', valuation.unrealizedPct == null ? '—' : formatPercent(valuation.unrealizedPct), valuation.unrealizedPct == null ? (livePricingEnabled ? 'Waiting for fresh market prices' : 'Turn on live pricing') : 'Market value vs cost basis');
     $('metricPnl').className = unrealizedClass;
   }
   if (overviewPurpose === 'TRADE') {
@@ -1228,7 +1278,7 @@ function renderAnalyticsStats(list, analysis, performance, valuation) {
       analyticsStat('Largest allocation', largest ? `${largest.base} ${formatPercent(concentration)}` : '—', 'Share of open cost basis'),
       analyticsStat('Open positions', String(valuation.openPositions), formatMoney(valuation.totalCostBasis)),
       analyticsStat('PHP fees', formatMoney(analysis.feesPhp), 'Known PHP-denominated fees'),
-      analyticsStat('Live coverage', valuation.openPositions ? `${valuation.valuedPositions}/${valuation.openPositions}` : '—', livePricingEnabled ? 'Open PHP positions with live bids' : 'Live pricing is off')
+      analyticsStat('Live coverage', valuation.openPositions ? `${valuation.valuedPositions}/${valuation.openPositions}` : '—', livePricingEnabled ? 'Open PHP positions with fresh market prices' : 'Live pricing is off')
     ].join('');
   }
 }
@@ -1332,13 +1382,16 @@ function renderHoldings() {
     const market = symbol ? marketPrices.get(symbol) : null;
     let marketValue = null;
     let unrealized = null;
-    if (market?.bidPrice && h.netQty > 0n) {
+    const marketFresh = isFreshMarketQuote(market);
+    if (marketFresh && market?.lastPrice && h.netQty > 0n) {
       try {
-        marketValue = mulFixed(h.netQty, parseFixed(market.bidPrice));
+        marketValue = mulFixed(h.netQty, parseFixed(market.lastPrice));
         if (h.quote === 'PHP' && h.knownCost >= 0n) unrealized = marketValue - h.knownCost;
       } catch { marketValue = null; }
     }
-    const liveBid = !livePricingEnabled ? 'Off' : market?.bidPrice ? formatMoney(parseFixed(market.bidPrice)) : (marketRejectedSymbols.has(symbol) ? 'Unsupported' : (symbol ? 'Waiting…' : '—'));
+    const liveMarket = !livePricingEnabled ? 'Off' : marketFresh && market?.lastPrice ? formatMoney(parseFixed(market.lastPrice)) : (market?.updatedAt ? 'Stale' : (symbol ? 'Waiting…' : '—'));
+    const liveBid = !livePricingEnabled ? 'Off' : marketFresh && market?.bidPrice ? formatMoney(parseFixed(market.bidPrice)) : (market?.updatedAt ? 'Stale' : (symbol ? 'Waiting…' : '—'));
+    const quoteAge = market?.updatedAt ? Math.max(0, Math.round((Date.now() - market.updatedAt) / 1000)) : null;
     const valueText = marketValue == null ? '—' : formatMoney(marketValue);
     const pnlText = unrealized == null ? '—' : formatMoney(unrealized);
     const pnlClass = unrealized == null ? '' : unrealized > 0n ? 'positive' : unrealized < 0n ? 'negative' : '';
@@ -1346,20 +1399,20 @@ function renderHoldings() {
     const costText = h.quote === 'PHP' ? formatMoney(h.knownCost) : `${escapeHtml(h.quote)} ${formatFixed(h.knownCost, 4)}`;
     const key = holdingUiKey(h);
     const expanded = expandedHoldingKeys.has(key);
-    return { h, key, expanded, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText };
+    return { h, key, expanded, quantity, liveMarket, liveBid, quoteAge, valueText, pnlText, pnlClass, avgText, costText };
   });
 
-  body.innerHTML = rows.map(({ h, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<tr>
+  body.innerHTML = rows.map(({ h, quantity, liveMarket, valueText, pnlText, pnlClass, avgText, costText }) => `<tr>
     <td><strong>${escapeHtml(h.base)}</strong></td>
     <td>${quantity}</td>
     <td>${avgText}</td>
     <td>${costText}</td>
-    <td>${liveBid}</td>
+    <td>${liveMarket}</td>
     <td><strong>${valueText}</strong></td>
     <td class="${pnlClass}">${pnlText}</td>
   </tr>`).join('');
 
-  if (cards) cards.innerHTML = rows.map(({ h, key, expanded, quantity, liveBid, valueText, pnlText, pnlClass, avgText, costText }) => `<article class="holding-card${expanded ? ' expanded' : ''}">
+  if (cards) cards.innerHTML = rows.map(({ h, key, expanded, quantity, liveMarket, liveBid, quoteAge, valueText, pnlText, pnlClass, avgText, costText }) => `<article class="holding-card${expanded ? ' expanded' : ''}">
     <div class="holding-summary">
       <div class="holding-summary-main">
         <div class="asset-name">${escapeHtml(h.base)}</div>
@@ -1374,11 +1427,13 @@ function renderHoldings() {
     <div class="holding-detail-panel"${expanded ? '' : ' hidden'}>
       <div class="value-grid">
         <div class="value-cell"><span>Quantity</span><strong>${quantity}</strong></div>
-        <div class="value-cell"><span>Live bid</span><strong>${liveBid}</strong></div>
+        <div class="value-cell"><span>Market price</span><strong>${liveMarket}</strong></div>
+        <div class="value-cell"><span>Sell bid</span><strong>${liveBid}</strong></div>
         <div class="value-cell"><span>Avg cost</span><strong>${avgText}</strong></div>
         <div class="value-cell"><span>Cost basis</span><strong>${costText}</strong></div>
         <div class="value-cell"><span>Unrealized</span><strong class="${pnlClass}">${pnlText}</strong></div>
         <div class="value-cell"><span>Bucket</span><strong>${escapeHtml(purposeLabel(h))}</strong></div>
+        <div class="value-cell"><span>Quote age</span><strong>${quoteAge == null ? '—' : `${quoteAge}s`}</strong></div>
       </div>
     </div>
   </article>`).join('');
@@ -2190,7 +2245,7 @@ async function init() {
   window.addEventListener('offline', () => {
     if (!vaultKey) return;
     stopMarketData({ clearPrices: false, resetStatus: false });
-    updateMarketStatus('Offline · showing last in-memory bids');
+    updateMarketStatus('Offline · showing last in-memory quotes');
   });
   window.addEventListener('online', () => {
     if (vaultKey && livePricingEnabled && !document.hidden) syncMarketData(true);
@@ -2393,7 +2448,6 @@ async function init() {
   };
   const refreshMarketPricing = () => {
     if (!livePricingEnabled) return toast('Turn live pricing on first.');
-    marketRejectedSymbols.clear();
     syncMarketData(true);
   };
   $('marketToggleBtn')?.addEventListener('click', toggleMarketPricing);

@@ -11,7 +11,7 @@ There is no application backend and no user account system.
 The app has three client-side pages implemented as hash-routed views inside `index.html`:
 
 - `#overview`: purpose-specific analytics with Trading / Long-term tabs. Trading emphasizes matched-exit performance (realized P&L, win rate, profit factor, max drawdown, expectancy, average win/loss, open live value/unrealized P&L, cumulative realized P&L, and open cost-basis allocation). Long-term emphasizes current live value, open cost basis, unrealized P&L/return, purchase accumulation, concentration, fees, and allocation.
-- `#holdings`: open inventory, quantity, average cost, cost basis, live Coins.ph best bid, current PHP value, unrealized P&L.
+- `#holdings`: open inventory, quantity, average cost, cost basis, fresh Coins.ph market price, best sell bid, current PHP value, unrealized P&L.
 - `#ledger`: search/filter, select/bulk-delete, edit/delete, CSV import, encrypted backup/restore, vault clearing.
 
 A floating bottom menu navigates between the three views and opens manual transaction entry. Main app actions are icon buttons with accessible `aria-label`/`title` text.
@@ -123,21 +123,17 @@ Trading analytics intentionally use only PHP-denominated SELL events that can be
 
 Long-term analytics emphasize portfolio health rather than win/loss statistics: live best-bid market value when enabled, open cost basis, unrealized P&L and return on live-valued positions, gross/average purchases, realized P&L for any long-term disposals, largest cost-basis concentration, live-price coverage, cumulative purchase activity, and cost-basis allocation.
 
-Overview live valuation uses the same opt-in Coins.ph public market data as Holdings. On enable/reconnect the app first requests the public `bookTicker` best-bid snapshot from `https://api.pro.coins.ph`, then keeps the existing Coins.ph WebSocket for real-time `bookTicker` updates. A 30-second Coins.ph-only snapshot refresh is retained as a fallback when the socket is quiet/unavailable. Both views share the same in-memory market-price map and on/off state. No API key, telemetry, or persisted price data is used.
+Overview live valuation uses the same opt-in Coins.ph public WebSocket market data as Holdings. Browser REST snapshot calls were removed because Coins.ph does not return permissive CORS headers for that endpoint. The app now consumes `<symbol>@ticker`, which includes last trade, best bid and best ask. Fresh last-trade price drives valuation; best bid remains available as the liquidation-oriented sell bid. Both views share the same in-memory market-price map and on/off state. No API key, telemetry, or persisted price data is used.
 
 ## Live Coins.ph valuation
 
-Live pricing uses the public Coins.ph `bookTicker` REST snapshot plus quote WebSocket. `MARKET_WS_BASE` points to:
+Live pricing uses only the public Coins.ph quote WebSocket. `MARKET_WS_BASE` points to:
 
 `wss://wsapi.pro.coins.ph/openapi/quote/stream?streams=`
 
-Live pricing starts OFF on every app load. The user can explicitly toggle it on from Holdings or Overview. Enabling it requests an immediate best-bid snapshot so the UI does not wait for the first WebSocket book change.
+Live pricing starts OFF on every app load. When enabled, the app subscribes only to open `*/PHP` holdings using `<symbol>@ticker`. The ticker stream provides `c` (last traded price), `b` (best bid), and `a` (best ask) roughly once per second. Holdings/Overview valuation uses a fresh last traded price, while holding details show best bid separately.
 
-When enabled, the app subscribes only to open `*/PHP` holdings using `<symbol>@bookTicker` streams.
-
-Use the best bid as the current PHP liquidation-oriented value:
-
-`PHP value = open net quantity × best bid`
+Quotes are memory-only and are considered stale after 15 seconds without a fresh event. A watchdog reconnects a stale stream. There is no REST fallback because the static browser app cannot rely on Coins.ph market REST CORS headers.
 
 Only pair symbols are sent. Transaction IDs, quantities, cost basis, history, passphrase, and encrypted records are never sent to Coins.ph.
 
@@ -181,7 +177,7 @@ Desktop and mobile renderers share the same event delegation and record keys. Wh
 
 1. Do not persist plaintext transactions, passphrases, derived keys, or live prices.
 2. Do not add third-party JS/CDN dependencies casually; deployed JavaScript executes inside the unlocked vault origin.
-3. Keep CSP network access narrow. Current external allowance is only Coins.ph public market-data endpoints (HTTPS best-bid snapshot plus WebSocket updates).
+3. Keep CSP network access narrow. Current external allowance is only the Coins.ph public market-data WebSocket.
 4. Do not add telemetry that can reveal portfolio assets or usage.
 5. Any change to record encryption needs backward migration support.
 6. Keep sensitive UI state cleared on lock/pagehide.
@@ -232,3 +228,7 @@ The app shell is now build `2026.09.12.3`. The HTML build marker, JavaScript `AP
 
 
 - 2026-09-13 live-pricing/holdings update: Coins.ph batch snapshot failures now isolate unsupported symbols instead of blocking all bids; the live stream excludes rejected pairs and manual refresh revalidates them. Mobile Holdings cards are compact/collapsible with per-card and Expand all/Collapse all controls. Closed/zero holdings are omitted from the Holdings list.
+
+## Build 2026.09.13.3 — raw WebSocket market streams
+
+The market-data implementation was changed from one combined WebSocket URL to independent raw Coins.ph ticker streams, based on a user-supplied local example known to work in-browser. For each open PHP holding, Trade Vault connects to `wss://wsapi.pro.coins.ph/openapi/quote/ws/v3/<symbol>@ticker`. No REST market-data call is used, so live pricing does not depend on CORS. `c` / `lastPrice` feeds Holdings market value and unrealized P&L; `b` / `bidPrice` remains the separate sell-bid display. Each symbol has independent ping, stale detection, and exponential reconnect state, so a bad or unsupported pair cannot take down pricing for the others. Quotes remain in memory only. The encrypted record schema and backup format are unchanged.
